@@ -1,0 +1,13 @@
+[
+	["from.Class", "to.Class", "converter.Class"],
+
+	["bxml.docx.DOCX", "pubxml.document.Document", "pubxml.converters.docx_document.DocxDocument"],
+	["pubxml.document.Document", "bxml.docx.DOCX", null],
+	
+	["pubxml.document.Document", "pubxml.html.HTML", "pubxml.converters.document_html.DocumentHtml"],
+	["pubxml.html.HTML", "pubxml.document.Document", "pubxml.converters.html_document.HtmlDocument"],
+	
+	["pubxml.icml.ICML", "pubxml.document.Document", "pubxml.converters.icml_document.IcmlDocument"],
+	["pubxml.document.Document", "pubxml.icml.ICML", "pubxml.converters.document_icml.DocumentIcml"]
+
+]
