@@ -1,0 +1,3 @@
+[submodule "bkgen/resources/publishing-xml"]
+	path = bkgen/resources/publishing-xml
+	url = https://github.com/BlackEarth/publishing-xml.git
