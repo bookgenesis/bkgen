@@ -5,14 +5,14 @@ config = {
   "url": "https://gitlab.com/BlackEarth/bkgen",
   "author": "Sean Harrison",
   "author_email": "sah@blackearth.us",
-  "license": "LGPL 3.0",
+  "license": "All rights reserved.",
   "classifiers": [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3"
   ],
   "entry_points": {},
-  "install_requires": [],
+  "install_requires": ["bl", "bf", "bxml", "bsql"],
   "extras_require": {
     "dev": [],
     "test": []

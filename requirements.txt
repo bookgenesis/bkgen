@@ -1,1 +1,15 @@
-bl
+appdirs==1.4.0
+-e git+http://github.com/BlackEarth/bf@1aed526714cb658651ff80a451c58a5689e3962e#egg=bf
+-e git+https://gitlab.com/BlackEarth/bkgen.git@d5e154dc3dd5b2735bc0c164382ec9c0784fde9f#egg=bkgen
+-e git+https://github.com/BlackEarth/bl.git@62d70ae2a63e2d8c40441f30570b14d1e22a3cd3#egg=bl
+-e git+https://github.com/BlackEarth/bxml@946f42e4ba0a377a4216a1651fb15a5d19693877#egg=bxml
+cssselect==1.0.1
+lxml==3.7.3
+Mako==1.0.6
+MarkupSafe==0.23
+packaging==16.8
+pyparsing==2.1.10
+python-editor==1.0.3
+sass==2.3
+six==1.10.0
+Unum==4.1.3

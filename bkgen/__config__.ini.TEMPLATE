@@ -1,0 +1,22 @@
+## Package configuration for bkgen
+
+[Package]
+path: %(path)s
+debug: True
+
+[Database]
+dialect: postgresql
+adaptor: psycopg2
+user: %(user)s
+password: %(password)s
+host: localhost
+port: :5432
+dbname: bkgen
+debug: ${Package:debug}
+
+[Resources]
+path: ${Package:path}/resources
+publishingxml: ${path}/publishing-xml
+schemas: ${publishingxml}
+epubcheck: ${path}/epubcheck-4.0.2/epubcheck.jar
+kindlegen: ${path}/KindleGen_Mac_i386_v2_9/kindlegen
