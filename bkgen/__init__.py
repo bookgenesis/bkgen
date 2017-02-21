@@ -1,11 +1,9 @@
 import os
 from bl.dict import Dict
 from bl.config import Config
-from .database import Database
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 config = Config(fn=os.path.join(PATH, '__config__.ini'))
-db = Database(**config.Database)
 
 NS = Dict(
     pub="http://publishingxml.org/ns",
