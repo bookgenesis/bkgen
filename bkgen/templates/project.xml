@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<project xmlns="http://publishingxml.org/ns" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="">
+
+  <!-- metadata: for project publication -->
+  <opf:metadata>
+    <dc:title id="title1"></dc:title>
+  </opf:metadata>
+
+  <!-- sources: imported content, without any conversion done -->
+  <sources>
+	</sources>
+
+  <!-- documents: normalized XML  -->
+  <documents>
+	</documents>
+
+  <!-- resources: cover, stylesheets, images, media -->
+  <resources>
+  </resources>
+
+  <!-- spine: the ordered content in the project -->
+  <spine>
+  </spine>
+
+</project>
