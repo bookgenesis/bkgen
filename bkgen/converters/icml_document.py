@@ -14,12 +14,12 @@ from bxml.xml import XML
 from bxml.xt import XT
 from bxml.builder import Builder
 
-import pubxml
-from pubxml.icml import ICML
-from pubxml.converters import Converter
-from pubxml.document import Document
+from bkgen import NS
+from bkgen.icml import ICML
+from bkgen.converters import Converter
+from bkgen.document import Document
 
-B = Builder(default=pubxml.NS.html, **pubxml.NS)
+B = Builder(default=NS.html, **NS)
 transformer = XT()
 
 class IcmlDocument(Converter):
@@ -84,7 +84,7 @@ def CharacterStyleRange(elem, **params):
             span.set('class', span_class)
         if elem.get('AppliedConditions') is not None:
             conditions = [c.replace('Condition/','').replace('%20','_') for c in elem.get('AppliedConditions').split(' ')]
-            span.set('{%(pub)s}cond' % pubxml.NS, ' '.join(conditions))
+            span.set('{%(pub)s}cond' % NS, ' '.join(conditions))
         span.text = ''
         span.tail = ''
         return [span]
@@ -132,7 +132,7 @@ def Content(elem, **params):
                 transformer(elem.getchildren(), **params))
     # \t characters to <pub:tab/>
     content = etree.fromstring(etree.tounicode(t, with_tail=False)
-                .replace('\t',"<pub:tab xmlns:pub='%(pub)s'/>" % pubxml.NS).encode('utf-8'))
+                .replace('\t',"<pub:tab xmlns:pub='%(pub)s'/>" % NS).encode('utf-8'))
     content.tail = ''
     return [content]
 
@@ -309,7 +309,7 @@ def HyperlinkTextOrCrossReferenceSource(elem, **params):
     if attribs is not None:
         hyperlink = B.pub.hyperlink(attribs, transformer(elem.getchildren(), **params))
         cc = hyperlink.getchildren()
-        if len(cc)==1 and cc[0].tag=="{%(pub)s}cref" % pubxml.NS:
+        if len(cc)==1 and cc[0].tag=="{%(pub)s}cref" % NS:
             for k in hyperlink.attrib.keys():
                 cc[0].set(k, hyperlink.get(k))
             return cc
@@ -466,7 +466,7 @@ def embed_textframes(doc):
 
 def convert_tabs(doc):
     txt = etree.tounicode(doc)
-    txt = txt.replace("<?ACE 8?>", "<pub:tab align='right' xmlns:pub='%(pub)s'/>" % pubxml.NS)
+    txt = txt.replace("<?ACE 8?>", "<pub:tab align='right' xmlns:pub='%(pub)s'/>" % NS)
     txt = txt.replace("<?ACE 7?>", "")                                          # align "here" tab
     tfn = os.path.join(os.path.dirname(__file__), random_id())
     with open(tfn, 'wb') as tf:
@@ -476,14 +476,14 @@ def convert_tabs(doc):
     return d
 
 def remove_empty_spans(doc):
-    for span in doc.xpath("//html:span", namespaces=pubxml.NS):
+    for span in doc.xpath("//html:span", namespaces=NS):
         if span.attrib.keys() == [] or XML.is_empty(span, ignore_whitespace=True):
             XML.replace_with_contents(span)
     return doc
 
 def process_t_codes(doc):
-    body = doc.find("{%(html)s}body" % pubxml.NS)
-    for t in doc.xpath("//pub:t", namespaces=pubxml.NS):
+    body = doc.find("{%(html)s}body" % NS)
+    for t in doc.xpath("//pub:t", namespaces=NS):
         XML.replace_with_contents(t)
     return doc
 
@@ -495,47 +495,47 @@ def convert_line_breaks(doc):
 
 def process_endnotes(doc):
     # enclose endnotes that are tagged with endnote_start
-    for e in doc.xpath("//html:endnote_start", namespaces=pubxml.NS):
-        e.tag = "{%(pub)s}endnote" % pubxml.NS
+    for e in doc.xpath("//html:endnote_start", namespaces=NS):
+        e.tag = "{%(pub)s}endnote" % NS
         nxt = e.getnext()
-        while nxt is not None and nxt.tag != "{%(pub)s}endnote_start" % pubxml.NS:
+        while nxt is not None and nxt.tag != "{%(pub)s}endnote_start" % NS:
             e.append(nxt)
             nxt = e.getnext()
 
     # for now, just strip off the endnote characteristics so that HTML output can be processed
-    for endnote in doc.xpath("//html:endnote", namespaces=pubxml.NS):
+    for endnote in doc.xpath("//html:endnote", namespaces=NS):
         endnote.text = endnote.tail = None
         XML.replace_with_contents(endnote)
-    for ie in doc.xpath("//html:insert_endnotes", namespaces=pubxml.NS):
+    for ie in doc.xpath("//html:insert_endnotes", namespaces=NS):
         XML.replace_with_contents(ie)
     return(doc)     
 
 def hyperlinks_inside_paras(doc):
     "hyperlinks that cross paragraph boundaries need to be nested inside the paragraphs"
-    for hyperlink in doc.xpath("//html:hyperlink[html:p]", namespaces=pubxml.NS):
-        XML.interior_nesting(hyperlink, "html:p", namespaces=pubxml.NS)
+    for hyperlink in doc.xpath("//html:hyperlink[html:p]", namespaces=NS):
+        XML.interior_nesting(hyperlink, "html:p", namespaces=NS)
     return doc
 
 def unpack_nested_paras(doc):
     """HiddenText (conditional text) often results in nested paras, they need to be unpacked"""
-    for p in doc.xpath("//html:p/html:p", namespaces=pubxml.NS):
+    for p in doc.xpath("//html:p/html:p", namespaces=NS):
         XML.unnest(p)
     return doc
 
 def remove_empty_paras(doc):
     """empty paras are meaningless and removed."""
-    for p in doc.xpath(".//html:p", namespaces=pubxml.NS):
+    for p in doc.xpath(".//html:p", namespaces=NS):
         XML.remove_if_empty(p, leave_tail=False, ignore_whitespace=False)
     return doc  
 
 def p_tails(doc):
-    for p in doc.xpath(".//html:p", namespaces=pubxml.NS):
+    for p in doc.xpath(".//html:p", namespaces=NS):
         p.tail = '\n'
     return doc  
 
 def includes_before_paras(doc):
-    for include in doc.xpath(".//pub:include", namespaces=pubxml.NS):
-        p = XML.find(include, "ancestor::html:p", namespaces=pubxml.NS)
+    for include in doc.xpath(".//pub:include", namespaces=NS):
+        p = XML.find(include, "ancestor::html:p", namespaces=NS)
         if p is not None:
             parent = p.getparent()
             parent.insert(parent.index(p), include)
@@ -544,20 +544,20 @@ def includes_before_paras(doc):
 
 def anchors_shift_paras(doc):
     # a monstrosity
-    for p in doc.xpath("//html:p", namespaces=pubxml.NS):
+    for p in doc.xpath("//html:p", namespaces=NS):
         while len(p.getchildren()) > 0 \
         and p.text in [None, ''] \
-        and p.getchildren()[0].tag in ["{%(pub)s}anchor_start" % pubxml.NS, "{%(pub)s}anchor_end" % pubxml.NS]:
+        and p.getchildren()[0].tag in ["{%(pub)s}anchor_start" % NS, "{%(pub)s}anchor_end" % NS]:
             a = p.getchildren()[0]
-            while a is not None and a.tag == "{%(pub)s}anchor_start" % pubxml.NS and a.tail in [None, '']:
+            while a is not None and a.tag == "{%(pub)s}anchor_start" % NS and a.tail in [None, '']:
                 a = a.getnext()
-            if a is None or a.tag != "{%(pub)s}anchor_end" % pubxml.NS: 
+            if a is None or a.tag != "{%(pub)s}anchor_end" % NS: 
                 break
-            prevs = p.xpath("preceding::html:p", namespaces=pubxml.NS)
+            prevs = p.xpath("preceding::html:p", namespaces=NS)
             if len(prevs) > 0:
                 prev = prevs[-1]
                 while prev is not None and len(prev.getchildren()) == 0 and prev.text in [None, '']:
-                    prevs = prev.xpath("preceding::html:p", namespaces=pubxml.NS)
+                    prevs = prev.xpath("preceding::html:p", namespaces=NS)
                     if len(prevs) == 0: break
                     prev = prevs[-1]
                 if prev is not None:
@@ -567,10 +567,10 @@ def anchors_shift_paras(doc):
             else:
                 break
         while len(p.getchildren()) > 0 \
-        and p.getchildren()[-1].tag == "{%(pub)s}anchor_start" % pubxml.NS\
+        and p.getchildren()[-1].tag == "{%(pub)s}anchor_start" % NS\
         and p.getchildren()[-1].tail in [None, '']:
             a = p.getchildren()[-1]
-            nexts = p.xpath("following::html:p", namespaces=pubxml.NS)
+            nexts = p.xpath("following::html:p", namespaces=NS)
             if len(nexts) > 0:
                 XML.remove(a, leave_tail=True)
                 nexts[0].insert(0, a)
@@ -582,13 +582,13 @@ def anchors_shift_paras(doc):
 
 def anchors_outside_hyperlinks(doc):
     "make sure anchors are outside of hyperlinks"
-    for a in doc.xpath("//html:anchor_start[ancestor::html:hyperlink]", namespaces=pubxml.NS):
-        h = a.xpath("ancestor::html:hyperlink", namespaces=pubxml.NS)[0]
+    for a in doc.xpath("//html:anchor_start[ancestor::html:hyperlink]", namespaces=NS):
+        h = a.xpath("ancestor::html:hyperlink", namespaces=NS)[0]
         XML.remove(a); a.tail = ''
         parent = h.getparent()
         parent.insert(parent.index(h), a)
-    for a in doc.xpath("//html:anchor_end[ancestor::html:hyperlink]", namespaces=pubxml.NS):
-        h = a.xpath("ancestor::html:hyperlink", namespaces=pubxml.NS)[0]
+    for a in doc.xpath("//html:anchor_end[ancestor::html:hyperlink]", namespaces=NS):
+        h = a.xpath("ancestor::html:hyperlink", namespaces=NS)[0]
         XML.remove(a); a.tail = ''
         parent = h.getparent()
         parent.insert(parent.index(h)+1, a)
@@ -596,15 +596,15 @@ def anchors_outside_hyperlinks(doc):
 
 def anchors_inside_paras(doc):
     """anchor_start at the start of the next para, anchor_end at the end of the previous para"""
-    for anchor_start in doc.xpath("//html:anchor_start[not(ancestor::html:p)]", namespaces=pubxml.NS):
-        paras = anchor_start.xpath("following::html:p", namespaces=pubxml.NS)
+    for anchor_start in doc.xpath("//html:anchor_start[not(ancestor::html:p)]", namespaces=NS):
+        paras = anchor_start.xpath("following::html:p", namespaces=NS)
         if len(paras) > 0:
             para = paras[0]
             XML.remove(anchor_start, leave_tail=True)
             para.insert(0, anchor_start)
             anchor_start.tail, para.text = para.text, ''
-    for anchor_end in doc.xpath("//html:anchor_end[not(ancestor::html:p)]", namespaces=pubxml.NS):
-        paras = anchor_end.xpath("preceding::html:p", namespaces=pubxml.NS)
+    for anchor_end in doc.xpath("//html:anchor_end[not(ancestor::html:p)]", namespaces=NS):
+        paras = anchor_end.xpath("preceding::html:p", namespaces=NS)
         if len(paras) > 0:
             para = paras[-1]
             XML.remove(anchor_end, leave_tail=True)
@@ -613,7 +613,7 @@ def anchors_inside_paras(doc):
 
 def fix_endnote_refs(doc):
     "make sure endnote references are superscript"
-    for hyperlink in doc.xpath("//html:hyperlink[not(ancestor::html:span) and not(html:span) and contains(@anchor, 'endnote_ref_')]", namespaces=pubxml.NS):
+    for hyperlink in doc.xpath("//html:hyperlink[not(ancestor::html:span) and not(html:span) and contains(@anchor, 'endnote_ref_')]", namespaces=NS):
         span = B.html.span({'class':"_Endnote Reference"})
         span.text, hyperlink.text = hyperlink.text or '', ''
         for ch in hyperlink.getchildren():
@@ -623,8 +623,8 @@ def fix_endnote_refs(doc):
 
 def process_para_breaks(body):
     # If a <pub:p_break/> is in the midst of a <p>, make a new <p>. 
-    for p_break in body.xpath(".//pub:p_break", namespaces=pubxml.NS):
-        p = p_break.xpath("ancestor::html:p", namespaces=pubxml.NS)[-1]
+    for p_break in body.xpath(".//pub:p_break", namespaces=NS):
+        p = p_break.xpath("ancestor::html:p", namespaces=NS)[-1]
         parent = p_break.getparent()
         while parent != p:
             XML.unnest(p_break)
@@ -636,8 +636,8 @@ def process_para_breaks(body):
 
 def nest_span_hyperlinks(body):
     # span must nest within hyperlink
-    for span in body.xpath("//html:span[html:hyperlink]", namespaces=pubxml.NS):
-        XML.fragment_nesting(span, "html:hyperlink", namespaces=pubxml.NS)
+    for span in body.xpath("//html:span[html:hyperlink]", namespaces=NS):
+        XML.fragment_nesting(span, "html:hyperlink", namespaces=NS)
     return body   
 
 def is_prev_node_br(elem):

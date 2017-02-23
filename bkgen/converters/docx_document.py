@@ -14,11 +14,11 @@ from bxml.xt import XT
 from bxml.builder import Builder
 from bxml.xslt import XSLT
 
-import pubxml
-from pubxml.converters import Converter
-from pubxml.document import Document
+from bkgen import NS
+from bkgen.converters import Converter
+from bkgen.document import Document
 
-B = Builder(**pubxml.NS)
+B = Builder(**NS)
 transformer = XT()
 transformer_XSLT = etree.XSLT(etree.parse(os.path.splitext(__file__)[0] + '.xsl'))
 
@@ -91,7 +91,7 @@ def embed_notes(root, **params):
     return root
 
 def remove_empty_spans(root):
-    for span in root.xpath(".//html:span", namespaces=pubxml.NS):
+    for span in root.xpath(".//html:span", namespaces=NS):
         if span.text in [None, ''] and len(span.getchildren())==0:
             XML.remove(span, leave_tail=True)
         elif span.attrib=={}:
@@ -99,7 +99,7 @@ def remove_empty_spans(root):
     return root
 
 def remove_empty_paras(root):
-    for p in root.xpath(".//html:p", namespaces=pubxml.NS):
+    for p in root.xpath(".//html:p", namespaces=NS):
         if p.text in [None, ''] and len(p.getchildren())==0:
             XML.remove(p, leave_tail=True)
     return root        
@@ -107,13 +107,13 @@ def remove_empty_paras(root):
 def wrap_sections(root, **params):
     """wrap sections divided by section breaks"""
     fn = params['fn']
-    body = root.find('{%(html)s}body' % pubxml.NS)
+    body = root.find('{%(html)s}body' % NS)
     section_ids = []
     section = B.html.section('\n'); section.tail='\n'
     body.insert(0, section)
     nxt = section.getnext()
     while nxt is not None:
-        if nxt.tag == "{%(pub)s}section_end" % pubxml.NS:
+        if nxt.tag == "{%(pub)s}section_end" % NS:
             # put the section_end attribs in the section
             for a in nxt.attrib:
                 section.set(a, nxt.get(a))
@@ -134,25 +134,25 @@ def split_level_sections(root):
     """h1...h9 paragraphs indicate the beginning of a section;
         each level creates a new section.
     """
-    body = XML.find(root, "html:body", namespaces=pubxml.NS)
+    body = XML.find(root, "html:body", namespaces=NS)
     level_section_xpath = """.//html:*[not(ancestor::html:table) and 
         (name()='h1' or name()='h2' or name()='h3' or name()='h4' or name()='h5' 
         or name()='h6' or name()='h7' or name()='h8' or name()='h9')]"""
-    for elem in body.xpath(level_section_xpath, namespaces=pubxml.NS):
+    for elem in body.xpath(level_section_xpath, namespaces=NS):
         parent = elem.getparent()
         # start a section, go until another element like this one or no more available
         level_tag = elem.tag
         level = int(level_tag[-1])
         title = etree.tounicode(elem, method='text', with_tail=False).strip()
-        num_sections = len(elem.xpath("//html:section", namespaces=pubxml.NS))
-        section = etree.Element("{%(html)s}section" % pubxml.NS)
+        num_sections = len(elem.xpath("//html:section", namespaces=NS))
+        section = etree.Element("{%(html)s}section" % NS)
         section.text = section.tail = '\n'
         parent.insert(parent.index(elem), section)
         nxt = elem.getnext()
         section.append(elem)
         while (nxt is not None 
                 and not (nxt.tag == level_tag or nxt.tag[-1] == str(level)) 
-                and nxt.tag != "{%(html)s}section" % pubxml.NS):
+                and nxt.tag != "{%(html)s}section" % NS):
             elem = nxt
             nxt = elem.getnext()
             section.append(elem)
@@ -162,22 +162,22 @@ def nest_level_sections(root):
     """h1...h9 paragraphs indicate the beginning of a nested section;
         each level creates a new nested section.
     """
-    body = XML.find(root, "html:body", namespaces=pubxml.NS)
+    body = XML.find(root, "html:body", namespaces=NS)
     level_section_xpath = """.//html:*[not(ancestor::html:table) and 
         (name()='h1' or name()='h2' or name()='h3' or name()='h4' or name()='h5' 
         or name()='h6' or name()='h7' or name()='h8' or name()='h9')]"""
-    for elem in body.xpath(level_section_xpath, namespaces=pubxml.NS):
+    for elem in body.xpath(level_section_xpath, namespaces=NS):
         parent = elem.getparent()
         # if this is the only element at this level in this section, 
         # and it's at the beginning of the section,
         # then don't make a nested section for this element -- it's already done.
-        if parent.index(elem) > 0 and len(parent.xpath(level_section_xpath, namespaces=pubxml.NS)) > 1:
+        if parent.index(elem) > 0 and len(parent.xpath(level_section_xpath, namespaces=NS)) > 1:
             # start a section, go until another element like this one or no more available
             level_tag = elem.tag
             level = int(level_tag[-1])
             title = etree.tounicode(elem, method='text', with_tail=False).strip()
-            num_sections = len(elem.xpath("//html:section", namespaces=pubxml.NS))
-            section = etree.Element("{%(html)s}section" % pubxml.NS)
+            num_sections = len(elem.xpath("//html:section", namespaces=NS))
+            section = etree.Element("{%(html)s}section" % NS)
             section.text = section.tail = '\n'
             parent.insert(parent.index(elem), section)
             nxt = elem.getnext()
@@ -191,10 +191,10 @@ def nest_level_sections(root):
 def sections_title_id(root, **params):
     """assign a section title and id, if possible to each section in the document"""
     section_ids = []
-    for section in root.xpath(".//html:section", namespaces=pubxml.NS):
+    for section in root.xpath(".//html:section", namespaces=NS):
         xp = """html:*[name()='p' or name()='h1' or name()='h2' or name()='h3' or name()='h4' 
                         or name()='h5' or name()='h6' or name()='h7' or name()='h8' or name()='h9'][1]"""
-        pp = section.xpath(xp, namespaces=pubxml.NS)
+        pp = section.xpath(xp, namespaces=NS)
         if len(pp) > 0:
             c = pp[0].get('class')
             if c is not None:
@@ -207,7 +207,7 @@ def sections_title_id(root, **params):
                                 XSLT.template_match_omission("pub:footnote"),
                                 XSLT.template_match_omission("pub:endnote"),
                                 XSLT.template_match_omission("pub:comment"),
-                                namespaces=pubxml.NS))
+                                namespaces=NS))
                     p = xslt(pp[0]).getroot()
                     title = String(etree.tounicode(p, method='text').strip()).resub('\s+', ' ')
                 elif c[-len('-head'):].lower()=='-head':
@@ -229,7 +229,7 @@ def map_para_styles_levels(root, **params):
     """Adjust the para class to use the Word style name.
         Also convert <p> to <h#> if there is an outline level in the style."""
     stylemap = params['docx'].stylemap(cache=True)
-    for p in root.xpath(".//html:p[@class]", namespaces=pubxml.NS):
+    for p in root.xpath(".//html:p[@class]", namespaces=NS):
         style = stylemap.get(p.get('class'))
 
         # class name
@@ -248,13 +248,13 @@ def map_para_styles_levels(root, **params):
                 and int(style.properties.outlineLvl.val) < 9:
                     level = int(style.properties.outlineLvl.val) + 1
         if level is not None:
-            p.tag = "{%s}h%d" % (pubxml.NS.html, level)          # change tag to h1...h9
+            p.tag = "{%s}h%d" % (NS.html, level)          # change tag to h1...h9
 
     return root
 
 def map_span_styles(root, **params):
     stylemap = params['docx'].stylemap(cache=True)
-    for sp in root.xpath(".//html:span[@class]", namespaces=pubxml.NS):
+    for sp in root.xpath(".//html:span[@class]", namespaces=NS):
         cls = DOCX.classname(stylemap.get(sp.get('class')).name)
         sp.set('class', cls)
     return root
@@ -301,7 +301,7 @@ def resolve_hyperlinks(root, **params):
 
 def merge_contiguous_spans(doc):
     """if spans are next to each other and have the same attributes, merge them"""
-    spans = XML.xpath(doc, "//html:span", namespaces=pubxml.NS)
+    spans = XML.xpath(doc, "//html:span", namespaces=NS)
     spans.reverse()
     for span in spans:
         next = span.getnext()
@@ -322,7 +322,7 @@ def paragraphs_with_newlines(root):
                                 or ancestor::pub:endnote)
                             and (name()='p' or name()='h1' or name()='h2' or name()='h3' or name()='h4'
                                 or name()='h5' or name()='h6' or name()='h7' or name()='h8' or name()='h9')]
-                        """, namespaces=pubxml.NS):
+                        """, namespaces=NS):
         p.tail = '\n'
     return root
 
@@ -333,22 +333,22 @@ def nest_fields(root):
     
     # move TOC, ..., field_end out of parent paragraph when it's the first thing
     for field in root.xpath(".//pub:field_start[starts-with(@instr,'TOC')] | .//pub:field_end", 
-                            namespaces=pubxml.NS):
+                            namespaces=NS):
         parent = field.getparent()
-        if parent.tag=='{%(html)s}p' % pubxml.NS and parent[0]==field:
+        if parent.tag=='{%(html)s}p' % NS and parent[0]==field:
             gparent = parent.getparent()
             gparent.insert(gparent.index(parent), field)
             parent.text = (parent.text or '') + (field.tail or '')
             field.tail='\n'
 
     # nest fields -- this assumes fields will nest
-    field_starts = root.xpath("//pub:field_start[1]", namespaces=pubxml.NS)
+    field_starts = root.xpath("//pub:field_start[1]", namespaces=NS)
     while len(field_starts) > 0:
         field = field_starts[0]
-        field.tag = "{%(pub)s}field" % pubxml.NS
+        field.tag = "{%(pub)s}field" % NS
         field.text, field.tail = field.tail, ''
         nxt = field.getnext()
-        while nxt is not None and nxt.tag != "{%(pub)s}field_end" % pubxml.NS:
+        while nxt is not None and nxt.tag != "{%(pub)s}field_end" % NS:
             e = nxt
             nxt = field.getnext()
             if nxt is not None:
@@ -356,17 +356,17 @@ def nest_fields(root):
         if nxt is None:
             pass
             # log("ERROR: unclosed field:", field.attrib)
-        elif nxt.tag == "{%(pub)s}field_end" % pubxml.NS:
+        elif nxt.tag == "{%(pub)s}field_end" % NS:
             XML.remove(nxt, leave_tail=True)
         else:
             pass
             # log("UNDEFINED: field ending", field.attrib)
-        field_starts = root.xpath("//pub:field_start[1]", namespaces=pubxml.NS)
+        field_starts = root.xpath("//pub:field_start[1]", namespaces=NS)
     return root
 
 def field_attributes(root):
     """convert the Word field instructions to attributes"""
-    for field in root.xpath(".//pub:field[@instr]", namespaces=pubxml.NS):
+    for field in root.xpath(".//pub:field[@instr]", namespaces=NS):
         tokens = [i.strip('"') for i in re.split('(?:("[^"]+")|\s+)', field.attrib.pop('instr')) if i not in [None, '']]
         cls = tokens.pop(0).upper()
         if cls in FIELD_TAGS:               # use the tag in FIELD_TAGS, if given
@@ -401,22 +401,22 @@ def parse_field_attributes(cls, tokens):
 def toc_fields(root):
     """TOC fields usually have PAGEREF fields inside them, but the main text of each entry is not linked.
     Add a link to the main text of each entry that has a PAGEREF field but no link."""
-    for toc in root.xpath("//pub:field[@class='TOC']", namespaces=pubxml.NS):
-        for p in toc.xpath(".//html:p[.//pub:field[@class='PAGEREF'] and not(.//html:a[@href])]", namespaces=pubxml.NS):
-            pageref = p.xpath(".//pub:field[@class='PAGEREF']", namespaces=pubxml.NS)[0]
+    for toc in root.xpath("//pub:field[@class='TOC']", namespaces=NS):
+        for p in toc.xpath(".//html:p[.//pub:field[@class='PAGEREF'] and not(.//html:a[@href])]", namespaces=NS):
+            pageref = p.xpath(".//pub:field[@class='PAGEREF']", namespaces=NS)[0]
             a = B.html.a({'href': "#"+pageref.get('anchor')})
             # put content into a hyperlink, up to a pub:tab or pub:field[@class='PAGEREF']
             a.text, p.text = p.text, ''
             for ch in p.getchildren():
-                while ch.tag != '{%(pub)s}tab' % pubxml.NS and (
-                        ch.tag != '{%(pub)s}field' % pubxml.NS 
+                while ch.tag != '{%(pub)s}tab' % NS and (
+                        ch.tag != '{%(pub)s}field' % NS 
                         or ch.get('class') != 'PAGEREF'):
                     a.append(ch)
             p.insert(0, a)
     return root
 
 FIELD_TAGS = {
-    'HYPERLINK': "{%(html)s}a" % pubxml.NS
+    'HYPERLINK': "{%(html)s}a" % NS
 }
 
 FIELD_TEMPLATES = {

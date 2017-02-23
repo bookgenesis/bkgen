@@ -3,10 +3,10 @@ import os, subprocess
 from bl.dict import Dict
 from bf.image import Image
 from bxml.xml import XML, etree
-import bg
+from bkgen import NS, config
 
 class MOBI(Dict):
-    NS = bg.NS
+    NS = NS
 
     def __init__(self, log=print, **args):
         Dict.__init__(self, log=log, **args)
@@ -86,14 +86,14 @@ class MOBI(Dict):
             x.write(canonicalized=False)
 
 
-    def compile_mobi(self, build_path, opffn, mobifn=None):
+    def compile_mobi(self, build_path, opffn, mobifn=None, config=config):
         """generate .mobi file using kindlegen"""
         if mobifn is None: 
             mobifn = os.path.join(os.path.dirname(build_path), os.path.basename(build_path)+'.mobi')
         logfn = mobifn+'.kindlegen.txt'
         logf = open(logfn, 'wb')
         print("compiling", mobifn)
-        cmd = [bg.config.Resources.kindlegen, opffn, '-o', os.path.basename(mobifn)]
+        cmd = [config.Resources.kindlegen, opffn, '-o', os.path.basename(mobifn)]
         subprocess.call(cmd, stdout=logf, stderr=logf)
         logf.close()
         mobi_build_fn = os.path.join(os.path.dirname(opffn), os.path.basename(mobifn))

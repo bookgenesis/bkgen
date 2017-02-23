@@ -525,7 +525,7 @@ if __name__=='__main__':
     from bkgen import config
     logging.basicConfig(format='[%(asctime)s] %(levelname)s: %(message)s', level=logging.WARN)
     if len(sys.argv) < 2:
-        log.warn("Usage: bg.project command project_path [project_path] ...")
+        log.warn("Usage: python -m bkgen.project command project_path [project_path] ...")
     else:
         for project_path in sys.argv[2:]:
             project_path = os.path.abspath(project_path)

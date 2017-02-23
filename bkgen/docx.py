@@ -2,10 +2,10 @@
 import os
 from lxml import etree
 import bxml.docx
-from bg import NS
+from bkgen import NS, Source
 
-class DOCX(bxml.docx.DOCX):
-    """A Word document can be a source that is brought into bg, and an output format"""
+class DOCX(bxml.docx.DOCX, Source):
+    """A Word document can be a source that is brought in, and an output format"""
 
     def documents(self, path=None):
         """return a list of documents containing the content of the document"""
@@ -17,11 +17,9 @@ class DOCX(bxml.docx.DOCX):
 
     def document(self, fn=None): 
         """returns an XML document containing the content of the Word document"""
-        import bg.xt.docx_xml
-        from .document import Document
-        doc = self.transform(bg.xt.docx_xml.Transformer, 
-                fn=fn or os.path.splitext(self.fn)[0]+'.xml', 
-                XMLClass=Document)
+        from converters.docx_document import DocxDocument
+        converter = DocxDocument()
+        doc = converter.convert(self, fn=fn or os.path.splitext(self.fn)[0]+'.xml')
         return doc
 
     def resources(self, path=None):
@@ -34,5 +32,6 @@ class DOCX(bxml.docx.DOCX):
         xml = self.xml(src="docProps/core.xml")
         xml.root.tag = "{%(pub)s}metadata" % NS
         return xml.root
+
 
 

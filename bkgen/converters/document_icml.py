@@ -10,12 +10,12 @@ from bxml.xml import XML
 from bxml.xt import XT
 from bxml.builder import Builder
 
-import pubxml
-from pubxml.converters import Converter
-from pubxml.document import Document
-from pubxml.icml import ICML
+from bkgen import NS, config
+from bkgen.converters import Converter
+from bkgen.document import Document
+from bkgen.icml import ICML
 
-B = Builder(**pubxml.NS)
+B = Builder(**NS)
 transformer = XT()
 transformer_XSLT = etree.XSLT(etree.parse(os.path.splitext(__file__)[0] + '.xsl'))
 
@@ -23,7 +23,7 @@ class DocumentIcml(Converter):
     def convert(self, document, **params):
         return document.transform(transformer, XMLClass=ICML, **params)
 
-@match(transform, "elem.tag == '{%(pub)s}document'" % pubxml.NS)
+@match(transform, "elem.tag == '{%(pub)s}document'" % NS)
 def document(elem, **params):
     # using procedural code to build doc as ElementTree so as to keep the PIs in place.
     doc = etree.ElementTree(etree.fromstring("""\
@@ -100,7 +100,7 @@ def document(elem, **params):
     root.insert(root.index(story), rpsg)
 
     # docvars
-    docvar_elems = elem.xpath("c:docvars/c:docvar", namespaces=pubxml.NS)
+    docvar_elems = elem.xpath("c:docvars/c:docvar", namespaces=NS)
     docvars = {e.get('name'):e.get('value') for e in docvar_elems}
     if len(docvars) > 0:    
         code = "{{docvars}}%s{{/docvars}}" % json.dumps(docvars)
@@ -181,7 +181,7 @@ def condition_definition(name, color):
     e.tail = '\n\t'
     return e
 
-@match(transform, "elem.tag=='{%(html)s}body'" % pubxml.NS)
+@match(transform, "elem.tag=='{%(html)s}body'" % NS)
 def body(elem, **params):
     params['story_id'] = 's'+random_id(6)               # to use in building unique sequential ids, such as Hyperlinks
     story = E.Story({'Self': params['story_id']}, '\n',
@@ -190,7 +190,7 @@ def body(elem, **params):
     story.tail='\n'
     return [story]
 
-@match(transform, "elem.tag=='{%(html)s}section'" % pubxml.NS)
+@match(transform, "elem.tag=='{%(html)s}section'" % NS)
 def section(elem, **params):
     attrib_string = ' '.join(['%s="%s"' % (k, elem.get(k)) for k in elem.attrib.keys()])
     r = [
@@ -202,7 +202,7 @@ def section(elem, **params):
     ]
 
     # put a hard page break of the correct kind, if called for by the section break
-    sections = elem.xpath("//c:section", namespaces=pubxml.NS)
+    sections = elem.xpath("//c:section", namespaces=NS)
     if elem.get('break_type')=='nextPage':
         r = page_break(elem, break_type='Next') + r
     elif elem.get('break_type')=='oddPage':
@@ -252,10 +252,10 @@ def ElemToCode(elem):
 
 # == PARA and CHAR == 
 
-@match(transform, "elem.tag=='{%(html)s}p'" % pubxml.NS)
+@match(transform, "elem.tag=='{%(html)s}p'" % NS)
 def para(elem, **params):
     # if insert_endnotes occurs in this paragraph, just do that
-    if elem.find("{%(pub)s}insert_endnotes" % pubxml.NS) is not None:
+    if elem.find("{%(pub)s}insert_endnotes" % NS) is not None:
         return transform(list(elem), **params)
 
     if elem.get('style') is not None:
@@ -279,24 +279,24 @@ def para(elem, **params):
     # if the para has outline="1", add a destination and bookmark
     if elem.get('outline')=='1':
         txt = etree.tounicode(elem, method='text', with_tail=False).strip()
-        prevs = elem.xpath("preceding::c:para", namespaces=pubxml.NS)
+        prevs = elem.xpath("preceding::c:para", namespaces=NS)
         if len(prevs) > 0:
             prev = prevs[-1]
         else:
             prev = None
         # merge consecutive outline="1" elements into the first one. So check in both directions.
-        if prev is None or prev.tag != "{%(html)s}para" % pubxml.NS or prev.get('outline') != '1':
+        if prev is None or prev.tag != "{%(html)s}para" % NS or prev.get('outline') != '1':
             # only insert a bookmark if the previous paragraph was not outline="1"
 
             # merge the following outline="1" paras into this bookmark
             nxt = elem.getnext()
-            while nxt is not None and nxt.tag=="{%(html)s}para" % pubxml.NS and nxt.get('outline')=='1':
+            while nxt is not None and nxt.tag=="{%(html)s}para" % NS and nxt.get('outline')=='1':
                 txt += ' ' + etree.tounicode(nxt, method='text', with_tail=False).strip()
                 nxt = nxt.getnext()
 
             # use a child anchor_start if there is no text before it in the element
             # -- bookmark needs to hit the beginning of the paragraph in case there's a turn-over
-            anchors = elem.xpath("c:anchor_start", namespaces=pubxml.NS)
+            anchors = elem.xpath("c:anchor_start", namespaces=NS)
             if len(anchors) > 0 and elem.text in [None, ''] \
             and ''.join([
                         etree.tounicode(e, method='text',with_tail=True) 
@@ -320,7 +320,7 @@ def Bookmark(bkmkname, destname):
     b.tail='\n\t'
     return b
 
-@match(transform, "elem.tag=='{%(html)s}char'" % pubxml.NS)
+@match(transform, "elem.tag=='{%(html)s}char'" % NS)
 def char(elem, **params):
     csr = CharacterStyleRange(
             transform(list(elem), charstyle=elem.get('style'), **params), 
@@ -336,11 +336,11 @@ def char(elem, **params):
 
 # == TABLES == 
 
-@match(transform, "elem.tag=='{%(html)s}table'" % pubxml.NS)
+@match(transform, "elem.tag=='{%(html)s}table'" % NS)
 def table(elem, **params):
-    trs = elem.xpath("c:tr", namespaces=pubxml.NS)
+    trs = elem.xpath("c:tr", namespaces=NS)
     numrows = len(trs)
-    numcols = len(elem.xpath("c:tr[1]/c:td", namespaces=pubxml.NS))
+    numcols = len(elem.xpath("c:tr[1]/c:td", namespaces=NS))
     colwidth = 324 / numcols           # 324 points = 4.5 inches as the total width of the table
     tblName = 't'+random_id(8)
     tbl = E.Table(
@@ -355,7 +355,7 @@ def table(elem, **params):
         )    
     c = 0
     for tr in trs:
-        tds = tr.xpath("c:td", namespaces=pubxml.NS)
+        tds = tr.xpath("c:td", namespaces=NS)
         for td in tds:
             c += 1
             cell = E.Cell(
@@ -383,7 +383,7 @@ def table(elem, **params):
 
 # == Footnotes == 
 
-@match(transform, "elem.tag=='{%(pub)s}footnote'" % pubxml.NS)
+@match(transform, "elem.tag=='{%(pub)s}footnote'" % NS)
 def footnote(elem, **params):
     # don't pass down the character style of the enclosing <char>
     fn_params = {k:params[k] for k in params.keys() if k != "charstyle"}
@@ -401,14 +401,14 @@ def footnote(elem, **params):
         res.insert(0, '\n\t\t')
     return res
 
-@match(transform, "elem.tag=='{%(pub)s}footnote_ref'" % pubxml.NS)
+@match(transform, "elem.tag=='{%(pub)s}footnote_ref'" % NS)
 def footnote_ref(elem, **params):
     return ['\n\t\t', E.Content(etree.PIBase('ACE 4'))]
 
 # == Endnotes == 
 # section @endnote_fmt in ['decimal', 'lowerLetter', 'upperLetter', 'lowerRoman', 'upperRoman', 'chicago']
 
-@match(transform, "elem.tag=='{%(pub)s}endnote'" % pubxml.NS)
+@match(transform, "elem.tag=='{%(pub)s}endnote'" % NS)
 def endnote(elem, **params):
     # give endnote a unique id in the publication by using the story id.
     endnote_id = "endnote_" + elem.get('id') + "_" + params['story_id']
@@ -476,15 +476,15 @@ def paragraph_destination(source_id, anchor, **params):
 
 def build_endnote_marker(elem):
     """returns the correct endnote marker for this endnote"""
-    section = elem.xpath("ancestor::c:section", namespaces=pubxml.NS)[0]
+    section = elem.xpath("ancestor::c:section", namespaces=NS)[0]
     endnote_fmt = section.get('endnote_fmt') or 'lowerLetter'       # default lowerLetter?
     endnote_base = int(section.get('endnote_start') or "1") - 1     # base = starting number - 1
 
     # endnote index
     if section.get('endnote_renum') == 'eachSect':      # index in section
-        index = section.xpath(".//c:endnote", namespaces=pubxml.NS).index(elem)
+        index = section.xpath(".//c:endnote", namespaces=NS).index(elem)
     else:                                               # index in document
-        index = elem.xpath("//c:endnote", namespaces=pubxml.NS).index(elem)
+        index = elem.xpath("//c:endnote", namespaces=NS).index(elem)
     index += endnote_base
     
     # endnote marker
@@ -506,12 +506,12 @@ def build_endnote_marker(elem):
     return endnote_marker
 
 
-@match(transform, "elem.tag=='{%(pub)s}endnote_ref'" % pubxml.NS)
+@match(transform, "elem.tag=='{%(pub)s}endnote_ref'" % NS)
 def endnote_ref(elem, endnote_id=None, **params):
     d = E.ParagraphDestination(Self="ParagraphDestination/"+endnote_id, Name=endnote_id)
     return [d, TextContentCSR(elem.tail, **params)]
 
-@match(transform, "elem.tag=='{%(pub)s}insert_endnotes'" % pubxml.NS)
+@match(transform, "elem.tag=='{%(pub)s}insert_endnotes'" % NS)
 def insert_endnotes(elem, **params):
     # insert the collected endnotes at the <insert_endnotes/>
     # and reset params['mutable']['Endnotes'] for further endnote collecting.
@@ -524,9 +524,9 @@ def insert_endnotes(elem, **params):
     return endnotes
 
 # == Print and Digital == 
-@match(transform, "elem.tag in ['{%(pub)s}print', '{%(pub)s}digital']" % pubxml.NS)
+@match(transform, "elem.tag in ['{%(pub)s}print', '{%(pub)s}digital']" % NS)
 def condition_elem(elem, **params):
-    params['AppliedConditions'] = 'Condition/' + String(elem.tag.replace("{%(pub)s}" % pubxml.NS, '')).titleify()
+    params['AppliedConditions'] = 'Condition/' + String(elem.tag.replace("{%(pub)s}" % NS, '')).titleify()
     return [TextContentCSR(elem.text, **params)] \
         + transform(list(elem), **params) \
         +  [TextContentCSR(elem.tail, **params)]
@@ -539,7 +539,7 @@ def HyperlinkTextDestination(name):
         Name=name
         )
 
-@match(transform, "elem.tag=='{%(pub)s}anchor_start'" % pubxml.NS)
+@match(transform, "elem.tag=='{%(pub)s}anchor_start'" % NS)
 def anchor_start(elem, **params):
     # if the anchor has a "Bookmark" attribute
     if elem.get('bkmk') is not None:
@@ -556,7 +556,7 @@ def anchor_start(elem, **params):
         TextContentCSR(elem.tail, **params)
     ]
 
-@match(transform, "elem.tag=='{%(pub)s}anchor_end'" % pubxml.NS)
+@match(transform, "elem.tag=='{%(pub)s}anchor_end'" % NS)
 def anchor_end(elem, **params):
     return [
         '\n\t',
@@ -581,7 +581,7 @@ def hyperlink_destination(source_id, anchor=None, url=None, **params):
         destkey = None
         icmls = glob(os.path.dirname(params['xml'].fn)+"/*.icml")   # look for destination id in icml files
         for icml in icmls:
-            anchors = XML(icml, pubxml.config).root.xpath("//HyperlinkTextDestination[@Name='%s']" % anchor)
+            anchors = XML(icml, config).root.xpath("//HyperlinkTextDestination[@Name='%s']" % anchor)
             if len(anchors) > 0 and anchors[0].get('DestinationUniqueKey'):
                 destkey = anchors[0].get('DestinationUniqueKey')
                 break
@@ -611,7 +611,7 @@ def HyperlinkTextSource(source_id, text, elems, **params):
             '\n\t',
             transform(elems, **params))
 
-@match(transform, "elem.tag=='{%(pub)s}hyperlink'" % pubxml.NS)
+@match(transform, "elem.tag=='{%(pub)s}hyperlink'" % NS)
 def hyperlink_source(elem, **params):
     source_id = random_id(8)
     params['Hyperlinks'].append(
@@ -624,7 +624,7 @@ def hyperlink_source(elem, **params):
         TextContentCSR(elem.tail, **params)
     ]
 
-@match(transform, "elem.tag=='{%(pub)s}pageref'" % pubxml.NS)
+@match(transform, "elem.tag=='{%(pub)s}pageref'" % NS)
 def pageref(elem, **params):
     crossref_id = random_id(8)
     params['Hyperlinks'].append(hyperlink_destination(crossref_id, anchor=elem.get('anchor'), **params))
@@ -633,13 +633,13 @@ def pageref(elem, **params):
             'AppliedFormat': 'PageNumberCrossReferenceFormat'},
             E.Content('**UPDATE CROSS-REFERENCE**'),
         )
-    if elem.getparent().tag=='{%(html)s}char' % pubxml.NS:
+    if elem.getparent().tag=='{%(html)s}char' % NS:
         r = ['\n\t\t', e, '\n\t', E.Content(elem.tail or '')]
     else:
         r = ['\n\t', CharacterStyleRange(e, '\n\t', E.Content(elem.tail or ''), '\n\t', **params)]
     return r
 
-@match(transform, "elem.tag=='{%(pub)s}textref'" % pubxml.NS)
+@match(transform, "elem.tag=='{%(pub)s}textref'" % NS)
 def textref(elem, **params):
     crossref_id = random_id(8)
     params['Hyperlinks'].append(hyperlink_destination(crossref_id, anchor=elem.get('anchor'), **params))
@@ -648,7 +648,7 @@ def textref(elem, **params):
             'AppliedFormat': 'ParagraphTextCrossReferenceFormat'},
             E.Content('**UPDATE CROSS-REFERENCE**'),
         )
-    if elem.getparent().tag=='{%(html)s}char' % pubxml.NS:
+    if elem.getparent().tag=='{%(html)s}char' % NS:
         r = ['\n\t\t', e, '\n\t', E.Content(elem.tail or '')]
     else:
         r = ['\n\t', CharacterStyleRange(e, '\n\t', E.Content(elem.tail or ''), '\n\t', **params)]
@@ -656,7 +656,7 @@ def textref(elem, **params):
 
 # == Indexes == 
 
-@match(transform, "elem.tag=='{%(pub)s}xe'" % pubxml.NS)
+@match(transform, "elem.tag=='{%(pub)s}xe'" % NS)
 def xe(elem, **params):
     args = json.dumps(dict(**elem.attrib))
     return [
@@ -670,7 +670,7 @@ def xe(elem, **params):
         TextContentCSR(elem.tail, **params)
     ]
 
-@match(transform, "elem.tag=='{%(pub)s}index'" % pubxml.NS)
+@match(transform, "elem.tag=='{%(pub)s}index'" % NS)
 def index(elem, **params):
     args = json.dumps(dict(**elem.attrib))
     return [
@@ -684,7 +684,7 @@ def index(elem, **params):
 
 # == Other Inline Elements == 
 
-@match(transform, "elem.tag=='{%(pub)s}image'" % pubxml.NS)
+@match(transform, "elem.tag=='{%(pub)s}image'" % NS)
 def image(elem, **params):
     return [
         '\n\t\t',
@@ -692,7 +692,7 @@ def image(elem, **params):
         TextContentCSR(elem.tail, **params)
     ]
 
-@match(transform, "elem.tag=='{%(pub)s}timestamp'" % pubxml.NS)
+@match(transform, "elem.tag=='{%(pub)s}timestamp'" % NS)
 def timestamp(elem, **params):
     e = E.TextVariableInstance(
             Self=random_id(6),
@@ -700,25 +700,25 @@ def timestamp(elem, **params):
             ResultText=elem.text or '',
             AssociatedTextVariable="TimestampTextVariable")
     e.tail = '\n\t\t'
-    if elem.getparent().tag=='{%(html)s}char' % pubxml.NS:
+    if elem.getparent().tag=='{%(html)s}char' % NS:
         r = ['\n\t\t', e, '\n\t', E.Content(elem.tail or '')]
     else:
         r = ['\n\t', CharacterStyleRange(e, '\n\t', E.Content(elem.tail or ''), '\n\t', **params)]
     return r
 
-@match(transform, "elem.tag=='{%(pub)s}tab'" % pubxml.NS)
+@match(transform, "elem.tag=='{%(pub)s}tab'" % NS)
 def tab(elem, **params):
     if elem.get('align')=='right':
         e = E.Content(etree.PIBase('ACE 8'))
     else:
         e = E.Content('\t')
-    if elem.getparent().tag=='{%(html)s}char' % pubxml.NS:
+    if elem.getparent().tag=='{%(html)s}char' % NS:
         r = ['\n\t\t', e, '\n\t', E.Content(elem.tail or '')]
     else:
         r = ['\n\t', CharacterStyleRange(e, '\n\t', E.Content(elem.tail or ''), '\n\t', **params)]
     return r
 
-@match(transform, """elem.tag=='{%(pub)s}page_break'""" % pubxml.NS)
+@match(transform, """elem.tag=='{%(pub)s}page_break'""" % NS)
 def page_break(elem, **params): 
     "break_type: 'Next', 'Odd', 'Even'"
     break_type = params.get('break_type') or 'Next'
@@ -736,7 +736,7 @@ def page_break(elem, **params):
         '\n'
     ]
 
-@match(transform, """elem.tag=='{%(html)s}br'""" % pubxml.NS)
+@match(transform, """elem.tag=='{%(html)s}br'""" % NS)
 def line_break(elem, **params):
     return [
         '\n\t\t',
@@ -746,7 +746,7 @@ def line_break(elem, **params):
 
 # OTHER
 
-@match(transform, """elem.tag in ['{%(opf)s}metadata', '{%(pub)s}docvars']""" % pubxml.NS)
+@match(transform, """elem.tag in ['{%(opf)s}metadata', '{%(pub)s}docvars']""" % NS)
 def omissions(elem, **params):
     return transform.omit(elem, **params)
 

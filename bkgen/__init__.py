@@ -19,3 +19,8 @@ NS = Dict(
     ncx="http://www.daisy.org/z3986/2005/ncx/",
     cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties",    # Microsoft
 )
+class Source(Dict):
+    def stylesheet(self): return None
+    def documents(self): return []
+    def metadata(self): return None
+    def images(self): return []

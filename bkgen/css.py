@@ -8,7 +8,7 @@ from bl.dict import Dict
 from bl.file import File
 from bl.string import String
 from .styles import Styles
-from pubxml import NS
+from bkgen import NS
 
 class CSS(File):
     

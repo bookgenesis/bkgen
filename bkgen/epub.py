@@ -13,19 +13,19 @@ from bl.zip import ZIP
 from bl.text import Text
 from bl.file import File
 from bxml.builder import Builder
+from bkgen import NS, Source, config
 
-import bg
 FILENAME = os.path.abspath(__file__)
 
 ALLOWED_DATE_PROPERTIES = [                                     # allowed on dc:date
-    'id', 'dir', '{%(xml)s}lang' % bg.NS]
+    'id', 'dir', '{%(xml)s}lang' % NS]
 ALLOWED_META_PROPERTIES = [                                     # allowed on opf:meta
     'alternate-script', 'display-seq', 'file-as', 
     'group-position', 'identifier-type', 'meta-auth', 'role']
 
-class EPUB(ZIP):
-    NS = bg.NS
-    OPF = Builder(**bg.NS).opf
+class EPUB(ZIP, Source):
+    NS = NS
+    OPF = Builder(**NS).opf
     MEDIATYPES = Dict(**{
         '.ncx': 'application/x-dtbncx+xml',
         '.opf': 'application/oebps-package+xml',
@@ -37,7 +37,7 @@ class EPUB(ZIP):
         """use epubcheck to validate the epub"""
         checkfn = self.fn + '.epubcheck.txt'
         checkf = open(checkfn, 'wb')
-        cmd = ['java', '-jar', bg.config.Resources.epubcheck, self.fn]
+        cmd = ['java', '-jar', config.Resources.epubcheck, self.fn]
         subprocess.call(cmd, stdout=checkf, stderr=checkf)
         checkf.close()
         return checkfn
@@ -50,7 +50,7 @@ class EPUB(ZIP):
     def get_opf(self):
         """return the opf as an XML document"""
         container = XML(root=self.zipfile.read('META-INF/container.xml'))
-        zf_path = container.find(container.root, "//container:rootfile/@full-path", namespaces=bg.NS)
+        zf_path = container.find(container.root, "//container:rootfile/@full-path", namespaces=NS)
         opf = XML(
                 root=self.zipfile.read(zf_path), 
                 fn=os.path.join(self.fn, zf_path))
@@ -65,10 +65,10 @@ class EPUB(ZIP):
         if opf is None: opf = self.get_opf()
         docs = []
         # build docs from the spine so that they're in the correct order
-        for itemref in opf.xpath(opf.root, "opf:spine/opf:itemref", namespaces=bg.NS):
+        for itemref in opf.xpath(opf.root, "opf:spine/opf:itemref", namespaces=NS):
             href = opf.find(opf.root, 
                     "opf:manifest/opf:item[@id='%s']/@href" % itemref.get('idref'), 
-                    namespaces=bg.NS)
+                    namespaces=NS)
             zf_path = os.path.relpath(os.path.join(os.path.dirname(opf.fn), href), self.fn).replace('\\','/')
             html = XHTML(root=self.zipfile.read(zf_path), fn=os.path.join(path, href))
             docpath = os.path.join(path, os.path.dirname(href)).rstrip('/')
@@ -85,7 +85,7 @@ class EPUB(ZIP):
         res = []
         items = [
             item for item in
-            opf.xpath(opf.root, "opf:manifest/opf:item", namespaces=bg.NS)
+            opf.xpath(opf.root, "opf:manifest/opf:item", namespaces=NS)
             if item.get('media-type') not in [
                 EPUB.MEDIATYPES[k] for k in EPUB.MEDIATYPES.keys()
                 if k in ['.ncx', '.xhtml', '.opf', '.epub']
@@ -111,10 +111,10 @@ class EPUB(ZIP):
         if found_cover == False:
             # look in the metadata block
             cover_id = opf.find(opf.root, 
-                "opf:metadata/opf:meta[@name='cover']/@content", namespaces=bg.NS)
+                "opf:metadata/opf:meta[@name='cover']/@content", namespaces=NS)
             if cover_id is not None:
                 item = opf.find(opf.root, 
-                    "opf:manifest/opf:item[@id='%s']" % cover_id, namespaces=bg.NS)
+                    "opf:manifest/opf:item[@id='%s']" % cover_id, namespaces=NS)
                 if item is not None:
                     fn = os.path.join(path, item.get('href'))
                     fns = [f.fn for f in res]
@@ -127,7 +127,7 @@ class EPUB(ZIP):
     def metadata(self, opf=None):
         """return an opf:metadata element with the metadata in the EPUB"""
         if opf is None: opf = self.get_opf()
-        return opf.find(opf.root, "opf:metadata", namespaces=bg.NS)
+        return opf.find(opf.root, "opf:metadata", namespaces=NS)
 
     @classmethod
     def build(C, output_path, metadata, epub_name=None, manifest=None, spine_items=None, 

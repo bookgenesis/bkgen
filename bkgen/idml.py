@@ -10,9 +10,9 @@ from bl.zip import ZIP
 from bl.string import String
 from bxml import XML
 from .icml import ICML
-import pubxml
+from bkgen import NS, Source
 
-class IDML(ZIP):
+class IDML(ZIP, Source):
     POINTS_PER_EM = ICML.POINTS_PER_EM
     NS = ICML.NS
 
@@ -67,7 +67,7 @@ class IDML(ZIP):
                 for e in d.root.xpath("//*[@id]"):
                     ids[e.get('id')] = d.fn
             for doc in documents:
-                for e in doc.root.xpath("//pub:include[@id]", namespaces=pubxml.NS):
+                for e in doc.root.xpath("//pub:include[@id]", namespaces=bkgen.NS):
                     if e.get('id') in ids:
                         id = e.attrib.pop('id')
                         targetfn = ids[id]
@@ -117,12 +117,4 @@ class IDML(ZIP):
         return ICML(root=self.read('Resources/Styles.xml')).stylesheet(
             fn=fn, 
             points_per_em=points_per_em)
-
-    def resources(self, path=None):
-        """return a list of files representing the resources in the document"""
-        return []
-
-    def metadata(self, path=None):
-        """return a list of files representing the resources in the document"""
-        return []
 

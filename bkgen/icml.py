@@ -8,9 +8,9 @@ from bl.dict import Dict
 from bl.string import String
 from bl.text import Text
 from bxml.xml import XML
-import pubxml
+from bkgen import NS, Source
 
-class ICML(XML):
+class ICML(XML, Source):
     "model for working with ICML files (also idPkg:Story xml)"
     ROOT_TAG = "Document"
     POINTS_PER_EM = 12
@@ -29,28 +29,24 @@ class ICML(XML):
         """produce and return XML output from this ICML document.
         fn = the output filename; default os.path.splitext(ICML.fn)[0] + '.xml'
         """
-        import pubxml.converters.icml_document
+        import bkgen.converters.icml_document
         from .document import Document
-        x = self.transform(pubxml.converters.icml_document.transformer, 
+        x = self.transform(bkgen.converters.icml_document.transformer, 
                             fn=fn or os.path.splitext(self.fn)[0]+'.xml',
                             DocClass=Document,
                             **params)
         return x
 
-    def resources(self, path=None):
-        """return a list of files representing the resources in the document"""
-        return []
-
     def metadata(self):
         """return an opf:metadata element with the metadata in the document"""
         # nothing for now
-        return etree.Element("{%(pub)s}metadata" % pubxml.NS)
+        return etree.Element("{%(pub)s}metadata" % bkgen.NS)
 
     def stylesheet(self, fn=None, points_per_em=None):
         """create a CSS stylesheet, using the style definitions in the ICML file."""
 
         from bl.file import File
-        from bg.models.styles import Styles
+        from bkgen.styles import Styles
 
         if points_per_em is None: points_per_em = POINTS_PER_EM
 
