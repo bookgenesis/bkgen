@@ -1,26 +1,17 @@
 <?xml version='1.0' encoding='UTF-8'?>
+<project name="" xmlns="http://publishingxml.org/ns" xmlns:epub="http://www.idpf.org/2007/ops">
 
-<project xmlns="http://publishingxml.org/ns" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="">
+	<!-- metadata: for project publication -->
+	<opf:metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:opf="http://www.idpf.org/2007/opf" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" >
+		<dc:title id="title1"></dc:title>
+		</opf:metadata>
 
-  <!-- metadata: for project publication -->
-  <opf:metadata>
-    <dc:title id="title1"></dc:title>
-  </opf:metadata>
+	<!-- resources: cover, stylesheets, ... -->
+	<resources>
+		</resources>
 
-  <!-- sources: imported content, without any conversion done -->
-  <sources>
-	</sources>
-
-  <!-- documents: normalized XML  -->
-  <documents>
-	</documents>
-
-  <!-- resources: cover, stylesheets, images, media -->
-  <resources>
-  </resources>
-
-  <!-- spine: the ordered content in the project -->
-  <spine>
-  </spine>
+	<!-- spine: the ordered content in the project -->
+	<spine>
+		</spine>
 
 </project>

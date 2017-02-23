@@ -1,0 +1,35 @@
+/* == GLOBAL STYLES == */
+ 
+body {
+	font-size: 1.0em;
+}
+
+table {
+    border-collapse: collapse;
+}
+ 
+td {
+    border: 1px solid black;
+    padding: 4pt 4pt 2pt 4pt;
+    vertical-align: top;
+}
+ 
+p {
+    margin: 0 0 0 0;
+    line-height: 1.33;
+    text-indent: 0;
+}
+ 
+/* The cover image should fit to the screen in e-reading software */
+img.cover {
+    height: 99%;
+}
+
+.superscript {
+	vertical-align: text-top;
+	font-size: 75%;
+}
+.bold { font-weight: bold;}
+.italic { font-style: italic; }
+.smallcaps { font-variant: small-caps; }
+.allcaps { text-transform: uppercase; }
