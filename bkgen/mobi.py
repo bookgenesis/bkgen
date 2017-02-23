@@ -26,7 +26,7 @@ class MOBI(Dict):
         mobifn = self.mobi_fn(build_path, mobi_name=mobi_name)
         if nav_landmarks is None:
             nav_landmarks = EPUB.nav_landmarks({'href':nav_href, 'title':'Table of Contents', 'epub_type':'toc'})
-        opffn = EPUB(**self).build(build_path, metadata, 
+        result = EPUB(**self).build(build_path, metadata, 
                     epub_name=mobi_name, spine_items=spine_items, cover_src=cover_src, cover_html=False,
                     nav_toc=nav_toc, nav_landmarks=nav_landmarks, nav_page_list=nav_page_list, 
                     nav_href=nav_href, nav_title=nav_title, zip=False)
@@ -35,7 +35,8 @@ class MOBI(Dict):
         EPUB.append_toc_to_spine(opffn, nav_href)
         self.size_images(opffn)
         self.compile_mobi(build_path, opffn, mobifn=mobifn)
-        return mobifn
+        result.fn=mobifn
+        return result
 
     @classmethod
     def move_anchors_before_paragraphs(C, build_path, opffn):

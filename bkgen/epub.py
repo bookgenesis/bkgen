@@ -206,19 +206,22 @@ class EPUB(ZIP):
             C.unhide_toc(os.path.join(output_path, nav_href))
             C.append_toc_to_spine(opffn, nav_href)
 
-        epubfn = C.epub_fn(output_path, epub_name)
+        result = Dict(
+            fn=C.epub_fn(output_path, epub_name))
         if zip==True:
             the_epub = C.zip_epub(output_path, 
-                epubfn=epubfn,
+                epubfn=result.epubfn,
                 mimetype_fn=C.make_mimetype_file(output_path),
                 container_fn=C.make_container_file(output_path, opffn),
-                opf_fn=opffn,
-                log=log)
+                opf_fn=opffn)
             if check==True:
-                log(the_epub.check())
-            return the_epub.fn
+                epubcheckfn = the_epub.check()
+                log.info(epubcheckfn)
+                result.log = epubcheckfn
+            result.fn = the_epub.fn
         else:
-            return opffn
+            result.fn = output_path
+        return result
 
     @classmethod
     def make_cover_html(C, output_path, cover_src, log=print):

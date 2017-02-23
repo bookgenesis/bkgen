@@ -10,3 +10,16 @@ publishingxml: ${path}/publishing-xml
 schemas: ${publishingxml}
 epubcheck: ${path}/epubcheck-4.0.2/epubcheck.jar
 kindlegen: ${path}/KindleGen_Mac_i386_v2_9/kindlegen
+
+## Default values for Project parameters — uncomment if changing
+[Projects]
+#content_folder: content
+#image_folder: ${content_folder}/images
+#cover_folder: cover
+#output_folder: outputs
+#interior_folder: interior
+#source_folder: sources
+
+[EPUB]
+image_quality: 80
+image_maxwh: 2048
