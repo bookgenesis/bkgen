@@ -17,7 +17,7 @@ class DOCX(bxml.docx.DOCX, Source):
 
     def document(self, fn=None): 
         """returns an XML document containing the content of the Word document"""
-        from converters.docx_document import DocxDocument
+        from .converters.docx_document import DocxDocument
         converter = DocxDocument()
         doc = converter.convert(self, fn=fn or os.path.splitext(self.fn)[0]+'.xml')
         return doc

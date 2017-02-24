@@ -46,7 +46,7 @@ class ICML(XML, Source):
         """create a CSS stylesheet, using the style definitions in the ICML file."""
 
         from bl.file import File
-        from bkgen.styles import Styles
+        from bf.styles import Styles
 
         if points_per_em is None: points_per_em = POINTS_PER_EM
 
