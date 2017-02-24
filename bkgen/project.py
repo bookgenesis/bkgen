@@ -87,21 +87,24 @@ class Project(XML):
             if not os.path.exists(path): os.makedirs(path)
 
         # make sure there is a global content stylesheet for this project
-        stylesheet_fn = os.path.join(project.path, 'project.css')
-        log.debug("project stylesheet = %r" % stylesheet_fn)
-        if not os.path.exists(stylesheet_fn):
-            log.debug("stylesheet does not exist, creating")
-            from bl.text import Text
-            stylesheet = Text(fn=os.path.join(PATH, 'templates', 'project.css'))
-            stylesheet.fn = stylesheet_fn
-            stylesheet.write()
-
-        # make sure the global stylesheet is reflected in the resources
         stylesheet_elem = project.find(project.root, 
             "pub:resources/pub:resource[@class='stylesheet']", namespaces=NS)
+        if stylesheet_elem is not None:
+            stylesheet_fn = os.path.abspath(os.path.join(project.path, stylesheet_elem.get('href')))
+            if not os.path.exists(stylesheet_fn):
+                stylesheet_elem.getparent().remove(stylesheet_elem)
+                stylesheet_elem = None
         if stylesheet_elem is None:
+            stylesheet_fn = os.path.join(project.path, project.content_folder, project.name+'.css')
             stylesheet_href = os.path.relpath(stylesheet_fn, project.path)
             project.add_resource(stylesheet_href, 'stylesheet')
+            if not os.path.exists(stylesheet_fn):
+                log.debug("stylesheet does not exist, creating")
+                from bl.text import Text
+                stylesheet = Text(fn=os.path.join(PATH, 'templates', 'project.css'))
+                stylesheet.fn = stylesheet_fn
+                stylesheet.write()
+        log.debug("project stylesheet = %r" % stylesheet_fn)
 
         project.write()
         return project
