@@ -10,12 +10,14 @@
 
 ## Alpha 1 — “MVP”
 
-**I want to be able to build a clean, publication-ready ebook from my manuscript.**
+**User: “I want to be able to build a clean, publication-ready ebook from my manuscript.”**
 
 **Summary:** Users can sign up and create one free project in their account that is limited to 10 MB. Content can be imported in Word, Markdown, and HTML; outputs can be built as .zip, .epub, and .mobi. No support yet for InDesign formats or PDF. The only interface for input and output are upload and download — no Dropbox or other file sharing integration yet. There is no payment processing as yet. 
 
 -   **Project**:
-    -   Import content: .docx, .epub, .md, .html, images.  
+    *   Import content: 
+        _ .docx	_ .epub	_ .html	_ images
+
     -   Import via upload form
     -   View digital TOC
     -   Browse content
@@ -45,7 +47,7 @@ Very soon I will add a subscription option, charging perhaps $3/mo. or $30/yr. p
 
 ## Alpha 2 — Dropbox Integration
 
-**I want to be able to import project files from Dropbox and work on my project files in the Dropbox folder, automatically syncing with my bookgenesis account.**
+**User: “I want to be able to import project files from Dropbox and work on my project files in the Dropbox folder, automatically syncing with my bookgenesis account.”**
 
 The second beta will focus on Dropbox integration — because this is the input/output model that I myself will use the most! And it seems that most of the publishing industry is using Dropbox for file sharing. So this is a necessary component.
 
@@ -61,13 +63,13 @@ One solution: **Start with per-Project shared folders, then later (if needed) ad
 
 ## Beta 1 — Subscriptions
 
-**I want to be able to do all of my ebook production through my bookgenesis.com account, and I'm ready to pay for that service.**
+**User: “I want to be able to do all of my ebook production through my bookgenesis.com account, and I'm ready to pay for that service.”**
 
 In order to enable higher-order use of the service, subscriptions will need to be enabled. This is also a good moment at which to create the first beta, signifying feature-complete for v. 1.0.0. Subscriptions require payment processing (through Stripe), subscription management, and resource management.
 
 ## Beta 2…N — ?
 
-**I want the service to do Y that it doesn't do, and that feature is a must-have for me to use it.**
+**User: I want the service to do Y that it doesn't do, and that feature is a must-have for me to use it.**
 
 We don't yet know exactly what users are going to want in the first release version of the product, but we need to be prepared to respond to their requests in a timely way!
 
