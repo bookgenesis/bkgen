@@ -60,7 +60,8 @@ class Project(XML):
         """
         name = name or String(title).nameify()
         if not(re.match(r"^[\w\-\_\.]+$", name or '', flags=re.U)): 
-            raise ValueError('Please provide a project name containing letters, numbers, hyphens, undescores, and periods -- no whitespace or special characters.')
+            raise ValueError('Please provide a project name containing letters, numbers, hyphens, '
+                + 'underscores, and periods -- no whitespace or special characters.')
         if not os.path.exists(parent_path):
             raise ValueError("Before creating the project, first create the parent folder, %s" % parent_path)
 
@@ -156,7 +157,7 @@ class Project(XML):
         if documents is None: return
         spine_elem = self.find(self.root, "pub:spine", namespaces=NS)
         spine_hrefs = [spineitem.get('href') 
-            for spineitem in self.find(spine_elem, "pub:spineitem", namespaces=NS)]
+            for spineitem in self.xpath(spine_elem, "pub:spineitem", namespaces=NS)]
         for doc in documents:
             # save the document, overwriting any existing document in that location
             doc.fn = os.path.join(self.path, self.content_folder, self.make_basename(fn=doc.fn))
@@ -169,8 +170,8 @@ class Project(XML):
                 if section_href not in spine_hrefs:
                     spineitem = PUB.spineitem(href=section_href); spineitem.tail = '\n\t\t'
                     for attrib in ['title', 'epub:type']:
-                        if section.get(attrib, namespaces=NS) is not None:
-                            spineitem.set(attrib, section.get(attrib, namespaces=NS), namespaces=NS)
+                        if section.get(attrib) is not None:
+                            spineitem.set(attrib, section.get(attrib))
                     spine_elem.append(spineitem)
 
     def import_metadata(self, metadata):
@@ -523,7 +524,7 @@ def remove_project(project_path):
 
 if __name__=='__main__':
     from bkgen import config
-    logging.basicConfig(format='[%(asctime)s] %(levelname)s: %(message)s', level=logging.WARN)
+    logging.basicConfig(**config.Logging)
     if len(sys.argv) < 2:
         log.warn("Usage: python -m bkgen.project command project_path [project_path] ...")
     else:
@@ -532,12 +533,12 @@ if __name__=='__main__':
             if 'create' in sys.argv[1]:
                 Project.create(os.path.dirname(project_path), os.path.basename(project_path), **config.Projects)
             if 'import' in sys.argv[1]:
-                import_all(path, **config.Projects)
+                import_all(project_path, **config.Projects)
             if 'build' in sys.argv[1]:
                 if '-epub' in sys.argv[1]: format='epub'
                 elif '-mobi' in sys.argv[1]: format='mobi'
                 else: format = None
-                build_project(path, format=format)
+                build_project(project_path, format=format)
             if 'cleanup' in sys.argv[1]:
                 cleanup_project(project_path)
             if 'zip' in sys.argv[1]:
