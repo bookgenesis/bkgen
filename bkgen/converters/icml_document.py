@@ -5,6 +5,7 @@ log = logging.getLogger(__name__)
 
 import os, re, json, sys
 from lxml import etree
+import pycountry
 from bl.id import random_id
 from bl.dict import Dict
 from bl.string import String
@@ -13,11 +14,10 @@ from bl.text import Text
 from bxml.xml import XML
 from bxml.xt import XT
 from bxml.builder import Builder
-
-from bkgen import NS
 from bkgen.icml import ICML
 from bkgen.converters import Converter
 from bkgen.document import Document
+NS = Document.NS
 
 B = Builder(default=NS.html, **NS)
 transformer = XT()
@@ -78,7 +78,7 @@ def CharacterStyleRange(elem, **params):
                 .replace('CharacterStyle/', '')\
                 .replace('%3a', ':').replace(": ", ":")
         span_class = ICML.classname(cs)
-        span = B.html.span(common_text_attributes(elem),
+        span = B.html.span(character_attribs(elem),
             transformer(elem.getchildren(), span_class=span_class, **params))
         if span_class not in ['', None, 'Default-Paragraph-Font', 'No-character-style']: 
             span.set('class', span_class)
@@ -89,20 +89,76 @@ def CharacterStyleRange(elem, **params):
         span.tail = ''
         return [span]
 
-def common_text_attributes(elem):
-    """return attributes for common text styles on elem"""
+def character_attribs(elem):
+    """return common character attributes on elem"""
     attrib = Dict()
-    # Capitalization
-    if elem.get('Capitalization') in ['SmallCaps', 'CapToSmallCap']:
-        attrib.smallcaps = 'true'
-    elif elem.get('Capitalization')=='AllCaps':
-        attrib.allcaps = 'true'
-    # Font Style
-    fontstyle = (elem.get('FontStyle') or '')
-    if 'italic' in fontstyle.lower():
-        attrib.italic = 'true'
-    if 'bold' in fontstyle.lower():
-        attrib.bold = 'true'
+    style = Dict()
+    for key in elem.attrib:
+        if elem.get(key) is None:
+            pass
+        elif key=='Capitalization':
+            val = elem.get(key)
+            if val in ['SmallCaps', 'CapToSmallCap']:
+                style['font-variant'] = 'small-caps'
+            elif val == 'AllCaps':
+                style['text-transform'] = 'uppercase'
+            elif val == 'Normal':
+                style['text-transform'] = 'none'
+                style['font-variant'] = 'normal'
+            else:
+                log.warn('%s=%r' % (key, elem.get(key)))
+        elif key=='FontStyle':
+            for val in elem.get(key).split():
+                if val == 'Italic':
+                    style['font-style'] = 'italic'
+                elif val == 'Bold':
+                    style['font-weight'] = 'bold'
+                elif val == 'Semibold':
+                    style['font-weight'] = '600'
+                elif val == 'Condensed':
+                    style['font-stretch'] = 'condensed'
+                elif val == 'Regular':
+                    style['font-style'] = 'normal'
+                    style['font-weight'] = 'normal'
+                else:
+                    log.warn('%s=%r' % (key, elem.get(key)))
+        elif key=='PointSize':
+            style['font-size'] = elem.get(key)+'pt'
+        elif key=='Position':
+            if elem.get(key)=='Superscript':
+                style['vertical-align'] = 'super'
+            elif elem.get(key)=='Subscript':
+                style['vertical-align'] = 'sub'
+            elif elem.get(key)=='Normal':
+                style['vertical-align'] = 'baseline'
+            else:
+                log.warn('%s=%r' % (key, elem.get(key)))
+        elif key == 'CharacterDirection':
+            if elem.get(key)=='LeftToRightDirection':
+                style['direction'] = 'ltr'
+            elif elem.get(key)=='RightToLeftDirection':
+                style['direction'] = 'rtl'
+            elif elem.get(key) != 'DefaultDirection':
+                log.warn('%s=%r' % (key, elem.get(key)))
+        elif key == 'AppliedLanguage':
+            try:
+                # look up the language using the lovely pycountry.languages database
+                lang = pycountry.languages.lookup(elem.get(key).split('/')[-1].split(':')[0])
+                if lang is not None:
+                    attrib.lang = lang.alpha_2
+                else:
+                    log.warn('%s=%r' % (key, elem.get(key)))
+            except:
+                log.warn(sys.exc_info()[1])
+                log.warn('%s=%r' % (key, elem.get(key)))
+        elif key in ['AppliedCharacterStyle', 'BaselineShift', 'FillColor', 'FillTint', 
+                'HorizontalScale', 'Kashidas', 'KerningMethod', 'KerningValue', 
+                'ParagraphBreakType', 'StrokeColor', 'Tracking', 'VerticalScale']:
+            pass
+        else:
+            log.warn('%s=%r' % (key, elem.get(key)))
+    if style.keys() != []:
+        attrib.style = '; '.join(["%s:%s" % (k, style[k]) for k in style.keys()])
     return attrib
 
 @transformer.match("elem.tag=='HiddenText'")
@@ -406,7 +462,7 @@ def Change(elem, **params):
         # res = B.html('del', attrib, transformer(elem.getchildren(), **params))
         pass
     else:
-        log.error("Invalid ChangeType: %r" % elem.get('ChangeType'))
+        log.warn("Invalid ChangeType: %r" % elem.get('ChangeType'))
 
 # == omitted/ignored == 
 omitted = [
