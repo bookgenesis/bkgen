@@ -67,7 +67,7 @@ class IDML(ZIP, Source):
                 for e in d.root.xpath("//*[@id]"):
                     ids[e.get('id')] = d.fn
             for doc in documents:
-                for e in doc.root.xpath("//pub:include[@id]", namespaces=bkgen.NS):
+                for e in doc.root.xpath("//pub:include[@id]", namespaces=NS):
                     if e.get('id') in ids:
                         id = e.attrib.pop('id')
                         targetfn = ids[id]

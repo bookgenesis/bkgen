@@ -102,7 +102,6 @@ class ICML(XML, Source):
                 for k in bs.keys():
                     if k not in s.keys():
                         s[k] = bs[k]
-
         return s
 
     def include_mixin(self, style, mixin):
