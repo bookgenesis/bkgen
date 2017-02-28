@@ -1,13 +1,18 @@
 ## Package configuration for bkgen
 
-[Package]
+[BkGen]
 path: %(path)s
 debug: True
 
+[Logging]
+# level: logging.DEBUG=10, .INFO=20, .WARN=30, .ERROR=40, .CRITICAL=50
+format: [%(asctime)s] %(name)s:%(lineno)s: %(message)s
+level: 10
+
 [Resources]
-path: ${Package:path}/resources
+path: ${BkGen:path}/resources
 publishingxml: ${path}/publishing-xml
-schemas: ${publishingxml}
+schemas: ${publishingxml}/schemas
 epubcheck: ${path}/epubcheck-4.0.2/epubcheck.jar
 kindlegen: ${path}/KindleGen_Mac_i386_v2_9/kindlegen
 
