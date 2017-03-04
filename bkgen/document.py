@@ -22,6 +22,11 @@ class Document(XML):
                 x.root.insert(0, head)
         return x
 
+    def icml(self, **params):
+        from .converters.document_icml import DocumentIcml
+        converter = DocumentIcml()
+        return converter.convert(self, **params)
+
     def html(self, fn=None, ext='.xhtml', output_path=None, resources=[], **args):
         from .converters.document_html import DocumentHtml
         converter = DocumentHtml()
