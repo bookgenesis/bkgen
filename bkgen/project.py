@@ -14,12 +14,13 @@ from bxml.xml import XML, etree
 from bxml.builder import Builder
 
 from bkgen import NS
+from .source import Source
 
 FILENAME = os.path.abspath(__file__)
 PATH = os.path.dirname(FILENAME)
 PUB = Builder.single(NS.pub)
 
-class Project(XML):
+class Project(XML, Source):
     """Every project has a project.xml file that holds information about the project.
     The root element is pub:project, where 'pub:' is the Publishing XML namespace (see http://publishingxml.org).
     """
@@ -40,14 +41,44 @@ class Project(XML):
         return self.root.get('name')
 
     @property
+    def path(self):
+        return os.path.dirname(os.path.abspath(self.fn))
+
+    # SOURCE PROPERTIES
+    @property
     def metadata(self):
         """metadata is kept in the project.xml opf:metadata block."""
         from .metadata import Metadata
         return Metadata(root=self.find(self.root, "opf:metadata", namespaces=NS))
 
     @property
-    def path(self):
-        return os.path.dirname(os.path.abspath(self.fn))
+    def documents(self):
+        """all of pub:document files in the content subfolder."""
+        from .document import Document
+        return [Document(fn=fn) for fn in rglob(self.path, 'content/*.xml')]
+
+    @property
+    def images(self):
+        """all of the image files in the content subfolder."""
+        from bf.image import Image
+        images = [Image(fn=fn) 
+            for fn 
+            in rglob(os.path.join(self.path, self.content_folder), '*.*')
+            if os.path.splitext(fn)[-1].lower() in 
+                ['.jpg', '.jpeg', '.tiff', '.tif', '.png', '.pdf', '.bmp']
+        ]
+        return images
+
+    @property
+    def stylesheet(self):
+        """the master .css for this project is the resource class="stylesheet"."""
+        from .css import CSS
+        csshref = self.find(self.root, "pub:resources/pub:resource[@class='stylesheet']/@href", namespaces=NS)
+        if csshref is not None:
+            cssfn = os.path.join(self.path, csshref)
+            return CSS(fn=cssfn)
+ 
+    # CLASSMETHODS
 
     @classmethod
     def create(Class, parent_path, title, name=None, **project_params):
@@ -109,27 +140,21 @@ class Project(XML):
         project.write()
         return project
 
-    def add_resource(self, href, rclass, kind=None):
+    def add_resource(self, href, resource_class, kind=None):
         """add the given resource to the project file, if it isn't already present"""
         resources = self.find(self.root, "pub:resources", namespaces=NS)
-        resource = self.find(resources, "/pub:resource[@href='%s' and @class='%s']" % (href, rclass), namespaces=NS)
+        resource = self.find(resources, "/pub:resource[@href='%s' and @class='%s']" % (href, resource_class), namespaces=NS)
         if resource is None:
-            resource = PUB.resource({'href':href, 'class':rclass}); resource.tail='\n\t\t'
+            resource = PUB.resource({'href':href, 'class':resource_class}); resource.tail='\n\t\t'
             if kind is not None: resource.set('kind', kind)
             resources.append(resource)
         else:
-            raise ValueError("resource with that href already exists: %r" % resource.attrib)
+            log.warn("resource with that href already exists: %r" % resource.attrib)
         return resource
 
     def import_source(self, source, documents=True, images=True, stylesheet=True, metadata=False):
         """import a source into the project.
-            source : an object that contains the content source; must have the following interface:
-                source.fn               -- the current full filename of the source
-                source.write(fn=...)    -- to write the content source to the given filename
-                source.documents()      -- to return a collection of <pub:document/> containing the content (or [])
-                source.images()         -- to return a collection of Image files from the source (or [])
-                source.metadata()       -- to return a Metadata XML object containing source metadata (or None)
-                source.stylesheet()     -- to return a CSS stylesheet from this source (or None)
+            source = a Source object that contains the content source
         """
         # move / copy the source into the "canonical" source file location for this project.
         source_new_fn = os.path.join(self.path, self.source_folder, self.make_basename(fn=source.fn))
@@ -141,11 +166,11 @@ class Project(XML):
             source.fn = source_new_fn
 
         # import the documents, metadata, images, and stylesheet from this source
-        if documents==True: self.import_documents(source.documents())
-        if metadata==True: self.import_metadata(source.metadata())
-        if images==True: self.import_images(source.images())
+        if documents==True: self.import_documents(source.documents)
+        if metadata==True: self.import_metadata(source.metadata)
+        if images==True: self.import_images(source.images)
         if stylesheet==True:
-            ss = source.stylesheet()
+            ss = source.stylesheet
             if ss is not None:
                 ss.fn = os.path.join(self.path, self.content_folder, self.make_basename(fn=source.fn, ext='.css'))
                 ss.write()
