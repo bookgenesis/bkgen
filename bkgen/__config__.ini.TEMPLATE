@@ -2,12 +2,12 @@
 
 [BkGen]
 path: %(path)s
-debug: True
+debug: False
 
 [Logging]
 # level: logging.DEBUG=10, .INFO=20, .WARN=30, .ERROR=40, .CRITICAL=50
 format: [%(asctime)s] %(name)s:%(lineno)s: %(message)s
-level: 10
+level: 20
 
 [Resources]
 path: ${BkGen:path}/resources
@@ -15,6 +15,7 @@ publishingxml: ${path}/publishing-xml
 schemas: ${publishingxml}/schemas
 epubcheck: ${path}/epubcheck-4.0.2/epubcheck.jar
 kindlegen: ${path}/KindleGen_Mac_i386_v2_9/kindlegen
+mimetypes: ${path}/mime.types
 
 ## Default values for Project parameters — uncomment if changing
 [Projects]

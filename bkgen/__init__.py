@@ -1,9 +1,10 @@
-import os
+import os, mimetypes
 from bl.dict import Dict
 from bl.config import Config
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 config = Config(fn=os.path.join(PATH, '__config__.ini'))
+mimetypes.init(files=[config.Resources.mimetypes])
 
 NS = Dict(
     pub="http://publishingxml.org/ns",
