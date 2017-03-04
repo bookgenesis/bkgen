@@ -1,11 +1,33 @@
 
+import os
 from bl.dict import Dict
 from bxml import XML
-from . import NS    
+from . import NS
+from .source import Source    
 
-class Document(XML):
+class Document(XML, Source):
     ROOT_TAG = "{%(pub)s}document" % NS
     NS = Dict(**{k:NS[k] for k in NS if k in ['html', 'pub', 'epub']})
+
+    @property
+    def documents(self):
+        return [self]
+
+    @property
+    def images(self):
+        from bf.image import Image
+        images = [
+            Image(fn=os.path.join(self.path, img.get('src')))
+            for img 
+            in self.xpath(self.root, "//html:img[@src]", namespaces=NS)]
+        return images
+
+    @property
+    def stylesheet(self):
+        from .css import CSS
+        cssfn = os.path.splitext(self.fn)[0]+'.css'
+        if os.path.exists(cssfn):
+            return CSS(fn=cssfn)
 
     @classmethod
     def load(C, fn=None, section_id=None, **args):
