@@ -13,6 +13,7 @@ from bkgen.converters import Converter
 from bkgen.document import Document
 
 B = Builder(**NS)
+H = Builder.single(NS.html)
 transformer = XT()
 transformer_XSLT = etree.XSLT(etree.parse(os.path.splitext(__file__)[0] + '.xsl'))
 

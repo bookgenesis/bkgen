@@ -1,7 +1,11 @@
 
+import logging
+log = logging.getLogger(__name__)
+
 import os
 from bl.dict import Dict
 from bxml import XML
+from bxml.builder import Builder
 from . import NS
 from .source import Source    
 
@@ -31,17 +35,21 @@ class Document(XML, Source):
 
     @classmethod
     def load(C, fn=None, section_id=None, **args):
+        B = Builder(default=C.NS.html, **C.NS)
         x = C(fn=fn, **args)
         if section_id is not None:
-            from bxml.builder import Builder
-            nsmap = {None:C.NS.html, 'pub':C.NS.pub, 'opf':C.NS.opf, 'dc':C.NS.dc}
-            B = Builder(default=C.NS.html, nsmap=nsmap, **C.NS)
-            section = C.find(x.root, "//*[@id='%s']" % section_id)
-            x.root = B.pub.document('\n\t', B._.body('\n', section))
-            x.fn = os.path.splitext(x.fn)[0] + '_' + section_id + '.xml'
-            if section is not None and section.get('title') is not None:
-                head = B._.head('\n\t\t', B._.title(section.get('title')), '\n\t'); head.tail='\nt'
-                x.root.insert(0, head)
+            section = C.find(x.root, "//html:section[@id='%s']" % section_id, namespaces=C.NS)
+        else:
+            section = C.find(x.root, "//html:section", namespaces=C.NS)
+        if section is not None:
+            log.debug(section.attrib)
+            title = section.get('title')
+            log.debug("title = %r" % title)
+            title_elem = B._('title', section.get('title') or '')
+            head_elem = B._.head('\n\t\t', title_elem, '\n\t')
+            body_elem = B._.body('\n', section)
+            x.root = B.pub.document('\n\t', head_elem, '\n\t', body_elem, '\n')
+            x.fn = os.path.splitext(x.fn)[0] + '_' + section.get('id') + '.xml'
         return x
 
     def icml(self, **params):
@@ -52,13 +60,12 @@ class Document(XML, Source):
     def html(self, fn=None, ext='.xhtml', output_path=None, resources=[], **args):
         from .converters.document_html import DocumentHtml
         converter = DocumentHtml()
-        nsmap = {None:C.NS.html, 'pub':C.NS.pub, 'opf':C.NS.opf, 'dc':C.NS.dc}
-        B = Builder(default=C.NS.html, nsmap=nsmap, **C.NS)
+        B = Builder(default=self.NS.html, **self.NS)
         fn = fn or os.path.splitext(self.fn)[0] + ext
         output_path = output_path or self.path
         
         # pre-process: get includes
-        for incl in self.root.xpath("//pub:include", namespaces=C.NS):
+        for incl in self.root.xpath("//pub:include", namespaces=self.NS):
             srcfn = os.path.join(os.path.dirname(self.fn), incl.get('src').split('#')[0])
             if os.path.exists(srcfn):
                 src = XML(fn=srcfn)
