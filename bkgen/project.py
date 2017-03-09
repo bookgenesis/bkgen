@@ -4,6 +4,7 @@ log = logging.getLogger(__name__)
 
 import os, re, shutil, subprocess, sys, time, traceback
 from copy import deepcopy
+from bl.dict import Dict
 from bl.file import File
 from bl.string import String
 from bl.rglob import rglob
@@ -13,7 +14,7 @@ from bl.zip import ZIP
 from bxml.xml import XML, etree
 from bxml.builder import Builder
 
-from bkgen import NS
+from bkgen import NS, config, mimetypes
 from .source import Source
 
 FILENAME = os.path.abspath(__file__)
@@ -126,7 +127,7 @@ class Project(XML, Source):
                 stylesheet_elem.getparent().remove(stylesheet_elem)
                 stylesheet_elem = None
         if stylesheet_elem is None:
-            stylesheet_fn = os.path.join(project.path, project.content_folder, project.name+'.css')
+            stylesheet_fn = os.path.join(project.path, 'project.css')
             stylesheet_href = os.path.relpath(stylesheet_fn, project.path)
             project.add_resource(stylesheet_href, 'stylesheet')
             if not os.path.exists(stylesheet_fn):
@@ -152,6 +153,59 @@ class Project(XML, Source):
             log.warn("resource with that href already exists: %r" % resource.attrib)
         return resource
 
+    def import_source_fn(self, fn, **fd):
+        """import the source fn. 
+        fn = the filesystem path to the file (such as a temporary file location)
+        **fd = data about the file
+            fd['content_type'] = the Content-Type as guessed by the application that is calling this.
+            fd['name'] = the "canonical" name of the file (as from uploading).
+        """
+        content_type = mimetypes.guess_type(fn)[0]
+        ext = os.path.splitext(fn)[-1].lower()
+        result_fd = Dict()
+        
+        # .DOCX files
+        if (content_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                or ext == '.docx'):
+            # write the content data to a temporary folder
+            from .docx import DOCX
+            project.import_source(DOCX(fn=fn))
+    
+        # .EPUB files
+        elif (content_type=='application/epub+zip'
+                or ext == '.epub'):
+            from .epub import EPUB
+            project.import_source(EPUB(fn=fn))
+
+        # .IDML files
+        elif (content_type=='application/vnd.adobe.indesign-idml-package'
+                or ext == '.idml'):
+            from .idml import IDML
+            project.import_source(IDML(fn=fn))
+
+        # .ICML files
+        elif (content_type=='application/xml'
+                and ext == '.icml'):
+            from .icml import ICML
+            project.import_source(ICML(fn=fn))
+
+        # Images
+        elif (content_type in ['image/jpeg', 'image/png', 'image/bmp', 'image/tiff', 'application/pdf']
+                or ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff', '.pdf']):
+            project.import_image(fn)
+
+        # not a matching file type
+        else:
+            log.warn('not allowed file type: %r' % fd)
+            fd.status = 'error'
+            fd.message = ext+' files (' + fd.get('content_type') + ') are not allowed, sorry'
+
+        if fd.status is None:
+            fd.status = 'success'
+            fd.message = 'import succeeded.'
+
+        return fd
+    
     def import_source(self, source, documents=True, images=True, stylesheet=True, metadata=False):
         """import a source into the project.
             source = a Source object that contains the content source
@@ -159,6 +213,7 @@ class Project(XML, Source):
         # move / copy the source into the "canonical" source file location for this project.
         source_new_fn = os.path.join(self.path, self.source_folder, self.make_basename(fn=source.fn))
         if source_new_fn != source.fn:
+            # move it if it's inside the project folder, otherwise copy it.
             if self.path in os.path.commonprefix([self.fn, source.fn]):
                 os.rename(source.fn, source_new_fn)
             else:
@@ -260,15 +315,12 @@ class Project(XML, Source):
             resources = self.find(self.root, "pub:resources", namespaces=NS)
             resources.append(resource)
 
-        if params.get('class')=='cover-digital' and os.path.splitext(resource_fn)[-1]=='.jpg':
+        if params.get('class')=='cover' and os.path.splitext(resource_fn)[-1]=='.jpg':
             existing_cover_digital = self.find(self.root, 
                 "//pub:resource[@class='cover-digital']", namespaces=NS)
             if existing_cover_digital is not None:
                 existing_cover_digital.set('class', 'image')
-            resource.set('class', 'cover-digital')
-
-        if db is not None:
-           self.make_resource_excerpts(db, content_href=href)
+            resource.set('class', 'cover')
 
         self.write()
 
@@ -322,7 +374,7 @@ class Project(XML, Source):
         if not os.path.isdir(epub_path): os.makedirs(epub_path)
         resources = self.output_resources(output_path=epub_path, **image_args)
         metadata = self.find(self.root, "opf:metadata", namespaces=NS)
-        cover_src = self.get_cover_href(get='digital')
+        cover_src = self.get_cover_href(kind='digital')
         spine_items = self.output_spineitems(output_path=epub_path, resources=resources, 
             ext='.xhtml', **image_args)
         result = EPUB().build(epub_path, metadata, 
@@ -409,6 +461,7 @@ class Project(XML, Source):
     def output_spineitems(self, output_path=None, ext='.xhtml', resources=None, 
                 http_equiv_content_type=False, canonicalized=False, **image_args):
         from bf.image import Image
+        from .document import Document
         log.debug("project.output_spineitems()")
         output_path = output_path or os.path.join(self.path, self.output_folder)
         if resources is None: resources = self.output_resources(output_path=output_path, **image_args)
@@ -417,6 +470,7 @@ class Project(XML, Source):
         outfns = []
         for spineitem in spineitems:
             split_href = spineitem.get('href').split('#')
+            log.debug(split_href)
             docfn = os.path.join(self.path, split_href[0])
             if len(split_href) > 1: 
                 d = Document.load(fn=docfn, section_id=split_href[1])
@@ -458,6 +512,7 @@ class Project(XML, Source):
                 for elem in XML(fn=outfn).root.xpath("//*[@id]"):
                     ids[elem.get('id')] = outfn
             for outfn in outfns:
+                log.debug(outfn)
                 x = XML(fn=outfn)
                 for e in [
                         e for e in x.root.xpath("//*[contains(@href, '#')]") 
@@ -475,7 +530,7 @@ class Project(XML, Source):
 
 # == COMMAND INTERFACE METHODS == 
 
-def import_all(project_path, **config):
+def import_all(project_path):
     """import sources, cover, and metadata into project"""
     project = Project(fn=os.path.join(project_path, 'project.xml'), **(config.get('Projects') or {}))
     basename = os.path.basename(project.path)
@@ -493,19 +548,19 @@ def import_all(project_path, **config):
     log.info('-- %d .idml files' % len(fns))
     fns = rglob(interior_path, '*.idml') + rglob(source_path, '*.idml')
     for fn in fns:
-        project.import_source(IDML(fn=fn), fns=fns)
+        project.import_source_fn(fn, fns=fns)
     
     # import icml 
     fns = rglob(interior_path, '*.icml') + rglob(source_path, '*.icml')
     log.info('-- %d .icml files' % len(fns))
     for fn in fns: 
-        project.import_source(ICML(fn=fn), fns=fns)
+        project.import_source_fn(fn, fns=fns)
     
     # import docx
     fns = rglob(interior_path, '*.docx') + rglob(source_path, '*.docx')
     log.info('-- %d .docx files' % len(fns))
     for fn in fns:
-        project.import_source(DOCX(fn=fn), with_metadata=False)
+        project.import_source_fn(fn, with_metadata=False)
 
     # import metadata.xml
     fns = [fn for fn in rglob(project.path, '*metadata.xml')
@@ -524,12 +579,12 @@ def import_all(project_path, **config):
     # cover
     fns = rglob(cover_path, "*.jpg")
     for fn in fns:
-        project.import_image(fn, **{'class': 'digital'})
+        project.import_image(fn, **{'class':'cover', 'kind':'digital'})
 
-def build_project(project_path, format=None, **config):
+def build_project(project_path, format=None):
     log.info("== BUILD PROJECT == %s" % os.path.basename(project_path))
     project = Project(fn=os.path.join(project_path, 'project.xml'), **(config.get('Projects') or {}))
-    image_args = {k:c[k] for k in (config.EPUB or {}).keys() if 'image_' in k}
+    image_args = {k:config.EPUB[k] for k in (config.EPUB or {}).keys() if 'image_' in k}
     if format is None or 'epub' in format:
         project.build_epub(show_nav=True, **image_args)
     if format is None or 'mobi' in format:
@@ -559,9 +614,9 @@ if __name__=='__main__':
         for project_path in sys.argv[2:]:
             project_path = os.path.abspath(project_path)
             if 'create' in sys.argv[1]:
-                Project.create(os.path.dirname(project_path), os.path.basename(project_path), **config.Projects)
+                Project.create(os.path.dirname(project_path), os.path.basename(project_path))
             if 'import' in sys.argv[1]:
-                import_all(project_path, **config.Projects)
+                import_all(project_path)
             if 'build' in sys.argv[1]:
                 if '-epub' in sys.argv[1]: format='epub'
                 elif '-mobi' in sys.argv[1]: format='mobi'
