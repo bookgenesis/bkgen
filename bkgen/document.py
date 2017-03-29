@@ -36,7 +36,8 @@ class Document(XML, Source):
     @classmethod
     def load(C, fn=None, section_id=None, **args):
         B = Builder(default=C.NS.html, **C.NS)
-        x = C(fn=fn, **args)
+        x = C(**args)
+        x.fn = fn
         if section_id is not None:
             section = C.find(x.root, "//html:section[@id='%s']" % section_id, namespaces=C.NS)
         else:
@@ -55,6 +56,11 @@ class Document(XML, Source):
     def icml(self, **params):
         from .converters.document_icml import DocumentIcml
         converter = DocumentIcml()
+        return converter.convert(self, **params)
+
+    def aid(self, **params):
+        from .converters.document_aid import DocumentAid
+        converter = DocumentAid()
         return converter.convert(self, **params)
 
     def html(self, fn=None, ext='.xhtml', output_path=None, resources=[], **args):
