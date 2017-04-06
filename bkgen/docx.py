@@ -15,20 +15,18 @@ class DOCX(bxml.docx.DOCX, Source):
         doc = converter.convert(self, fn=fn or os.path.splitext(self.fn)[0]+'.xml')
         return doc
 
-    @property
     def documents(self):
         """return a list of documents containing the content of the document"""
         # just the one document
         return [self.document()]
 
-    @property
     def images(self):
         """all the images referred to in the DOCX. 
         """
         from bf.image import Image
         images = []
         rels = self.xml(src='word/_rels/document.xml.rels').root
-        for img in root.xpath("//html:img", namespaces=DOCX.NS):
+        for img in self.root.xpath("//html:img", namespaces=DOCX.NS):
             image = Image()
             link_rel = XML.find(rels, "//rels:Relationship[@Id='%s']" % img.get('data-link-id'), namespaces=DOCX.NS)
             embed_rel = XML.find(rels, "//rels:Relationship[@Id='%s']" % img.get('data-embed-id'), namespaces=DOCX.NS)
@@ -42,7 +40,6 @@ class DOCX(bxml.docx.DOCX, Source):
             images.append(image)
         return images
 
-    @property
     def metadata(self):
         """return a Metadata object with the metadata in the document"""
         from .metadata import Metadata
@@ -50,6 +47,5 @@ class DOCX(bxml.docx.DOCX, Source):
         xml.root.tag = "{%(pub)s}metadata" % NS
         return xml
 
-    @property
     def stylesheet(self):
         return super().stylesheet()
