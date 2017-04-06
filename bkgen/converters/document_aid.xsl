@@ -22,7 +22,7 @@
 			    <xsl:value-of select="@class"/>
 			</xsl:attribute>
 			<xsl:apply-templates/>
-			<xsl:if test="not(ancestor::html:td) and not(following::*[1][contains(name(), 'break')])">
+			<xsl:if test="not(ancestor::html:td) and following::*">
                 <xsl:text>&#xA;</xsl:text>
             </xsl:if>
 		</xsl:copy>
