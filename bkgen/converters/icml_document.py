@@ -55,18 +55,25 @@ def Story(elem, **params):
     body.tail = '\n'
     body = process_para_breaks(body)
     body = nest_span_hyperlinks(body)
+    body = split_sections(body)
     return [body]
 
 # == ParagraphStyleRange ==
 @transformer.match("elem.tag=='ParagraphStyleRange'")
 def ParagraphStyleRange(elem, **params):
     # create the p class attribute
-    ps = elem.get('AppliedParagraphStyle').replace('ParagraphStyle/', '')\
-            .replace('%3a', ':').replace(": ", ":")
+    ps = elem.get('AppliedParagraphStyle')\
+            .replace('ParagraphStyle/', '').replace('%3a', ':').replace(": ", ":")
     p_class = ICML.classname(ps)
     p = B.html.p({'class': p_class}, 
         '', transformer(elem.getchildren(), p_class=p_class, **params))
-    return [p, '\n']
+    result = [p, '\n']
+    # if there is a section_start in the paragraph, move it out.
+    section_start = XML.find(p, ".//pub:section_start", namespaces=NS) 
+    if section_start is not None:
+        XML.remove(section_start, leave_tail=True)
+        result = [section_start, '\n'] + result
+    return result
 
 # == CharacterStyleRange ==
 @transformer.match("elem.tag=='CharacterStyleRange'")
@@ -695,6 +702,19 @@ def nest_span_hyperlinks(body):
     for span in body.xpath("//html:span[html:hyperlink]", namespaces=NS):
         XML.fragment_nesting(span, "html:hyperlink", namespaces=NS)
     return body   
+
+def split_sections(body):
+    """convert pub:section_start tags into html:section elements"""
+    sections = XML.xpath(body, ".//pub:section_start", namespaces=NS)
+    for section in sections:
+        section.tag = "{%(html)s}section" % NS
+        section.text = '\n'
+        next = section.getnext()
+        while next is not None and next.tag != "{%(pub)s}section_start" % NS:
+            elem = next
+            next = elem.getnext()
+            section.append(elem)
+    return body
 
 def is_prev_node_br(elem):
     prev = elem.getprevious()
