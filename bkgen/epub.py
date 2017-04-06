@@ -1,7 +1,7 @@
 
 DEBUG = False
 
-import os, mimetypes, shutil, subprocess, traceback, zipfile
+import os, logging, mimetypes, shutil, subprocess, traceback, zipfile
 from datetime import datetime
 from copy import deepcopy
 from lxml import etree
@@ -15,6 +15,7 @@ from bl.file import File
 from bxml.builder import Builder
 from bkgen import NS, Source, config
 
+log = logging.getLogger(__name__)
 FILENAME = os.path.abspath(__file__)
 
 ALLOWED_DATE_PROPERTIES = [                                     # allowed on dc:date
@@ -33,13 +34,14 @@ class EPUB(ZIP, Source):
         '.xhtml': 'application/xhtml+xml'
     })
 
-    def check(self, log=print):
+    def check(self):
         """use epubcheck to validate the epub"""
         checkfn = self.fn + '.epubcheck.txt'
         checkf = open(checkfn, 'wb')
         cmd = ['java', '-jar', config.Resources.epubcheck, self.fn]
         subprocess.call(cmd, stdout=checkf, stderr=checkf)
         checkf.close()
+        log.info("epubcheck log: %s" % checkfn)
         return checkfn
 
     def write(self, fn=None):
@@ -133,7 +135,7 @@ class EPUB(ZIP, Source):
     def build(C, output_path, metadata, epub_name=None, manifest=None, spine_items=None, 
                 cover_src=None, cover_html=True, nav_toc=None, nav_landmarks=None, 
                 nav_page_list=None, nav_href='nav.xhtml', nav_title="Navigation", 
-                show_nav=False, zip=True, check=True, log=print):
+                show_nav=False, zip=True, check=True):
         """build EPUB file output; returns EPUB object
         REQUIRED parameters:
             output_path   = where the build files are to be located
@@ -162,7 +164,7 @@ class EPUB(ZIP, Source):
         if epub_name is None: 
             epub_name = C.epub_name_from_path(output_path)
         
-        opf_metadata = C.opf_package_metadata(metadata, cover_src=cover_src, log=log) 
+        opf_metadata = C.opf_package_metadata(metadata, cover_src=cover_src) 
 
         if cover_src is not None and cover_html==True:
             cover_html_relpath = os.path.relpath(C.make_cover_html(output_path, cover_src), output_path)
@@ -200,23 +202,26 @@ class EPUB(ZIP, Source):
         # opf file -- pull it all together
         opffn = C.make_opf_file(output_path, 
                     opf_name=epub_name, metadata=opf_metadata, 
-                    manifest=manifest, spine=spine, guide=guide, log=log)
+                    manifest=manifest, spine=spine, guide=guide)
 
         if show_nav==True:
             C.unhide_toc(os.path.join(output_path, nav_href))
             C.append_toc_to_spine(opffn, nav_href)
 
+        mimetype_fn = C.make_mimetype_file(output_path)
+        container_fn = C.make_container_file(output_path, opffn)
+        
         result = Dict(
             fn=C.epub_fn(output_path, epub_name))
         if zip==True:
             the_epub = C.zip_epub(output_path, 
                 epubfn=result.epubfn,
-                mimetype_fn=C.make_mimetype_file(output_path),
-                container_fn=C.make_container_file(output_path, opffn),
+                mimetype_fn=mimetype_fn,
+                container_fn=container_fn,
                 opf_fn=opffn)
             if check==True:
                 epubcheckfn = the_epub.check()
-                log.info(epubcheckfn)
+                log.debug(epubcheckfn)
                 result.log = epubcheckfn
             result.fn = the_epub.fn
         else:
@@ -224,7 +229,7 @@ class EPUB(ZIP, Source):
         return result
 
     @classmethod
-    def make_cover_html(C, output_path, cover_src, log=print):
+    def make_cover_html(C, output_path, cover_src):
         cover_html = XML(fn=os.path.join(os.path.dirname(FILENAME), 'templates', 'cover.xhtml'))
         cover_html_relpath = os.path.splitext(cover_src)[0]+'.xhtml'
         cover_html.fn = os.path.join(output_path, cover_html_relpath)
@@ -234,21 +239,21 @@ class EPUB(ZIP, Source):
         return cover_html.fn
 
     @classmethod
-    def href_to_id(C, href, log=print):
+    def href_to_id(C, href):
         return String(href).identifier()
 
     @classmethod
-    def epub_name_from_path(C, output_path, log=print):
+    def epub_name_from_path(C, output_path):
         return os.path.basename(os.path.normpath(output_path).rstrip(os.path.sep))
 
     @classmethod
-    def epub_fn(C, output_path, epub_name=None, ext='.epub', log=print):
+    def epub_fn(C, output_path, epub_name=None, ext='.epub'):
         return os.path.join(os.path.dirname(os.path.abspath(output_path)), 
                             (epub_name or os.path.basename(output_path.rstrip(os.path.sep)))+ext)
 
     @classmethod
     def opf_manifest(C, output_path, opf_name=None, nav_href=None, cover_src=None,
-                        exclude=['mimetype', '*.xml', '*.opf', '.*', '~*', '#*#'], log=print):
+                        exclude=['mimetype', '*.xml', '*.opf', '.*', '~*', '#*#']):
         """build and return an opf:manifest element
         opf_name    = the relative path to the opf file
         nav_href    = the relative path (href) to the nav.xhtml file
@@ -278,7 +283,7 @@ class EPUB(ZIP, Source):
         return manifest  
 
     @classmethod
-    def opf_manifest_item(C, opf_path, href, mediatype=None, log=print):
+    def opf_manifest_item(C, opf_path, href, mediatype=None):
         item = C.OPF.item({
             'id': C.href_to_id(href),
             'href': href,
@@ -290,7 +295,7 @@ class EPUB(ZIP, Source):
         return item
 
     @classmethod
-    def spine_items_from_manifest(C, output_path, manifest, log=print):
+    def spine_items_from_manifest(C, output_path, manifest):
         """A list of spine_item dicts (see spec above under EPUB.build())"""
         spine_items = []
         for item in [item for item in manifest.getchildren() if item.get('href')[-4:]=='html']:
@@ -311,22 +316,26 @@ class EPUB(ZIP, Source):
 
     @classmethod
     def make_nav_file(C, output_path, *nav_elems, 
-                        nav_href='_nav.xhtml', title="Navigation", log=print):
+                        nav_href='_nav.xhtml', title="Navigation"):
         """create a nav.xhtml file in output_path, return the filename to it"""
-        H = Builder(default=C.NS.html, nsmap={None:C.NS.html, 'epub':C.NS.epub}, **C.NS).html
+        H = Builder(default=C.NS.html, **{'html':C.NS.html, 'epub':C.NS.epub})._
         nav = XML(
                 root=H.html(
-                        H.head(H.title(title), 
+                        '\n\t',
+                        H.head('\n\t\t', 
+                            H.title(title), 
+                            '\n\t\t',
                             H.style("""li {list-style-type: none;}""", 
-                                type="text/css")), 
-                        H.body(*nav_elems)))
+                                type="text/css"),
+                            '\n\t'),
+                        '\n\t', 
+                        H.body('\n', *nav_elems)))
         nav.fn=os.path.join(output_path,nav_href)
         nav.write(doctype="<!DOCTYPE html>")
-        # print(nav.fn, os.path.exists(nav.fn))
         return nav.fn
 
     @classmethod
-    def nav_toc_from_spine_items(C, output_path, spine_items, nav_title="Table of Contents", hidden="", log=print):
+    def nav_toc_from_spine_items(C, output_path, spine_items, nav_title="Table of Contents", hidden=""):
         nav_items = []
         for spine_item in spine_items:
             # either a title or a landmark in the spine item qualifies it for inclusion in the TOC
@@ -340,7 +349,7 @@ class EPUB(ZIP, Source):
             return C.nav_elem(*nav_items, epub_type="toc", title=nav_title, hidden=hidden)
 
     @classmethod
-    def nav_landmarks_from_spine_items(C, output_path, spine_items, title="Landmarks", hidden="", log=print):
+    def nav_landmarks_from_spine_items(C, output_path, spine_items, title="Landmarks", hidden=""):
         """build nav landmarks from spine_items. Each spine_item can have an optional landmark attribute,
             which if given is the epub_type of that landmark.
         """
@@ -355,7 +364,7 @@ class EPUB(ZIP, Source):
 
 
     @classmethod
-    def nav_landmarks(C, *landmarks, title='Landmarks', hidden="", log=print):
+    def nav_landmarks(C, *landmarks, title='Landmarks', hidden=""):
         """builds a landmarks nav element from the given landmarks parameters. Each parameter is a dict:
             'epub_type' : the epub:type attribute, which is the landmark type
             'href'      : the href to the landmark
@@ -371,7 +380,7 @@ class EPUB(ZIP, Source):
         return C.nav_elem(*landmarks, epub_type='landmarks', title=title, hidden=hidden)
 
     @classmethod
-    def nav_page_list_from_spine_items(C, output_path, spine_items, title="Page List", hidden="", log=print):
+    def nav_page_list_from_spine_items(C, output_path, spine_items, title="Page List", hidden=""):
         """builds a page-list nav element from the content listed in the manifest."""
         page_list_items = []
         for spine_item in spine_items:
@@ -383,10 +392,11 @@ class EPUB(ZIP, Source):
                 page_list_items.append({
                     'href':href+'#'+pagebreak.get('id'), 
                     'title':pagebreak.get('title')})
-        return C.nav_elem(*page_list_items, epub_type='page-list', title=title, hidden=hidden)
+        if len(page_list_items) > 0:
+            return C.nav_elem(*page_list_items, epub_type='page-list', title=title, hidden=hidden)
 
     @classmethod
-    def nav_elem(C, *nav_items, epub_type=None, title=None, hidden=None, log=print):
+    def nav_elem(C, *nav_items, epub_type=None, title=None, hidden=""):
         """create and return an html:nav element.
         nav_items   = a list of dict-type elements with the following attributes:
             href        : the href to the nav item (required)
@@ -396,27 +406,28 @@ class EPUB(ZIP, Source):
         title       = the optional title text to display on this nav
         hidden      = whether or not the nav element should be hidden; default not specified (None)
         """
-        H = Builder(default=C.NS.html, nsmap={None:C.NS.html, 'epub':C.NS.epub}, **C.NS).html
+        H = Builder(default=C.NS.html, **{'html':C.NS.html, 'epub':C.NS.epub})._
         if title is not None:
             h1 = H.h1(title)
         else:
             h1 = ''
-        nav_elem = H.nav(h1, H.ol())
+        nav_elem = H.nav('\n\t', h1, '\n\t', H.ol(), '\n'); nav_elem.tail = '\n\n'
         if epub_type is not None: 
             nav_elem.set('{%(epub)s}type' % C.NS, epub_type)
         if hidden is not None: 
-            nav_elem.set('hidden', hidden==True and "" or hidden)
+            nav_elem.set('hidden', hidden)
         ol_elem = nav_elem.find("{%(html)s}ol" % C.NS)
         for nav_item in nav_items:
             a_elem = H.a({'href': nav_item.get('href')}, 
                 nav_item.get('title') or String(nav_item.get('epub_type')).titleify())
             if nav_item.get('epub_type') is not None: 
                 a_elem.set("{%(epub)s}type" % C.NS, nav_item.get('epub_type'))
-            ol_elem.append(H.li(a_elem))
+            li = H.li(a_elem); li.tail = '\n\t\t'
+            ol_elem.append(li)
         return nav_elem
 
     @classmethod
-    def make_ncx_file(C, output_path, nav_fn, metadata, log=print):
+    def make_ncx_file(C, output_path, nav_fn, metadata):
         """use the nav file and metadata to create an ncx file"""
         N = Builder(**C.NS).ncx
         nav = XML(fn=nav_fn)
@@ -493,7 +504,7 @@ class EPUB(ZIP, Source):
         return guide
 
     @classmethod
-    def make_opf_file(C, output_path, opf_name=None, metadata=None, manifest=None, spine=None, guide=None, log=print):
+    def make_opf_file(C, output_path, opf_name=None, metadata=None, manifest=None, spine=None, guide=None):
         """create an opf file in output_path, return the filename to it
         output_path   = the filesystem path in which the epub is being built (required)
         opf_name    = the relative path to the opf file in output_path; default output_path basename
@@ -539,7 +550,7 @@ class EPUB(ZIP, Source):
         return opfdoc.fn
     
     @classmethod    
-    def opf_package_metadata(C, metadata, xml_lang='en-US', cover_src=None, log=print):
+    def opf_package_metadata(C, metadata, xml_lang='en-US', cover_src=None):
         """make adjustments to (a deep copy of) the metadata for the opf:package context"""
         DC = Builder(default=C.NS.dc, **C.NS)._
         metadata_elem = deepcopy(metadata)
@@ -555,14 +566,14 @@ class EPUB(ZIP, Source):
                         if k not in ALLOWED_DATE_PROPERTIES]:
                 popped[k] = date_elem.attrib.pop(k)
             # if len(popped.keys()) > 0:
-            #     log("WARN: attributes removed from dc:date:", popped)
+            #     log.warn("attributes removed from dc:date:", popped)
 
         # only certain non-namespaced opf:meta @property values are allowed in EPUB3
         for meta_elem in metadata_elem.xpath("opf:meta[@property]", namespaces=C.NS):
             if meta_elem.get('property') not in ALLOWED_META_PROPERTIES \
             and ':' not in (meta_elem.get('property') or ''):
                 metadata_elem.remove(meta_elem)
-                # log("WARN: meta @property removed: %s = %s" 
+                # log.warn("meta @property removed: %s = %s" 
                 #     % (meta_elem.get('property'), meta_elem.text or ''))
 
         # opf:meta @property="dcterms:modified" is required; set to the current time UTC
@@ -673,10 +684,11 @@ class EPUB(ZIP, Source):
 
     @classmethod
     def zip_epub(C, output_path, epubfn=None, mimetype_fn=None, opf_fn=None, container_fn=None, other_fns=[],
-                compression=zipfile.ZIP_DEFLATED, log=print):
+                compression=zipfile.ZIP_DEFLATED):
         """zip the epub and return its filename"""
         # set up the .zip file
         epub = ZIP(fn=epubfn or C.epub_fn(output_path), mode='w', compression=compression)
+        log.info("epub: %s" % epub.fn)
 
         # mimetype must be first, and not be compressed
         if mimetype_fn is None:
@@ -703,7 +715,7 @@ class EPUB(ZIP, Source):
             epub.zipfile.write(other_fn, os.path.relpath(fn, output_path))
 
         epub.close()
-        the_epub = C(fn=epub.fn, log=log)
+        the_epub = C(fn=epub.fn)
         return the_epub
 
     @classmethod
