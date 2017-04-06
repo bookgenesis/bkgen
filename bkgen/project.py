@@ -160,6 +160,7 @@ class Project(XML, Source):
             fd['content_type'] = the Content-Type as guessed by the application that is calling this.
             fd['name'] = the "canonical" name of the file (as from uploading).
         """
+        fd = Dict(**fd)
         content_type = mimetypes.guess_type(fn)[0]
         ext = os.path.splitext(fn)[-1].lower()
         result_fd = Dict()
@@ -169,25 +170,25 @@ class Project(XML, Source):
                 or ext == '.docx'):
             # write the content data to a temporary folder
             from .docx import DOCX
-            project.import_source(DOCX(fn=fn))
+            self.import_source(DOCX(fn=fn))
     
         # .EPUB files
         elif (content_type=='application/epub+zip'
                 or ext == '.epub'):
             from .epub import EPUB
-            project.import_source(EPUB(fn=fn))
+            self.import_source(EPUB(fn=fn))
 
         # .IDML files
         elif (content_type=='application/vnd.adobe.indesign-idml-package'
                 or ext == '.idml'):
             from .idml import IDML
-            project.import_source(IDML(fn=fn))
+            self.import_source(IDML(fn=fn))
 
         # .ICML files
         elif (content_type=='application/xml'
                 and ext == '.icml'):
             from .icml import ICML
-            project.import_source(ICML(fn=fn))
+            self.import_source(ICML(fn=fn))
 
         # Images
         elif (content_type in ['image/jpeg', 'image/png', 'image/bmp', 'image/tiff', 'application/pdf']
@@ -221,11 +222,11 @@ class Project(XML, Source):
             source.fn = source_new_fn
 
         # import the documents, metadata, images, and stylesheet from this source
-        if documents==True: self.import_documents(source.documents)
-        if metadata==True: self.import_metadata(source.metadata)
-        if images==True: self.import_images(source.images)
+        if documents==True: self.import_documents(source.documents())
+        if metadata==True: self.import_metadata(source.metadata())
+        if images==True: self.import_images(source.images())
         if stylesheet==True:
-            ss = source.stylesheet
+            ss = source.stylesheet()
             if ss is not None:
                 ss.fn = os.path.join(self.path, self.content_folder, self.make_basename(fn=source.fn, ext='.css'))
                 ss.write()
@@ -286,7 +287,7 @@ class Project(XML, Source):
         for image in images:
             self.import_image(image.fn)
 
-    def import_image(self, fn):
+    def import_image(self, fn, **params):
         """import the image from a local file. Process through GraphicsMagick to ensure clean."""
         basename = re.sub("(&[\w^;]+;|[\s\&+;'])", "-", os.path.basename(os.path.splitext(fn)[0]+'.jpg'))
         outfn = os.path.join(self.path, self.image_folder, basename)
@@ -317,10 +318,14 @@ class Project(XML, Source):
 
         if params.get('class')=='cover' and os.path.splitext(resource_fn)[-1]=='.jpg':
             existing_cover_digital = self.find(self.root, 
-                "//pub:resource[@class='cover-digital']", namespaces=NS)
+                "//pub:resource[(@class='cover' and (@kind='%s' or not(@kind)) or @class='cover-digital')]" % params.get('kind') or 'digital', namespaces=NS)
             if existing_cover_digital is not None:
                 existing_cover_digital.set('class', 'image')
+                _=existing_cover_digital.attrib.pop('kind')
             resource.set('class', 'cover')
+
+        if params.get('kind') is not None:
+            resource.set('kind', params.get('kind'))
 
         self.write()
 
@@ -345,7 +350,7 @@ class Project(XML, Source):
                 elif output_kind=='Kindle':
                     result = self.build_mobi()
                 elif output_kind=='Archive':
-                    result = self.build_archive_zip()
+                    result = self.build_archive()
             except:
                 msg = (str(String(sys.exc_info()[0].__name__).camelsplit()) + ' ' + str(sys.exc_info()[1])).strip()
                 result = Dict(kind=output_kind, message=msg, traceback=traceback.format_exc())
@@ -354,7 +359,7 @@ class Project(XML, Source):
             results.append(result)
         return results
 
-    def build_archive_zip(self):
+    def build_archive(self):
         """create a zip archive of the project folder itself"""
         outfn = os.path.join(self.path, self.output_folder, self.name+'.zip')
         zipfn = ZIP.zip_path(self.path, fn=outfn, mode='w',
@@ -413,7 +418,7 @@ class Project(XML, Source):
             f = File(fn=os.path.abspath(os.path.join(self.path, resource.get('href'))))
             if resource.get('class')=='stylesheet':
                 outfn = self.output_stylesheet(f.fn, output_path)
-            elif resource.get('class') in ['cover', 'image']:
+            elif resource.get('class') in ['cover', 'cover-digital', 'image']:
                 outfn = self.output_image(f.fn, output_path, **image_args)
             else:                                                               # other resource as-is
                 outfn = os.path.join(output_path, os.path.relpath(f.fn, os.path.dirname(self.fn)))
@@ -435,7 +440,7 @@ class Project(XML, Source):
         return outfn
 
     def output_image(self, fn, output_path=None, outfn=None, 
-            format='jpeg', ext='.jpg', res=300, quality=80, maxwh=2048):
+            format='jpeg', ext='.jpg', res=300, quality=80, maxwh=2048, maxpixels=4e6):
         f = File(fn=fn)
         mimetype = f.mimetype() or ''
         output_path = output_path or os.path.join(self.path, self.output_folder)
@@ -453,6 +458,9 @@ class Project(XML, Source):
                 geometry="%dx%d>" % (maxwh, maxwh))
             if format.lower() in ['jpeg', 'jpg']:
                 img_args.update(quality=quality)
+            w,h = [int(i) for i in Image(fn=fn).identify(format="%w,%h").split(',')]
+            if w*h > maxpixels:
+                img_args.geometry = "%dx%d>" % (maxpixels**.5, maxpixels**.5)
             res = Image(fn=fn).convert(outfn, **img_args)
         else:
             res = None
@@ -488,7 +496,7 @@ class Project(XML, Source):
                 if os.path.exists(doc_css_fn) and not os.path.exists(out_css_fn):
                     Text(fn=doc_css_fn).write(fn=out_css_fn)
                 if os.path.exists(out_css_fn):
-                    head = h.find(h.root, "html:head", namespaces=NS)
+                    head = h.find(h.root, "//html:head", namespaces=NS)
                     href = os.path.relpath(out_css_fn, h.dirpath())
                     link = etree.Element("{%(html)s}link" % NS, rel="stylesheet", href=href, type="text/css")
                     head.append(link)
@@ -499,6 +507,7 @@ class Project(XML, Source):
                 # output any images that are referenced from the document and are locally available
                 for img in h.root.xpath("//html:img", namespaces=NS):
                     srcfn = os.path.join(d.path, img.get('src'))
+                    outfn = os.path.join(h.path, img.get('src'))
                     if os.path.exists(srcfn):
                         _ = self.output_image(srcfn, outfn=outfn, **image_args)
                     else:
@@ -545,8 +554,8 @@ def import_all(project_path):
     if not os.path.exists(cover_path): os.makedirs(cover_path)
     
     # import idml if available
-    log.info('-- %d .idml files' % len(fns))
     fns = rglob(interior_path, '*.idml') + rglob(source_path, '*.idml')
+    log.info('-- %d .idml files' % len(fns))
     for fn in fns:
         project.import_source_fn(fn, fns=fns)
     
@@ -584,11 +593,13 @@ def import_all(project_path):
 def build_project(project_path, format=None):
     log.info("== BUILD PROJECT == %s" % os.path.basename(project_path))
     project = Project(fn=os.path.join(project_path, 'project.xml'), **(config.get('Projects') or {}))
-    image_args = {k:config.EPUB[k] for k in (config.EPUB or {}).keys() if 'image_' in k}
+    image_args = config.EPUB.images or {}
     if format is None or 'epub' in format:
-        project.build_epub(show_nav=True, **image_args)
+        project.build_epub(**image_args)
     if format is None or 'mobi' in format:
         project.build_mobi(**image_args)
+    if format=='archive':
+        project.build_archive()
 
 def cleanup_project(project_path):
     project = Project(fn=os.path.join(project_path, 'project.xml'), **(config.get('Projects') or {}))
@@ -620,6 +631,7 @@ if __name__=='__main__':
             if 'build' in sys.argv[1]:
                 if '-epub' in sys.argv[1]: format='epub'
                 elif '-mobi' in sys.argv[1]: format='mobi'
+                elif '-archive' in sys.argv[1]: format='archive'
                 else: format = None
                 build_project(project_path, format=format)
             if 'cleanup' in sys.argv[1]:
