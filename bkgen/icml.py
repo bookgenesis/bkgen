@@ -48,7 +48,7 @@ class ICML(XML, Source):
         from bl.file import File
         from bf.styles import Styles
 
-        if points_per_em is None: points_per_em = POINTS_PER_EM
+        if points_per_em is None: points_per_em = self.POINTS_PER_EM
 
         styles = Styles()
         for style in self.root.xpath("//CharacterStyle | //ParagraphStyle"):
@@ -88,8 +88,9 @@ class ICML(XML, Source):
     # its value based on what is there. Work by CSS attributes rather
     # than by ICML properties -- treat the style element as data to query
 
-    def style_block(self, elem, points_per_em=POINTS_PER_EM):
+    def style_block(self, elem, points_per_em=None):
         "query style elem and return a style definition block"
+        points_per_em = points_per_em or self.POINTS_PER_EM
         s = self.style_attributes(elem, points_per_em=points_per_em)
 
         # inheritance -- unpack, more reliable than using @extend
@@ -109,22 +110,24 @@ class ICML(XML, Source):
             style['@include'] = ''
         style['@include'] += ' ' + mixin
 
-    def style_attributes(self, elem, points_per_em=POINTS_PER_EM):
+    def style_attributes(self, elem, points_per_em=None):
         """query style elem for attributes and return a CSS style definition block.
         """
+        points_per_em = points_per_em or self.POINTS_PER_EM
         s = Dict()
 
         # color
         if elem.get('FillColor') is not None:
             color = elem.get('FillColor').split('/')[-1]
-            if len(color.split(' '))==3:
+            if re.match("\d+\d+\d", color) is not None:
                 r,g,b = [c.split('=')[-1] for c in color.split(' ')]
                 s['color:'] = 'rgb(%s,%s,%s)' % (r,g,b)
             elif color=='Black':
                 s['color:'] = 'rgb(0,0,0)'
             elif color=='Paper':
                 s['color:'] = 'rgb(255,255,255)'
-            # print(color, '=', s.get('color:') or 'not converted')
+            else:
+                s['color:'] = '"%s"' % color
 
         # direction -- can't be included in epub
         # if elem.get('CharacterDirection') == 'LeftToRightDirection':
