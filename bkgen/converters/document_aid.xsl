@@ -52,9 +52,11 @@
         	    <xsl:value-of select="count(html:tr)"/>
         	</xsl:attribute>
         	<xsl:if test="@class">
-        	    <xsl:attribute name="aid5:tablestyle"><xsl:value-of select="@class"/></xsl:attribute>
+        	    <xsl:attribute name="aid5-tablestyle"><xsl:value-of select="@class"/></xsl:attribute>
+                <xsl:attribute name="aid5:tablestyle"><xsl:value-of select="@class"/></xsl:attribute>
         	</xsl:if>
         	<xsl:if test="@data-cols">
+                <xsl:attribute name="aid-tcols"><xsl:value-of select="@data-cols"/></xsl:attribute>
 	        	<xsl:attribute name="aid:tcols"><xsl:value-of select="@data-cols"/></xsl:attribute>
         	</xsl:if>
         	<xsl:apply-templates/>
@@ -68,16 +70,20 @@
     <xsl:template match="html:td">
         <xsl:copy>
         	<xsl:attribute name="aid:table">cell</xsl:attribute>
+            <xsl:attribute name="aid-table">cell</xsl:attribute>
         	<xsl:if test="@id">
         	    <xsl:attribute name="id"><xsl:value-of select="@id"/></xsl:attribute>
         	</xsl:if>
         	<xsl:if test="@class">
+                <xsl:attribute name="aid5-cellstyle"><xsl:value-of select="@class"/></xsl:attribute>
         	    <xsl:attribute name="aid5:cellstyle"><xsl:value-of select="@class"/></xsl:attribute>
         	</xsl:if>
         	<xsl:if test="@width">
+                <xsl:attribute name="aid-ccolwidth"><xsl:value-of select="@width"/></xsl:attribute>
         	    <xsl:attribute name="aid:ccolwidth"><xsl:value-of select="@width"/></xsl:attribute>
         	</xsl:if>
         	<xsl:if test="@colspan">
+                <xsl:attribute name="aid-ccols"><xsl:value-of select="@colspan"/></xsl:attribute>
         	    <xsl:attribute name="aid:ccols"><xsl:value-of select="@colspan"/></xsl:attribute>
         	</xsl:if>
         	<xsl:apply-templates/>
