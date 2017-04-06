@@ -33,10 +33,11 @@ def default(elem, **params):
     return [ e ]
 
 def get_includes(root, **params):
-    for incl in root.xpath("//pub:include", namespaces=NS):
+    for incl in root.xpath(".//pub:include", namespaces=NS):
         for ch in incl: 
             incl.remove(ch)
         srcfn = os.path.join(os.path.dirname(params['fn']), incl.get('src').split('#')[0])
+        log.info(srcfn)
         assert os.path.exists(srcfn)
         src = XML(fn=srcfn)
         if '#' in incl.get('src'):
@@ -45,6 +46,8 @@ def get_includes(root, **params):
         else:
             elems = XML.xpath(src.root, "html:body/*", namespaces=NS)
         for elem in elems:
+            if len(elem.xpath(".//pub:include", namespaces=NS)) > 0:
+                elem = get_includes(elem, **params)
             incl.append(elem)
     return root
 
