@@ -158,7 +158,10 @@ def character_attribs(elem):
             except:
                 log.warn(sys.exc_info()[1])
                 log.warn('%s=%r' % (key, elem.get(key)))
-        elif key in ['AppliedCharacterStyle', 'BaselineShift', 'FillColor', 'FillTint', 
+        elif key == 'FillColor':
+                style['color'] = '%s' % elem.get(key).split('/')[-1]
+        elif key in ['AppliedCharacterStyle', 'AppliedConditions', 'BaselineShift', 
+                'FillColor', 'FillTint', 
                 'HorizontalScale', 'Kashidas', 'KerningMethod', 'KerningValue', 
                 'ParagraphBreakType', 'StrokeColor', 'Tracking', 'VerticalScale']:
             pass
@@ -265,22 +268,22 @@ def HyperlinkTextDestination(elem, **params):
         anchor = B.pub.anchor_start(name=make_anchor_name(elem.get('Name')))
         # If the anchor_start defines a bookmark, create a section_start as well
         # print(elem.get('Name'), elem.attrib)
-        bookmarks = elem.xpath("//Bookmark[@Destination='HyperlinkTextDestination/%s']" % elem.get('Name'))
-        if len(bookmarks) > 0:
+        bookmark = XML.find(elem, "//Bookmark[@Destination='HyperlinkTextDestination/%s']" % elem.get('Name'))
+        if bookmark is not None:
             section_start = B.pub.section_start(
                 id="section_"+anchor.get('name'), 
-                title=bookmarks[0].get('Name').replace('_', ' ').strip())
+                title=bookmark.get('Name').replace('_', ' ').strip())
             result += [section_start]
         # try to find a cross-reference source; if so, use the number and link back.
-        hyperlinks = elem.xpath("//Hyperlink[@DestinationUniqueKey='%s']" % elem.get('DestinationUniqueKey'))
-        if len(hyperlinks) > 0:
-            sources = elem.xpath("//CrossReferenceSource[@Self='%s']" % hyperlinks[0].get('Source'))
-            if len(sources) > 0:
-                content = sources[0].find('Content')
+        hyperlink = XML.find(elem, "//Hyperlink[@DestinationUniqueKey='%s']" % elem.get('DestinationUniqueKey'))
+        if hyperlink is not None:
+            source = XML.find(elem, "//CrossReferenceSource[@Self='%s']" % hyperlink.get('Source'))
+            if source is not None:
+                content = source.find('Content')
                 if content is not None:
-                    hyperlink_anchor = make_anchor_name(sources[0].get('Name'))
-                    hyperlink = B.pub.hyperlink(content.text, anchor=hyperlink_anchor)
-                    return [anchor, hyperlink, ' ']
+                    hyperlink_anchor = make_anchor_name(source.get('Name'))
+                    hyperlink_elem = B.pub.hyperlink(content.text, anchor=hyperlink_anchor)
+                    return [anchor, hyperlink_elem, ' ']
     result += [anchor]
     return result
 
@@ -391,7 +394,7 @@ def TextVariableInstance(elem, **params):
             # page references 
             return [B.pub.cref(elem.get('ResultText'))]
         elif variable_type == 'ModificationDateType':
-            return [B.pub.modified(idformat=text_variable.find('DateVariablePreference').get('Format'))]
+            return [B.pub.modified(elem.get('ResultText') or '', idformat=text_variable.find('DateVariablePreference').get('Format'))]
         else:
             return [elem.get('ResultText')]
     else:
