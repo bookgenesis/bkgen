@@ -34,22 +34,19 @@ class Document(XML, Source):
             return CSS(fn=cssfn)
 
     @classmethod
-    def load(C, fn=None, section_id=None, **args):
+    def load(C, fn, section_id=None, **args):
+        log.debug("fn=%r, section_id=%r, **%r" % (fn, section_id, args))
         B = Builder(default=C.NS.html, **C.NS)
-        x = C(**args)
+        x = C(fn=fn, **args)
         x.fn = fn
         if section_id is not None:
             section = C.find(x.root, "//html:section[@id='%s']" % section_id, namespaces=C.NS)
         else:
             section = C.find(x.root, "//html:section", namespaces=C.NS)
+        log.debug("%s: %r" % (section_id, section.attrib if section is not None else None))
         if section is not None:
-            log.debug(section.attrib)
-            title = section.get('title')
-            log.debug("title = %r" % title)
-            title_elem = B._('title', section.get('title') or '')
-            head_elem = B._.head('\n\t\t', title_elem, '\n\t')
             body_elem = B._.body('\n', section)
-            x.root = B.pub.document('\n\t', head_elem, '\n\t', body_elem, '\n')
+            x.root = B.pub.document('\n\t', body_elem, '\n')
             x.fn = os.path.splitext(x.fn)[0] + '_' + section.get('id') + '.xml'
         return x
 
