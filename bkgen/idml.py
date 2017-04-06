@@ -39,13 +39,13 @@ class IDML(ZIP, Source):
                 d[item.get('Self')] = item
         return d
 
-    def documents(self, path=None, **params):
+    def documents(self, path=None, articles=True, **params):
         """return a collection of pub:documents from the stories in the .idml file.
         If the .idml file has Articles, use those as guidance; otherwise, use the stories directly.
         """
         path = path if path is not None else self.output_path
         designmap = self.design_map(path=path)
-        if len(designmap.root.xpath("//Article")) > 0:
+        if articles==True and len(designmap.root.xpath("//Article")) > 0:
             return self.articles_documents(path=path, designmap=designmap)
         else:
             documents = []
