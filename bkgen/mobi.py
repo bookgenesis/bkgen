@@ -1,15 +1,17 @@
 
-import os, subprocess
+import os, logging, subprocess
 from bl.dict import Dict
 from bf.image import Image
 from bxml.xml import XML, etree
 from bkgen import NS, config
 
+log = logging.getLogger(__name__)
+
 class MOBI(Dict):
     NS = NS
 
-    def __init__(self, log=print, **args):
-        Dict.__init__(self, log=log, **args)
+    def __init__(self, **args):
+        Dict.__init__(self, **args)
 
     @classmethod
     def mobi_fn(C, mobi_path, mobi_name=None, ext='.mobi'):
@@ -30,6 +32,7 @@ class MOBI(Dict):
                     epub_name=mobi_name, spine_items=spine_items, cover_src=cover_src, cover_html=False,
                     nav_toc=nav_toc, nav_landmarks=nav_landmarks, nav_page_list=nav_page_list, 
                     nav_href=nav_href, nav_title=nav_title, zip=False)
+        opffn = EPUB.get_opf_fn(build_path)
         self.move_anchors_before_paragraphs(build_path, opffn)
         EPUB.unhide_toc(os.path.join(build_path, nav_href))
         EPUB.append_toc_to_spine(opffn, nav_href)
@@ -82,7 +85,7 @@ class MOBI(Dict):
                         width = int(w * (height/h))
                 if width != w or height != h:
                     Image(fn=srcfn).convert(outfn=srcfn, resize="%dx%d" % (width, height))
-                    print("%dx%d\t%dx%d\t%s" % (w, h, width, height, os.path.relpath(srcfn, os.path.dirname(opffn))))
+                    log.debug("%dx%d\t%dx%d\t%s" % (w, h, width, height, os.path.relpath(srcfn, os.path.dirname(opffn))))
             x.write(canonicalized=False)
 
 
@@ -92,10 +95,11 @@ class MOBI(Dict):
             mobifn = os.path.join(os.path.dirname(build_path), os.path.basename(build_path)+'.mobi')
         logfn = mobifn+'.kindlegen.txt'
         logf = open(logfn, 'wb')
-        print("compiling", mobifn)
+        log.info("mobi: %s" % mobifn)
         cmd = [config.Resources.kindlegen, opffn, '-o', os.path.basename(mobifn)]
         subprocess.call(cmd, stdout=logf, stderr=logf)
         logf.close()
+        log.info("kindlegen log: %s" % logfn)
         mobi_build_fn = os.path.join(os.path.dirname(opffn), os.path.basename(mobifn))
         if os.path.exists(mobi_build_fn):
             if os.path.exists(mobifn) and mobifn != mobi_build_fn:
