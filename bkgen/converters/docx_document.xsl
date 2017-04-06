@@ -34,7 +34,7 @@
     xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" 
     xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
 
-    exclude-result-prefixes="a aml dt m mc mo mv o pic r sl v ve w w10 w14 w15 wne wp wp14 wpc wpg wpi wps wsp wx"
+    exclude-result-prefixes="a aml dt m mc mo mv o pic sl v ve w w10 w14 w15 wne wp wp14 wpc wpg wpi wps wsp wx"
     >
 
     <xsl:output method="xml" encoding="utf-8"/>
@@ -518,6 +518,17 @@
     <xsl:template match="w:docPart"><xsl:apply-templates/></xsl:template>
     <xsl:template match="w:placeholder"><xsl:apply-templates/></xsl:template>
 
+    <xsl:template match="wp:anchor"><xsl:apply-templates/></xsl:template>
+
+    <xsl:template match="wp:simplePos"/>
+    <xsl:template match="wp:positionH"/>
+    <xsl:template match="wp:positionV"/>
+    <xsl:template match="wp:align"/>
+    <xsl:template match="wp:wrapTopAndBottom"/>
+    <xsl:template match="wp14:sizeRelH"/>
+    <xsl:template match="wp14:sizeRelV"/>
+    <xsl:template match="wp14:pctWidth"/>
+    <xsl:template match="wp14:pctHeight"/>
 
     <xsl:template match="w:divId"/>
     <xsl:template match="w:ind"/>
@@ -537,6 +548,9 @@
     <xsl:template match="w:proofErr"/>
     <xsl:template match="w:id"/>
 
+    <xsl:template match="w:*"/>
+    <xsl:template match="wp:*"/>
+    <xsl:template match="wp14:*"/>
     
 <!-- 
     <xsl:template match="w:pPrChange"/>
