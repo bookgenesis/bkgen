@@ -13,16 +13,16 @@ class Source(File):
 
     @property
     def documents(self):
-        return []
+        raise NotImplementedError
 
     @property
     def images(self):
-        return []
+        raise NotImplementedError
 
     @property
     def metadata(self):
-        return None
+        raise NotImplementedError
 
     @property
     def stylesheet(self):
-        return None
+        raise NotImplementedError
