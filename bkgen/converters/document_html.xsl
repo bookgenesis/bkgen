@@ -67,4 +67,8 @@
 	    <xsl:apply-templates/>
 	</xsl:template>
 
+	<xsl:template match="pub:include">
+	    <xsl:apply-templates/>
+	</xsl:template>
+
 </xsl:stylesheet>

@@ -66,20 +66,6 @@ class Document(XML, Source):
         B = Builder(default=self.NS.html, **self.NS)
         fn = fn or os.path.splitext(self.fn)[0] + ext
         output_path = output_path or self.path
-        
-        # pre-process: get includes
-        for incl in self.root.xpath("//pub:include", namespaces=self.NS):
-            srcfn = os.path.join(os.path.dirname(self.fn), incl.get('src').split('#')[0])
-            if os.path.exists(srcfn):
-                src = XML(fn=srcfn)
-                if '#' in incl.get('src'):
-                    srcid = incl.get('src').split('#')[-1]
-                    elems = XML.xpath(src.root, "//*[@id='%s']" % srcid)
-                else:
-                    elems = XML.xpath(src.root, "html:body/*", namespaces=C.NS)
-                div = B.html.div({'class': 'include', 'title': "src='%s'" % incl.get('src')}, *elems)
-                incl.getparent().replace(incl, div)
-
         h = converter.convert(self, fn=fn, output_path=output_path, resources=resources, **args)
         return h
 
@@ -88,6 +74,26 @@ class Document(XML, Source):
         return "\n".join([
                 etree.tounicode(e, with_tail=True)
                 for e in h.find(h.root, "html:body", namespaces=C.NS).getchildren()])  
+
+    def render_includes(self):
+        """put included content into the <pub:include> elements in the document."""
+        for incl in self.root.xpath("//pub:include", namespaces=NS):
+            # remove existing content from the include
+            incl.text = '\n'
+            for ch in incl.getchildren():
+                incl.remove(ch)
+
+            # fill the include with the included content from the source 
+            srcfn = os.path.abspath(os.path.join(os.path.dirname(self.fn), incl.get('src').split('#')[0]))
+            if os.path.exists(srcfn):
+                src = Document(fn=srcfn)
+                if '#' in incl.get('src'):
+                    srcid = incl.get('src').split('#')[-1]
+                    incl_elems = XML.xpath(src.root, "//*[@id='%s']" % srcid)
+                else:
+                    incl_elems = XML.xpath(src.root, "html:body/*", namespaces=NS)
+                for ie in incl_elems:
+                    incl.append(ie)
 
     def section_content(self, section_id):
         """return an xml string containing the content of the section"""

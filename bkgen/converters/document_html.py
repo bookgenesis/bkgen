@@ -19,6 +19,7 @@ transformer_XSLT = etree.XSLT(etree.parse(os.path.splitext(__file__)[0] + '.xsl'
 
 class DocumentHtml(Converter):
     def convert(self, document, **params):
+        document.render_includes()
         return document.transform(transformer, XMLClass=HTML, **params)
 
 # == DEFAULT == 
@@ -40,20 +41,6 @@ def default(elem, **params):
     # for p in XML.xpath(e, "//html:p", namespaces=NS):
     #     XML.remove_if_empty(p)
     return [ e ]
-
-def get_includes(elem):
-    for incl in elem.xpath("//pub:include", namespaces=NS):
-        srcfn = os.path.join(os.path.dirname(self.fn), incl.get('src').split('#')[0])
-        if os.path.exists(srcfn):
-            src = XML(fn=srcfn)
-            if '#' in incl.get('src'):
-                srcid = incl.get('src').split('#')[-1]
-                elems = XML.xpath(src.root, "//*[@id='%s']" % srcid)
-            else:
-                elems = XML.xpath(src.root, "html:body/*", namespaces=NS)
-            div = B.html.div({'class': 'include', 'title': "src='%s'" % incl.get('src')}, *elems)
-            incl.getparent().replace(incl, div)
-    return elem
 
 def fill_head(elem, **params):
     head = XML.find(elem, "//html:head", namespaces=NS)
