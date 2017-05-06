@@ -4,6 +4,16 @@ from bl.config import Config
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 config = Config(fn=os.path.join(PATH, '__config__.ini'))
+resources_path = os.path.join(PATH, 'bkgen', 'resources')
+config.Resources = Dict(
+    path=resources_path,
+    publishingxml=os.path.join(resources_path, 'publishing-xml'),
+    schemas=os.path.join(resources_path, 'publishing-xml', 'schemas'),
+    epubcheck=os.path.join(resources_path, 'epubcheck-4.0.2/epubcheck.jar'),
+    kindlegen=os.path.join(resources_path, 'KindleGen_Mac_i386_v2_9/kindlegen'),
+    mimetypes=os.path.join(resources_path, 'mime.types'),
+)
+
 mimetypes.init(files=[config.Resources.mimetypes])
 
 NS = Dict(
