@@ -541,7 +541,7 @@ class Project(XML, Source):
 
 def import_all(project_path):
     """import sources, cover, and metadata into project"""
-    project = Project(fn=os.path.join(project_path, 'project.xml'), **(config.get('Projects') or {}))
+    project = Project(fn=os.path.join(project_path, 'project.xml'), **(config.Project or {}))
     basename = os.path.basename(project.path)
     log.info("== IMPORT ALL FOR PROJECT: %s ==" % basename)
 
@@ -592,7 +592,7 @@ def import_all(project_path):
 
 def build_project(project_path, format=None):
     log.info("== BUILD PROJECT == %s" % os.path.basename(project_path))
-    project = Project(fn=os.path.join(project_path, 'project.xml'), **(config.get('Projects') or {}))
+    project = Project(fn=os.path.join(project_path, 'project.xml'), **(config.Project or {}))
     image_args = config.EPUB.images or {}
     if format is None or 'epub' in format:
         project.build_epub(**image_args)
@@ -602,7 +602,7 @@ def build_project(project_path, format=None):
         project.build_archive()
 
 def cleanup_project(project_path):
-    project = Project(fn=os.path.join(project_path, 'project.xml'), **(config.get('Projects') or {}))
+    project = Project(fn=os.path.join(project_path, 'project.xml'), **(config.Project or {}))
     ebooks_path = os.path.join(path, 'ebooks')
     dirs = [d for d in glob(ebooks_path+'/*') if os.path.isdir(d)]
     for d in dirs:
