@@ -59,6 +59,10 @@ class Project(XML, Source):
         return [Document(fn=fn) for fn in rglob(self.path, 'content/*.xml')]
 
     @property
+    def resources(self):
+        return self.find(self.root, "pub:resources", namespaces=NS)
+
+    @property
     def images(self):
         """all of the image files in the content subfolder."""
         from bf.image import Image
@@ -143,12 +147,11 @@ class Project(XML, Source):
 
     def add_resource(self, href, resource_class, kind=None):
         """add the given resource to the project file, if it isn't already present"""
-        resources = self.find(self.root, "pub:resources", namespaces=NS)
-        resource = self.find(resources, "/pub:resource[@href='%s' and @class='%s']" % (href, resource_class), namespaces=NS)
+        resource = self.find(self.resources, "/pub:resource[@href='%s' and @class='%s']" % (href, resource_class), namespaces=NS)
         if resource is None:
             resource = PUB.resource({'href':href, 'class':resource_class}); resource.tail='\n\t\t'
             if kind is not None: resource.set('kind', kind)
-            resources.append(resource)
+            self.resources.append(resource)
         else:
             log.warn("resource with that href already exists: %r" % resource.attrib)
         return resource
@@ -316,12 +319,13 @@ class Project(XML, Source):
             resources = self.find(self.root, "pub:resources", namespaces=NS)
             resources.append(resource)
 
-        if params.get('class')=='cover' and os.path.splitext(resource_fn)[-1]=='.jpg':
+        if params.get('class')=='cover-digital' and os.path.splitext(resource_fn)[-1]=='.jpg':
             existing_cover_digital = self.find(self.root, 
                 "//pub:resource[(@class='cover' and (@kind='%s' or not(@kind)) or @class='cover-digital')]" % params.get('kind') or 'digital', namespaces=NS)
             if existing_cover_digital is not None:
                 existing_cover_digital.set('class', 'image')
-                _=existing_cover_digital.attrib.pop('kind')
+                if existing_cover_digital.get('kind') is not None:
+                   _=existing_cover_digital.attrib.pop('kind')
             resource.set('class', 'cover')
 
         if params.get('kind') is not None:
@@ -369,7 +373,7 @@ class Project(XML, Source):
 
     def build_epub(self, clean=True, show_nav=False, zip=True, check=True, cleanup=False, **image_args):
         from .epub import EPUB
-        epub_isbn = self.metadata.get_dc_identifier(id_patterns=['epub', 'ebook', 'isbn'])
+        epub_isbn = self.metadata.identifier(id_patterns=['epub', 'ebook', 'isbn'])
         if epub_isbn is not None and epub_isbn.text is not None:
             epub_name = epub_isbn.text.replace('-', '')
         else:
@@ -390,7 +394,7 @@ class Project(XML, Source):
 
     def build_mobi(self, clean=True, cleanup=False, **image_args):
         from .mobi import MOBI
-        mobi_isbn = self.metadata.get_dc_identifier(id_patterns=['mobi', 'ebook', 'isbn'])
+        mobi_isbn = self.metadata.identifier(id_patterns=['mobi', 'ebook', 'isbn'])
         if mobi_isbn is not None:
             mobi_name = mobi_isbn.text.replace('-', '')
         else:
