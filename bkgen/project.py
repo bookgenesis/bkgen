@@ -319,9 +319,12 @@ class Project(XML, Source):
             resources = self.find(self.root, "pub:resources", namespaces=NS)
             resources.append(resource)
 
-        if params.get('class')=='cover-digital' and os.path.splitext(resource_fn)[-1]=='.jpg':
+        if ('cover' in params.get('class') 
+            and (params.get('kind') is None or 'digital' in params.get('kind')) 
+            and os.path.splitext(resource_fn)[-1]=='.jpg'):
             existing_cover_digital = self.find(self.root, 
-                "//pub:resource[(@class='cover' and (@kind='%s' or not(@kind)) or @class='cover-digital')]" % params.get('kind') or 'digital', namespaces=NS)
+                "//pub:resource[contains(@class,'cover') and (@kind='%s' or not(@kind))]" 
+                % params.get('kind') or 'digital', namespaces=NS)
             if existing_cover_digital is not None:
                 existing_cover_digital.set('class', 'image')
                 if existing_cover_digital.get('kind') is not None:
