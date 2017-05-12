@@ -14,8 +14,8 @@ class Metadata(XML):
     def element_text(self, xpath):
         return self.find(self.root, "%s/text()" % xpath, namespaces=NS)
 
-    def meta_text(self, property):
-        return self.element_text("opf:meta[@property='%s']/text()" % property)
+    def meta_text(self, property_name):
+        return self.element_text("opf:meta[@property='%s']" % property_name)
 
     @property
     def title_text(self):
