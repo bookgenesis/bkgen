@@ -51,7 +51,7 @@ def document(elem, **params):
     root = merge_contiguous_spans(root)
     root = remove_empty_paras(root)
     root = wrap_sections(root, **params)
-    root = split_level_sections(root)
+    # root = split_level_sections(root)
     root = sections_title_id(root)
 
     # Post-Process
