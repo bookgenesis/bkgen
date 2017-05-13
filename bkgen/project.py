@@ -166,7 +166,7 @@ class Project(XML, Source):
         fd = Dict(**fd)
         content_type = mimetypes.guess_type(fn)[0]
         ext = os.path.splitext(fn)[-1].lower()
-        result_fd = Dict()
+        result = Dict()
         
         # .DOCX files
         if (content_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -201,14 +201,14 @@ class Project(XML, Source):
         # not a matching file type
         else:
             log.warn('not allowed file type: %r' % fd)
-            fd.status = 'error'
-            fd.message = ext+' files (' + fd.get('content_type') + ') are not allowed, sorry'
+            result.status = 'error'
+            result.message = ext+' files (' + fd.get('content_type') + ') are not allowed, sorry'
 
-        if fd.status is None:
-            fd.status = 'success'
-            fd.message = 'import succeeded.'
+        if result.status is None:
+            result.status = 'success'
+            result.message = 'import succeeded.'
 
-        return fd
+        return result
     
     def import_source(self, source, documents=True, images=True, stylesheet=True, metadata=False):
         """import a source into the project.
@@ -243,8 +243,10 @@ class Project(XML, Source):
         """
         if documents is None: return
         spine_elem = self.find(self.root, "pub:spine", namespaces=NS)
-        spine_hrefs = [spineitem.get('href') 
-            for spineitem in self.xpath(spine_elem, "pub:spineitem", namespaces=NS)]
+        spine_hrefs = [
+            spineitem.get('href') 
+            for spineitem in self.xpath(spine_elem, "pub:spineitem", namespaces=NS)
+        ]
         for doc in documents:
             # save the document, overwriting any existing document in that location
             doc.fn = os.path.join(self.path, self.content_folder, self.make_basename(fn=doc.fn))
@@ -314,22 +316,19 @@ class Project(XML, Source):
         href = os.path.relpath(resource_fn, self.path)
         resource = self.find(self.root, "//pub:resource[@href='%s']" % href, namespaces=NS)
         if resource is None:
-            resource = etree.Element("{%(pub)s}resource" % NS, **{'href':href, 'class':'image'})
+            resource = etree.Element("{%(pub)s}resource" % NS, href=href, **params)
             resource.tail = '\n\t'
             resources = self.find(self.root, "pub:resources", namespaces=NS)
             resources.append(resource)
 
-        if ('cover' in params.get('class') 
+        if ('cover' in resource.get('class') 
             and (params.get('kind') is None or 'digital' in params.get('kind')) 
             and os.path.splitext(resource_fn)[-1]=='.jpg'):
             existing_cover_digital = self.find(self.root, 
                 "//pub:resource[contains(@class,'cover') and (@kind='%s' or not(@kind))]" 
                 % params.get('kind') or 'digital', namespaces=NS)
             if existing_cover_digital is not None:
-                existing_cover_digital.set('class', 'image')
-                if existing_cover_digital.get('kind') is not None:
-                   _=existing_cover_digital.attrib.pop('kind')
-            resource.set('class', 'cover')
+                resources.remove(existing_cover_digital)
 
         if params.get('kind') is not None:
             resource.set('kind', params.get('kind'))
