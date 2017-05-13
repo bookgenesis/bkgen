@@ -225,11 +225,11 @@ class Project(XML, Source):
             source.fn = source_new_fn
 
         # import the documents, metadata, images, and stylesheet from this source
-        if documents==True: self.import_documents(source.documents())
-        if metadata==True: self.import_metadata(source.metadata())
-        if images==True: self.import_images(source.images())
+        if documents==True: self.import_documents(source.documents)
+        if metadata==True: self.import_metadata(source.metadata)
+        if images==True: self.import_images(source.images)
         if stylesheet==True:
-            ss = source.stylesheet()
+            ss = source.stylesheet
             if ss is not None:
                 ss.fn = os.path.join(self.path, self.content_folder, self.make_basename(fn=source.fn, ext='.css'))
                 ss.write()

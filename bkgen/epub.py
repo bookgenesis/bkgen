@@ -58,6 +58,7 @@ class EPUB(ZIP, Source):
                 fn=os.path.join(self.fn, zf_path))
         return opf
 
+    @property
     def documents(self, path=None, opf=None):
         """return a list of pub:document containing the content in the EPUB
         path = the output path for the documents.
@@ -78,6 +79,7 @@ class EPUB(ZIP, Source):
             docs.append(doc)
         return docs
 
+    @property
     def resources(self, path=None, opf=None):
         """return a list of files containing project resources in the EPUB
         path = the output path for the resources
@@ -126,6 +128,7 @@ class EPUB(ZIP, Source):
 
         return res
 
+    @property
     def metadata(self, opf=None):
         """return an opf:metadata element with the metadata in the EPUB"""
         if opf is None: opf = self.get_opf()

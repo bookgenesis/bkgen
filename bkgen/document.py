@@ -14,6 +14,11 @@ class Document(XML, Source):
     NS = Dict(**{k:NS[k] for k in NS if k in ['html', 'pub', 'epub']})
 
     @property
+    def metadata(self):
+        from .metadata import Metadata
+        return Metadata()
+
+    @property
     def documents(self):
         return [self]
 
