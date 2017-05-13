@@ -156,14 +156,11 @@ class Project(XML, Source):
             log.warn("resource with that href already exists: %r" % resource.attrib)
         return resource
 
-    def import_source_fn(self, fn, **fd):
+    def import_source_file(self, fn, **args):
         """import the source fn. 
         fn = the filesystem path to the file (such as a temporary file location)
-        **fd = data about the file
-            fd['content_type'] = the Content-Type as guessed by the application that is calling this.
-            fd['name'] = the "canonical" name of the file (as from uploading).
+        args = arguments that will be passed to Project.import_source()
         """
-        fd = Dict(**fd)
         content_type = mimetypes.guess_type(fn)[0]
         ext = os.path.splitext(fn)[-1].lower()
         result = Dict()
@@ -173,25 +170,25 @@ class Project(XML, Source):
                 or ext == '.docx'):
             # write the content data to a temporary folder
             from .docx import DOCX
-            self.import_source(DOCX(fn=fn))
+            self.import_source(DOCX(fn=fn), **args)
     
         # .EPUB files
         elif (content_type=='application/epub+zip'
                 or ext == '.epub'):
             from .epub import EPUB
-            self.import_source(EPUB(fn=fn))
+            self.import_source(EPUB(fn=fn), **args)
 
         # .IDML files
         elif (content_type=='application/vnd.adobe.indesign-idml-package'
                 or ext == '.idml'):
             from .idml import IDML
-            self.import_source(IDML(fn=fn))
+            self.import_source(IDML(fn=fn), **args)
 
         # .ICML files
         elif (content_type=='application/xml'
                 and ext == '.icml'):
             from .icml import ICML
-            self.import_source(ICML(fn=fn))
+            self.import_source(ICML(fn=fn), **args)
 
         # Images
         elif (content_type in ['image/jpeg', 'image/png', 'image/bmp', 'image/tiff', 'application/pdf']
@@ -200,9 +197,9 @@ class Project(XML, Source):
 
         # not a matching file type
         else:
-            log.warn('not allowed file type: %r' % fd)
+            result.message = 'Sorry, not a supported file type: %r (%r)' % (ext, content_type))
             result.status = 'error'
-            result.message = ext+' files (' + fd.get('content_type') + ') are not allowed, sorry'
+            log.error(result.message)
 
         if result.status is None:
             result.status = 'success'
@@ -563,19 +560,19 @@ def import_all(project_path):
     fns = rglob(interior_path, '*.idml') + rglob(source_path, '*.idml')
     log.info('-- %d .idml files' % len(fns))
     for fn in fns:
-        project.import_source_fn(fn, fns=fns)
+        project.import_source_file(fn, fns=fns)
     
     # import icml 
     fns = rglob(interior_path, '*.icml') + rglob(source_path, '*.icml')
     log.info('-- %d .icml files' % len(fns))
     for fn in fns: 
-        project.import_source_fn(fn, fns=fns)
+        project.import_source_file(fn, fns=fns)
     
     # import docx
     fns = rglob(interior_path, '*.docx') + rglob(source_path, '*.docx')
     log.info('-- %d .docx files' % len(fns))
     for fn in fns:
-        project.import_source_fn(fn, with_metadata=False)
+        project.import_source_file(fn, with_metadata=False)
 
     # import metadata.xml
     fns = [fn for fn in rglob(project.path, '*metadata.xml')
