@@ -103,7 +103,8 @@ class Document(XML, Source):
 
     def section_content(self, section_id):
         """return an xml string containing the content of the section"""
-        section = self.find(self.root, "//html:section[@id='%s']" % section_id, namespaces=C.NS)
+        section = self.find(self.root, "//html:section[@id='%s']" % section_id, namespaces=NS)
+        log.info("%s" % section_id)
         if section is not None:
             return (section.text or '') + ''.join([
                 etree.tounicode(e, with_tail=True)
