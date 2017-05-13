@@ -197,7 +197,7 @@ class Project(XML, Source):
 
         # not a matching file type
         else:
-            result.message = 'Sorry, not a supported file type: %r (%r)' % (ext, content_type))
+            result.message = 'Sorry, not a supported file type: %r (%r)' % (ext, content_type)
             result.status = 'error'
             log.error(result.message)
 

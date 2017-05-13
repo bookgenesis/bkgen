@@ -3,6 +3,7 @@ import logging
 log = logging.getLogger(__name__)
 
 import os
+from lxml import etree
 from bl.dict import Dict
 from bxml import XML
 from bxml.builder import Builder
@@ -78,7 +79,7 @@ class Document(XML, Source):
         h = self.html(fn=fn, output_path=output_path, resources=resources, **args)
         return "\n".join([
                 etree.tounicode(e, with_tail=True)
-                for e in h.find(h.root, "html:body", namespaces=C.NS).getchildren()])  
+                for e in h.find(h.root, "html:body", namespaces=NS).getchildren()])  
 
     def render_includes(self):
         """put included content into the <pub:include> elements in the document."""

@@ -26,8 +26,7 @@ class DocumentHtml(Converter):
 # do XSLT on the element and return the results
 @transformer.match("True")
 def default(elem, **params):
-    e = get_includes(elem)
-    e = transformer_XSLT(e).getroot()
+    e = transformer_XSLT(elem).getroot()
     e = fill_head(e, **params)
     # omit "Print" condition
     for conditional_elem in XML.xpath(e, "//html:*[@pub:cond]", namespaces=NS):
