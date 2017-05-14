@@ -315,20 +315,19 @@ class Project(XML, Source):
         if resource is None:
             resource = etree.Element("{%(pub)s}resource" % NS, href=href, **params)
             resource.tail = '\n\t'
-            resources = self.find(self.root, "pub:resources", namespaces=NS)
-            resources.append(resource)
+        log.debug("resource.attrib = %r" % resource.attrib)
 
-        if ('cover' in resource.get('class') 
-            and (params.get('kind') is None or 'digital' in params.get('kind')) 
+        if 'cover' in resource.get('class'):
+            if ((params.get('kind') is None or 'digital' in params.get('kind')) 
             and os.path.splitext(resource_fn)[-1]=='.jpg'):
-            existing_cover_digital = self.find(self.root, 
-                "//pub:resource[contains(@class,'cover') and (@kind='%s' or not(@kind))]" 
-                % params.get('kind') or 'digital', namespaces=NS)
-            if existing_cover_digital is not None:
-                resources.remove(existing_cover_digital)
+                existing_cover_digital = self.find(self.root, 
+                    "//pub:resource[contains(@class,'cover') and (@kind='%s' or not(@kind))]" 
+                    % params.get('kind') or 'digital', namespaces=NS)
+                if existing_cover_digital is not None:
+                    resources.remove(existing_cover_digital)
 
-        if params.get('kind') is not None:
-            resource.set('kind', params.get('kind'))
+        resources = self.find(self.root, "pub:resources", namespaces=NS)
+        resources.append(resource)
 
         self.write()
 
