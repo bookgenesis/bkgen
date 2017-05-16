@@ -26,7 +26,7 @@ class Project(XML, Source):
     The root element is pub:project, where 'pub:' is the Publishing XML namespace (see http://publishingxml.org).
     """
     ROOT_TAG = "{%(pub)s}project" % NS
-    OUTPUT_KINDS = Dict(**{'EPUB':'.epub', 'Kindle':'.mobi'})
+    OUTPUT_KINDS = Dict(**{'EPUB':'.epub', 'Kindle':'.mobi'})#, 'Archive':'.zip'})
 
     def __init__(self, **args):
         XML.__init__(self, **args)
@@ -44,6 +44,10 @@ class Project(XML, Source):
     @property
     def path(self):
         return os.path.dirname(os.path.abspath(self.fn))
+
+    @property
+    def output_kinds(self):
+        return self.get('output_kinds') or self.OUTPUT_KINDS
 
     # SOURCE PROPERTIES
     @property
