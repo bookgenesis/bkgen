@@ -26,7 +26,7 @@ class Project(XML, Source):
     The root element is pub:project, where 'pub:' is the Publishing XML namespace (see http://publishingxml.org).
     """
     ROOT_TAG = "{%(pub)s}project" % NS
-    OUTPUT_KINDS = {'EPUB':'.epub', 'Kindle':'.mobi', 'Archive':'.zip'}
+    OUTPUT_KINDS = Dict(**{'EPUB':'.epub', 'Kindle':'.mobi'})
 
     def __init__(self, **args):
         XML.__init__(self, **args)
@@ -307,7 +307,6 @@ class Project(XML, Source):
         f = File(fn=outfn)
         resource_fn = os.path.join(self.path, self.image_folder, basename)
         log.debug("resource = %s" % os.path.relpath(resource_fn, self.path))
-
         f.write(fn=resource_fn)
         log.debug(os.path.relpath(resource_fn, self.path))
         href = os.path.relpath(resource_fn, self.path)
@@ -316,6 +315,8 @@ class Project(XML, Source):
             resource = etree.Element("{%(pub)s}resource" % NS, href=href, **params)
             resource.tail = '\n\t'
         log.debug("resource.attrib = %r" % resource.attrib)
+
+        resources = self.find(self.root, "pub:resources", namespaces=NS)
 
         if 'cover' in resource.get('class'):
             if ((params.get('kind') is None or 'digital' in params.get('kind')) 
@@ -326,7 +327,6 @@ class Project(XML, Source):
                 if existing_cover_digital is not None:
                     resources.remove(existing_cover_digital)
 
-        resources = self.find(self.root, "pub:resources", namespaces=NS)
         resources.append(resource)
 
         self.write()
@@ -336,7 +336,7 @@ class Project(XML, Source):
             pub:resources/pub:resource[contains(@class, 'cover') and 
                 (not(@kind) or contains(@kind, '%s'))]/@href""" % kind, namespaces=NS)        
 
-    def build_outputs(self, kind=None):
+    def build_outputs(self, kind=None, cleanup=True):
         """build the project outputs
             kind=None:      which kind of output to build; if None, build all
         """
@@ -348,9 +348,9 @@ class Project(XML, Source):
                 log.info("output kind=%r" % output_kind)
                 assert output_kind in self.OUTPUT_KINDS.keys()
                 if output_kind=='EPUB':
-                    result = self.build_epub()
+                    result = self.build_epub(cleanup=cleanup)
                 elif output_kind=='Kindle':
-                    result = self.build_mobi()
+                    result = self.build_mobi(cleanup=cleanup)
                 elif output_kind=='Archive':
                     result = self.build_archive()
             except:
@@ -359,6 +359,12 @@ class Project(XML, Source):
                 log.error(result.msg)
                 log.debug(result.traceback)
             results.append(result)
+
+        outputs_elem = self.find(self.root, "pub:outputs", namespaces=NS)
+        if outputs_elem is not None:
+            outputs_elem.set('completed', time.strftime("%Y-%m-%dT%H:%M:%S"))
+            self.write()
+
         return results
 
     def build_archive(self):

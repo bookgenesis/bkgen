@@ -4,7 +4,7 @@ from bl.config import Config
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 config = Config(fn=os.path.join(PATH, '__config__.ini'))
-resources_path = os.path.join(PATH, 'bkgen', 'resources')
+resources_path = os.path.join(PATH, 'resources')
 config.Resources = Dict(
     path=resources_path,
     publishingxml=os.path.join(resources_path, 'publishing-xml'),
