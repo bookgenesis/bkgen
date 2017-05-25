@@ -65,8 +65,9 @@ def ParagraphStyleRange(elem, **params):
     ps = elem.get('AppliedParagraphStyle')\
             .replace('ParagraphStyle/', '').replace('%3a', ':').replace(": ", ":")
     p_class = ICML.classname(ps)
+    if 'p_class' not in params: params['p_class'] = p_class
     p = B.html.p({'class': p_class}, 
-        '', transformer(elem.getchildren(), p_class=p_class, **params))
+        '', transformer(elem.getchildren(), **params))
     result = [p, '\n']
     # if there is a section_start in the paragraph, move it out.
     section_start = XML.find(p, ".//pub:section_start", namespaces=NS) 
@@ -85,8 +86,9 @@ def CharacterStyleRange(elem, **params):
                 .replace('CharacterStyle/', '')\
                 .replace('%3a', ':').replace(": ", ":")
         span_class = ICML.classname(cs)
+        if 'span_class' not in params: params['span_class'] = span_class
         span = B.html.span(character_attribs(elem),
-            transformer(elem.getchildren(), span_class=span_class, **params))
+            transformer(elem.getchildren(), **params))
         if span_class not in ['', None, 'Default-Paragraph-Font', 'No-character-style']: 
             span.set('class', span_class)
         if elem.get('AppliedConditions') is not None:
@@ -388,17 +390,19 @@ def HyperlinkTextOrCrossReferenceSource(elem, **params):
 @transformer.match("elem.tag=='TextVariableInstance'")
 def TextVariableInstance(elem, **params):
     text_variable = XML.find(elem, "//TextVariable[@Self='%s']" % elem.get('AssociatedTextVariable'))
-    if text_variable is not None:
-        variable_type = text_variable.get('VariableType')
-        if variable_type == 'XrefPageNumberType':
-            # page references 
-            return [B.pub.cref(elem.get('ResultText'))]
-        elif variable_type == 'ModificationDateType':
-            return [B.pub.modified(elem.get('ResultText') or '', idformat=text_variable.find('DateVariablePreference').get('Format'))]
-        else:
-            return [elem.get('ResultText')]
-    else:
-        return [elem.get('ResultText')]
+    # if text_variable is not None:
+    #     variable_type = text_variable.get('VariableType')
+    #     if variable_type == 'XrefPageNumberType':
+    #         # page references 
+    #         return [B.pub.cref(elem.get('ResultText'))]
+    #     elif variable_type == 'ModificationDateType':
+    #         return [B.pub.modified(elem.get('ResultText') or '', idformat=text_variable.find('DateVariablePreference').get('Format'))]
+    #     else:
+    #         return [elem.get('ResultText')]
+    # else:
+    #     return [elem.get('ResultText')]
+    log.debug("%s %r %r" % (elem.tag, elem.attrib, elem.get('ResultText')))
+    return [B.pub.textvariable(elem.get('ResultText'), **elem.attrib)]
 
 # == Rectangle == 
 @transformer.match("elem.tag=='Rectangle'")
@@ -412,15 +416,13 @@ def PDF_or_Image(elem, **params):
         url = URL(link.get("LinkResourceURI"))
         if url.scheme == 'file':
             doc_dir = os.path.dirname(params['document_path'])
-            int_dir = os.path.join(doc_dir, os.path.basename(doc_dir + ".INT"))
             # find path of image relative to the interior directory
             # ie. "DOC_DIR/INT_DIR_NAME/Links/Image.pdf" becomes "Links/Image.pdf"
-            rel_path = os.path.relpath(url.path, int_dir)
+            rel_path = os.path.relpath(url.path, doc_dir)
             rel_splits = os.path.normpath(rel_path).split(os.sep)
             rel_splits = [re.sub("(&[\w^;]+;|[\s\&+;'])", "-", part) for part in rel_splits]
             rel_path = os.sep.join(rel_splits)
-            if os.path.splitext(rel_path)[1] != ".jpg":
-                rel_path += ".jpg"
+            rel_path += ".jpg"  # Export-Images.jsx appends '.jpg' to all asset filenames, so do likewise
             filename = rel_path
         else:
             filename = str(url)

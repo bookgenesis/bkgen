@@ -63,7 +63,7 @@ class EPUB(ZIP, Source):
         """return a list of pub:document containing the content in the EPUB
         path = the output path for the documents.
         """
-        from .xhtml import XHTML
+        from .html import HTML
         if path is None: path = os.path.dirname(os.path.abspath(self.fn))
         if opf is None: opf = self.get_opf()
         docs = []
@@ -73,11 +73,15 @@ class EPUB(ZIP, Source):
                     "opf:manifest/opf:item[@id='%s']/@href" % itemref.get('idref'), 
                     namespaces=NS)
             zf_path = os.path.relpath(os.path.join(os.path.dirname(opf.fn), href), self.fn).replace('\\','/')
-            html = XHTML(root=self.zipfile.read(zf_path), fn=os.path.join(path, href))
+            html = HTML(root=self.zipfile.read(zf_path), fn=os.path.join(path, href))
             docpath = os.path.join(path, os.path.dirname(href)).rstrip('/')
-            doc = html.document(path=docpath)
+            doc = html.document(fn=os.path.join(docpath, os.path.splitext(os.path.basename(html.fn))[0]+'.xml'))
             docs.append(doc)
         return docs
+
+    @property
+    def images(self):
+        return []
 
     @property
     def resources(self, path=None, opf=None):

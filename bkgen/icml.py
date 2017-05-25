@@ -1,5 +1,5 @@
 
-import os, re, traceback
+import os, re, traceback, logging
 import glob
 from lxml import etree
 from time import time
@@ -9,6 +9,8 @@ from bl.string import String
 from bl.text import Text
 from bxml.xml import XML
 from bkgen import NS, Source
+
+log = logging.getLogger(__name__)
 
 class ICML(XML, Source):
     "model for working with ICML files (also idPkg:Story xml)"
@@ -113,6 +115,8 @@ class ICML(XML, Source):
     def style_attributes(self, elem, points_per_em=None):
         """query style elem for attributes and return a CSS style definition block.
         """
+        log.debug(elem.attrib)
+
         points_per_em = points_per_em or self.POINTS_PER_EM
         s = Dict()
 
@@ -173,12 +177,13 @@ class ICML(XML, Source):
         # margin-left
         if elem.get('LeftIndent') is not None:
             leftindent = float(elem.get('LeftIndent') or 0)/points_per_em
-            textindent = float(elem.get('FirstLineIndent') or 0)/points_per_em
-            if textindent < 0:  # hanging indent
-                val = "%.01fem" % round(leftindent - textindent, 2)
-            else:               # regular indent
-                val = "%.01fem" % round(leftindent, 2)
-            s['margin-left:'] = val
+            # firstindent = float(elem.get('FirstLineIndent') or 0)/points_per_em
+            # if firstindent < 0:  # hanging indent
+            #     val = "%.01fem" % round(leftindent + firstindent, 2)
+            # else:               # regular indent
+            #     val = "%.01fem" % round(leftindent, 2)
+            # s['margin-left:'] = val
+            s['margin-left:'] = "%.01fem" % round(leftindent, 2)
 
         # margin-right
         if elem.get('RightIndent') is not None:
@@ -241,7 +246,7 @@ class ICML(XML, Source):
 
         # vertical-align
         if elem.get('Position') in ['Superscript', 'OTSuperscript']:
-            s['vertical-align:'] = 'top'
+            s['vertical-align:'] = 'text-top'
             s['font-size:'] = '70%'
         elif elem.get('Position') in ['Subscript', 'OTSubscript']:
             s['vertical-align:'] = 'bottom'
@@ -259,5 +264,6 @@ class ICML(XML, Source):
             if n != 0:
                 s['word-spacing:'] = "%d%%" % n
 
+        log.debug("=> style: %r" % s)
         return s
 

@@ -71,4 +71,13 @@
 	    <xsl:apply-templates/>
 	</xsl:template>
 
+	<xsl:template match="pub:image[@filename]">
+		<img>
+			<xsl:attribute name="src">
+			    <xsl:value-of select="@filename"/>
+			</xsl:attribute>
+		</img>	    
+		<br></br>
+	</xsl:template>
+
 </xsl:stylesheet>

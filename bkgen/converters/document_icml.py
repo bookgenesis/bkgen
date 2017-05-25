@@ -289,7 +289,7 @@ def para(elem, **params):
 
             # use a child anchor_start if there is no text before it in the element
             # -- bookmark needs to hit the beginning of the paragraph in case there's a turn-over
-            anchors = elem.xpath("c:anchor_start", namespaces=NS)
+            anchors = elem.xpath("pub:anchor_start", namespaces=NS)
             if len(anchors) > 0 and elem.text in [None, ''] \
             and ''.join([
                         etree.tounicode(e, method='text',with_tail=True) 
@@ -331,9 +331,9 @@ def char(elem, **params):
 
 @transformer.match("elem.tag=='{%(html)s}table'" % NS)
 def table(elem, **params):
-    trs = elem.xpath("c:tr", namespaces=NS)
+    trs = elem.xpath("html:tr", namespaces=NS)
     numrows = len(trs)
-    numcols = len(elem.xpath("c:tr[1]/c:td", namespaces=NS))
+    numcols = len(elem.xpath("html:tr[1]/html:td", namespaces=NS))
     colwidth = 324 / numcols           # 324 points = 4.5 inches as the total width of the table
     tblName = 't'+random_id(8)
     tbl = E.Table(
@@ -348,7 +348,7 @@ def table(elem, **params):
         )    
     c = 0
     for tr in trs:
-        tds = tr.xpath("c:td", namespaces=NS)
+        tds = tr.xpath("html:td", namespaces=NS)
         for td in tds:
             c += 1
             cell = E.Cell(
@@ -469,15 +469,15 @@ def paragraph_destination(source_id, anchor, **params):
 
 def build_endnote_marker(elem):
     """returns the correct endnote marker for this endnote"""
-    section = elem.xpath("ancestor::c:section", namespaces=NS)[0]
+    section = elem.xpath("ancestor::html:section", namespaces=NS)[0]
     endnote_fmt = section.get('endnote_fmt') or 'lowerLetter'       # default lowerLetter?
     endnote_base = int(section.get('endnote_start') or "1") - 1     # base = starting number - 1
 
     # endnote index
     if section.get('endnote_renum') == 'eachSect':      # index in section
-        index = section.xpath(".//c:endnote", namespaces=NS).index(elem)
+        index = section.xpath(".//pub:endnote", namespaces=NS).index(elem)
     else:                                               # index in document
-        index = elem.xpath("//c:endnote", namespaces=NS).index(elem)
+        index = elem.xpath("//pub:endnote", namespaces=NS).index(elem)
     index += endnote_base
     
     # endnote marker

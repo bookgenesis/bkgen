@@ -4,6 +4,7 @@ log = logging.getLogger(__name__)
 
 import os, re, shutil, subprocess, sys, time, traceback
 from copy import deepcopy
+from glob import glob
 from bl.dict import Dict
 from bl.file import File
 from bl.string import String
@@ -218,19 +219,17 @@ class Project(XML, Source):
         # move / copy the source into the "canonical" source file location for this project.
         source_new_fn = os.path.join(self.path, self.source_folder, self.make_basename(fn=source.fn))
         if source_new_fn != source.fn:
-            # move it if it's inside the project folder, otherwise copy it.
-            if self.path in os.path.commonprefix([self.fn, source.fn]):
-                os.rename(source.fn, source_new_fn)
-            else:
+            # copy it if it's not inside the project folder
+            if self.path not in os.path.commonprefix([self.fn, source.fn]):
                 shutil.copy(source.fn, source_new_fn)
-            source.fn = source_new_fn
+                source.fn = source_new_fn
 
         # import the documents, metadata, images, and stylesheet from this source
-        if documents==True: self.import_documents(source.documents)
-        if metadata==True: self.import_metadata(source.metadata)
-        if images==True: self.import_images(source.images)
+        if documents==True: self.import_documents(source.documents())
+        if metadata==True: self.import_metadata(source.metadata())
+        if images==True: self.import_images(source.images())
         if stylesheet==True:
-            ss = source.stylesheet
+            ss = source.stylesheet()
             if ss is not None:
                 ss.fn = os.path.join(self.path, self.content_folder, self.make_basename(fn=source.fn, ext='.css'))
                 ss.write()
@@ -488,6 +487,7 @@ class Project(XML, Source):
         spineitems = [deepcopy(spineitem) for spineitem in 
                     self.root.xpath("pub:spine/pub:spineitem[not(@include='False')]", namespaces=NS)]
         outfns = []
+        css_fns = glob(os.path.join(self.path, self.content_folder, '*.css'))
         for spineitem in spineitems:
             split_href = spineitem.get('href').split('#')
             log.debug(split_href)
@@ -502,16 +502,20 @@ class Project(XML, Source):
                 h = d.html(fn=outfn, ext=ext, resources=resources, 
                         output_path=output_path, http_equiv_content_type=http_equiv_content_type)
                 # add the document-specific CSS, if it exists
-                doc_css_fn = os.path.splitext(docfn)[0]+'.css'
-                out_css_fn = os.path.splitext(
-                    os.path.join(output_path, os.path.relpath(docfn, self.path)))[0]+'.css'
-                if os.path.exists(doc_css_fn) and not os.path.exists(out_css_fn):
-                    Text(fn=doc_css_fn).write(fn=out_css_fn)
-                if os.path.exists(out_css_fn):
-                    head = h.find(h.root, "//html:head", namespaces=NS)
-                    href = os.path.relpath(out_css_fn, h.dirpath())
-                    link = etree.Element("{%(html)s}link" % NS, rel="stylesheet", href=href, type="text/css")
-                    head.append(link)
+                doc_css_fns = [
+                    cssfn for cssfn 
+                    in [os.path.commonprefix([docfn, cssfn])+'.css' for cssfn in css_fns] 
+                    if os.path.exists(cssfn)]
+                for doc_css_fn in doc_css_fns:
+                    out_css_fn = os.path.splitext(
+                        os.path.join(output_path, os.path.relpath(doc_css_fn, self.path)))[0]+'.css'
+                    if os.path.exists(doc_css_fn) and not os.path.exists(out_css_fn):
+                        Text(fn=doc_css_fn).write(fn=out_css_fn)
+                    if os.path.exists(out_css_fn):
+                        head = h.find(h.root, "//html:head", namespaces=NS)
+                        href = os.path.relpath(out_css_fn, h.dirpath())
+                        link = etree.Element("{%(html)s}link" % NS, rel="stylesheet", href=href, type="text/css")
+                        head.append(link)
                 h.write(doctype="<!DOCTYPE html>", canonicalized=canonicalized)
                 outfns.append(h.fn)
                 spineitem.set('href', os.path.relpath(h.fn, output_path))
