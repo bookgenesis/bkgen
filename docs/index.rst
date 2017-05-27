@@ -12,6 +12,7 @@ Welcome to the bkgen documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   Package README <readme>
    The bkgen API <api/index>
 
 Indices and tables
