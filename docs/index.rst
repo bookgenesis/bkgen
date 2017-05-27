@@ -6,11 +6,13 @@
 Welcome to the bkgen documentation!
 ===================================
 
+.. Introduce the module here.
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-
+   The bkgen API <api/index>
 
 Indices and tables
 ==================
@@ -18,3 +20,4 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+

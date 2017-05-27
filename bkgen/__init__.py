@@ -1,3 +1,13 @@
+"""
+The bkgen module
+================
+The bkgen module itself provides several objects when imported:
+
+* **bkgen.config**: The module configuration (a bl.config.Config object, which is a nested Dict) containing several sections that are stored in the main __config__.ini file.
+* **bkgen.NS**: Namespaces that are used in book production.
+* **bkgen.mimetypes**: The python mimetypes module, with the included mimetypes customized for common book content types.
+"""
+
 import os, mimetypes
 from bl.dict import Dict
 from bl.config import Config
@@ -30,8 +40,4 @@ NS = Dict(
     ncx="http://www.daisy.org/z3986/2005/ncx/",
     cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties",    # Microsoft
 )
-class Source(Dict):
-    def stylesheet(self): return None
-    def documents(self): return []
-    def metadata(self): return None
-    def images(self): return []
+

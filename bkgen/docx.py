@@ -3,7 +3,8 @@ import os
 from lxml import etree
 from bl.url import URL
 import bxml.docx
-from bkgen import NS, Source
+from bkgen import NS
+from bkgen.source import Source
 
 class DOCX(bxml.docx.DOCX, Source):
     """A Word document can be a source that is brought in, and an output format"""

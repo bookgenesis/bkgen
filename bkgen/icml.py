@@ -8,7 +8,8 @@ from bl.dict import Dict
 from bl.string import String
 from bl.text import Text
 from bxml.xml import XML
-from bkgen import NS, Source
+from bkgen import NS
+from bkgen.source import Source
 
 log = logging.getLogger(__name__)
 

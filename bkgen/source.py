@@ -11,20 +11,16 @@ class Source(File):
     stylesheet()-- a CSS(File) object or None
     """
 
-    @property
     def documents(self):
         return []
         
-    @property
     def images(self):
         return []
 
-    @property
     def metadata(self):
         from .metadata import Metadata
         return Metadata()
 
-    @property
     def stylesheet(self):
         from .css import CSS
         return CSS()

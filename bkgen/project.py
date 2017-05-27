@@ -24,7 +24,8 @@ PUB = Builder.single(NS.pub)
 
 class Project(XML, Source):
     """Every project has a project.xml file that holds information about the project.
-    The root element is pub:project, where 'pub:' is the Publishing XML namespace (see http://publishingxml.org).
+    The root element is pub:project, where ``pub:`` is the Publishing XML namespace 
+    (see `publishingxml.org <http://publishingxml.org>`_).
     """
     ROOT_TAG = "{%(pub)s}project" % NS
     OUTPUT_KINDS = Dict(**{'EPUB':'.epub', 'Kindle':'.mobi'})#, 'Archive':'.zip'})
@@ -96,7 +97,8 @@ class Project(XML, Source):
             parent_path = the filesystem path to the parent folder that this project is in
             title = the title for the project
             name = the name of the project, which becomes its folder name and URL slug
-            **project_params = parameters passed to the Project.__init__()
+            project_params = parameters passed to the Project.__init__()
+        
         Returns the Project XML object.
         """
         name = name or String(title).nameify()

@@ -10,7 +10,8 @@ from bl.zip import ZIP
 from bl.string import String
 from bxml import XML
 from .icml import ICML
-from bkgen import NS, Source
+from bkgen import NS
+from bkgen.source import Source
 
 class IDML(ZIP, Source):
     POINTS_PER_EM = ICML.POINTS_PER_EM

@@ -13,7 +13,8 @@ from bl.zip import ZIP
 from bl.text import Text
 from bl.file import File
 from bxml.builder import Builder
-from bkgen import NS, Source, config
+from bkgen import NS, config
+from bkgen.source import Source
 
 log = logging.getLogger(__name__)
 FILENAME = os.path.abspath(__file__)
@@ -147,16 +148,18 @@ class EPUB(ZIP, Source):
         REQUIRED parameters:
             output_path   = where the build files are to be located
             metadata    = a metadata element to be used in building the EPUB 
+
         OPTIONAL parameters:
             epub_name   = the base filename for the build; or = output_path basename
             manifest    = the opf:manifest to use; or built from crawling the output_path
             spine_items = a list of dicts that have the following attributes:
-                            'href'      : *REQUIRED relative file path from output_path 
+                            'href'      : REQUIRED relative file path from output_path 
                             'idref'     : opf:itemref/@idref (default generated from href)
                             'linear'    : opf:itemref/@linear (="yes"|"no", default "yes")
                             'properties': opf:itemref/@properties
                             'title'     : can be used to populate nav items
                             'landmark'  : if given, included in landmarks nav with this landmark epub:type
+
             cover_src   = the cover image src; or no cover included
             cover_html  = whether to include the cover in the first html document (default True).
             nav_toc     = a toc nav element for the nav; or built from opf:spine_items
@@ -165,6 +168,7 @@ class EPUB(ZIP, Source):
             nav_href    = the relative path to use for the nav file (also ncx)
             nav_title   = the title to display on the nav page
             zip_epub    = if True, zip the EPUB after building
+
         """
         if not os.path.isdir(output_path): 
             os.makedirs(output_path)
@@ -409,6 +413,7 @@ class EPUB(ZIP, Source):
             href        : the href to the nav item (required)
             title       : the text to display in the nav item (required)
             epub_type   : if given, the epub:type for the nav item <a> element (for landmarks nav)
+
         epub_type   = the epub:type attribute of the nav element
         title       = the optional title text to display on this nav
         hidden      = whether or not the nav element should be hidden; default not specified (None)
