@@ -1,14 +1,27 @@
+alabaster==0.7.10
 appdirs==1.4.3
+Babel==2.4.0
 cssselect==1.0.1
 cssutils==1.0.2
+docutils==0.13.1
+imagesize==0.7.1
+Jinja2==2.9.6
 libsass==0.12.3
 lxml==3.7.3
+MarkupSafe==1.0
 packaging==16.8
 pycountry==17.1.8
+Pygments==2.2.0
 pyparsing==2.2.0
+pytz==2017.2
+requests==2.13.0
 six==1.10.0
+snowballstemmer==1.2.1
+Sphinx==1.6.1
+sphinxcontrib-websupport==1.0.1
+typing==3.6.1
 Unum==4.1.3
 -e git+https://github.com/BlackEarth/bf@5e622767c1e5ce32e345aea8c75c8a7c0a3bc1e2#egg=bf
--e git+https://github.com/BlackEarth/bl.git@f998be71eda3ba2360cc8d8bf66e3de7422dfd9c#egg=bl
+-e git+https://github.com/BlackEarth/bl.git@59c8ed655f88f08d0b13db9f1caddf99c6ed0ed4#egg=bl
 -e git+https://github.com/BlackEarth/bsql.git@63c0571128acecc57a46f0d4640bb499158d8085#egg=bsql
 -e git+https://github.com/BlackEarth/bxml@784ba4b66feaa0b52fd9ea597417e3a1140b523f#egg=bxml
