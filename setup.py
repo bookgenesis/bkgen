@@ -28,7 +28,7 @@ import os, json, shutil
 from setuptools import setup, find_packages
 from codecs import open
 
-PATH = os.path.abspath(__file__)
+PATH = os.path.dirname(os.path.abspath(__file__))
 configfn = os.path.join(PATH, 'bkgen', '__config__.ini')
 if not os.path.exists(configfn):
     shutil.copy(configfn + '.TEMPLATE', configfn)
