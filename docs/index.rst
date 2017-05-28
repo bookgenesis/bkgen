@@ -9,11 +9,11 @@ Welcome to the bkgen documentation!
 .. Introduce the module here.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
    Package README <readme>
-   The bkgen API <api/index>
+   API Documentation <api/index>
 
 Indices and tables
 ==================

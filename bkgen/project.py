@@ -1,3 +1,12 @@
+"""
+The Project object is used to represent a project.xml file. Usage:
+
+>>> from bkgen.project import Project
+>>> fn = '/path/to/Project-Folder/project.xml'
+>>> project = Project(fn=fn)
+
+Now all of the methods of the project can be called.
+"""
 
 import logging
 log = logging.getLogger(__name__)
@@ -27,7 +36,7 @@ class Project(XML, Source):
     The root element is pub:project, where ``pub:`` is the Publishing XML namespace 
     (see `publishingxml.org <http://publishingxml.org>`_).
     """
-    ROOT_TAG = "{%(pub)s}project" % NS
+    ROOT_TAG = "{%(pub)s}project" % NS      #: The tag for the root element of a project.
     OUTPUT_KINDS = Dict(**{'EPUB':'.epub', 'Kindle':'.mobi'})#, 'Archive':'.zip'})
 
     def __init__(self, **args):

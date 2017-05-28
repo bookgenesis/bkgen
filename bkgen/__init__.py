@@ -1,19 +1,33 @@
 """
-The bkgen module
-================
-The bkgen module itself provides several objects when imported:
-
-* **bkgen.config**: The module configuration (a bl.config.Config object, which is a nested Dict) containing several sections that are stored in the main __config__.ini file.
-* **bkgen.NS**: Namespaces that are used in book production.
-* **bkgen.mimetypes**: The python mimetypes module, with the included mimetypes customized for common book content types.
+bkgen
+=====
+The bkgen module provides several objects when imported.
 """
 
 import os, mimetypes
 from bl.dict import Dict
 from bl.config import Config
 
-PATH = os.path.dirname(os.path.abspath(__file__))
-config = Config(fn=os.path.join(PATH, '__config__.ini'))
+PATH = os.path.dirname(os.path.abspath(__file__))               #: The system path to the bkgen module
+config = Config(fn=os.path.join(PATH, '__config__.ini')) 
+"""The module configuration containing several sections:
+
+bkgen.config.Logging 
+    fed by default to new loggers.
+
+bkgen.config.Project
+    values for project parameters, if different from the defaults.
+
+bkgen.config.EPUB
+    EPUB parameters, such as specs for images
+
+bkgen.config.Kindle
+    Kindle build parameters
+
+bkgen.config.Resources
+    other resources used by bkgen. (These configuration parameters should generally not be changed,
+    so they are stored in the module source file.)
+"""
 resources_path = os.path.join(PATH, 'resources')
 config.Resources = Dict(
     path=resources_path,
@@ -24,7 +38,7 @@ config.Resources = Dict(
     mimetypes=os.path.join(resources_path, 'mime.types'),
 )
 
-mimetypes.init(files=[config.Resources.mimetypes])
+mimetypes.init(files=[config.Resources.mimetypes])              
 
 NS = Dict(
     pub="http://publishingxml.org/ns",

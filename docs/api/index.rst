@@ -6,7 +6,8 @@ bkgen API documentation
    :members:
    :undoc-members:
 
-bkgen also contains several submodules:
+bkgen submodules
+----------------
 
 .. toctree::
    :maxdepth: 2
