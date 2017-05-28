@@ -28,13 +28,8 @@ import os, json
 from setuptools import setup, find_packages
 from codecs import open
 
-path = os.path.dirname(os.path.abspath(__file__))
-
-with open(os.path.join(path, 'README.md'), encoding='utf-8') as f:
-    read_me = f.read()
-
 setup(
-    long_description=read_me,
+    long_description="This package contains the core BookGenesis software.",
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
     **config
 )
