@@ -2,25 +2,32 @@
 from bl.file import File
 
 class Source(File):
-    """Base class/mixin for supported source formats. All sources must have the following properties/methods:
-    fn          -- the filesystem path (filename) of the source, or None
-    write()     -- to write the source to the filesystem
-    documents() -- a list of pub:documents in the source or []
-    images()    -- a list of Image(File) objects or []
-    metadata()  -- a Metadata(XML) object or None
-    stylesheet()-- a CSS(File) object or None
+    """Base class/mixin for supported source formats. All sources must have the following properties and methods.
+    
+    **fn**    
+        the filesystem path (filename) of the source, or None
+    
+    **write()**
+        to write the source to the filesystem
     """
 
     def documents(self):
+        """returns a list of XML documents, with the root element tag pub:document, from the Source.
+        """
         return []
         
     def images(self):
+        """returns a list of bf.image.Image objects provided by the Source.
+        """
         return []
 
     def metadata(self):
-        from .metadata import Metadata
-        return Metadata()
+        """returns a :doc:`bkgen.metadata.Metadata </api/metadata>` object provided by the Source, or None.
+        """
+        return None
 
     def stylesheet(self):
-        from .css import CSS
-        return CSS()
+        """returns a :doc:`bkgen.css.CSS </api/css>` stylesheet object provided by the Source, or None.
+        """
+        return None
+

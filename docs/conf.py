@@ -34,7 +34,16 @@ sys.path.insert(0, os.path.abspath('..'))
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
+    'sphinx.ext.intersphinx',
 ]
+
+autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3', None),
+    'bl': ('http://bl.readthedocs.io', None),
+    'bf': ('http://bf.readthedocs.io', None),
+    'bxml': ('http://bxml.readthedocs.io', None),
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
