@@ -48,6 +48,9 @@ class Project(XML, Source):
         if self.interior_folder is None: self.interior_folder = 'interior'
         if self.source_folder is None: self.source_folder = 'sources'
 
+    def __repr__(self):
+        return "Project(fn=%r)" % self.fn
+
     @property
     def name(self): 
         return self.root.get('name')
@@ -176,6 +179,8 @@ class Project(XML, Source):
         content_type = mimetypes.guess_type(fn)[0]
         ext = os.path.splitext(fn)[-1].lower()
         result = Dict()
+
+        log.info("%r.import_source_file(%r, **%r)" % (self, fn, args))
         
         # .DOCX files
         if (content_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
