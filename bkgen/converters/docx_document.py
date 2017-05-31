@@ -61,7 +61,7 @@ def document(elem, **params):
 
 def get_document_metadata(root, **params):
     docx = params['docx']
-    metadata = docx.metadata.root
+    metadata = docx.metadata().root
     metadata.text = metadata.tail = '\n\t'
     for ch in metadata.getchildren():
         ch.tail='\n\t'

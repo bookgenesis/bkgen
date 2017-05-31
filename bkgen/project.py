@@ -60,24 +60,20 @@ class Project(XML, Source):
     def output_kinds(self):
         return self.get('output_kinds') or self.OUTPUT_KINDS
 
-    # SOURCE PROPERTIES
-    @property
+    # SOURCE METHODS
     def metadata(self):
         """metadata is kept in the project.xml opf:metadata block."""
         from .metadata import Metadata
         return Metadata(root=self.find(self.root, "opf:metadata", namespaces=NS))
 
-    @property
+    def resources(self):
+        return self.find(self.root, "pub:resources", namespaces=NS)
+
     def documents(self):
         """all of pub:document files in the content subfolder."""
         from .document import Document
         return [Document(fn=fn) for fn in rglob(self.path, 'content/*.xml')]
 
-    @property
-    def resources(self):
-        return self.find(self.root, "pub:resources", namespaces=NS)
-
-    @property
     def images(self):
         """all of the image files in the content subfolder."""
         from bf.image import Image
@@ -89,7 +85,6 @@ class Project(XML, Source):
         ]
         return images
 
-    @property
     def stylesheet(self):
         """the master .css for this project is the resource class="stylesheet"."""
         from .css import CSS
@@ -163,11 +158,12 @@ class Project(XML, Source):
 
     def add_resource(self, href, resource_class, kind=None):
         """add the given resource to the project file, if it isn't already present"""
-        resource = self.find(self.resources, "/pub:resource[@href='%s' and @class='%s']" % (href, resource_class), namespaces=NS)
+        resources = self.resources()
+        resource = self.find(resources, "/pub:resource[@href='%s' and @class='%s']" % (href, resource_class), namespaces=NS)
         if resource is None:
             resource = PUB.resource({'href':href, 'class':resource_class}); resource.tail='\n\t\t'
             if kind is not None: resource.set('kind', kind)
-            self.resources.append(resource)
+            resources.append(resource)
         else:
             log.warn("resource with that href already exists: %r" % resource.attrib)
         return resource
@@ -276,7 +272,7 @@ class Project(XML, Source):
 
     def import_metadata(self, metadata):
         """import the metadata found in the Metadata XML object"""
-        project_metadata = self.metadata.root
+        project_metadata = self.metadata().root
         if metadata is None: return
         for elem in metadata.root.getchildren():
             # replace old_elem if it exists
@@ -391,7 +387,7 @@ class Project(XML, Source):
 
     def build_epub(self, clean=True, show_nav=False, zip=True, check=True, cleanup=False, **image_args):
         from .epub import EPUB
-        epub_isbn = self.metadata.identifier(id_patterns=['epub', 'ebook', 'isbn'])
+        epub_isbn = self.metadata().identifier(id_patterns=['epub', 'ebook', 'isbn'])
         if epub_isbn is not None and epub_isbn.text is not None:
             epub_name = epub_isbn.text.replace('-', '')
         else:
@@ -412,7 +408,7 @@ class Project(XML, Source):
 
     def build_mobi(self, clean=True, cleanup=False, **image_args):
         from .mobi import MOBI
-        mobi_isbn = self.metadata.identifier(id_patterns=['mobi', 'ebook', 'isbn'])
+        mobi_isbn = self.metadata().identifier(id_patterns=['mobi', 'ebook', 'isbn'])
         if mobi_isbn is not None:
             mobi_name = mobi_isbn.text.replace('-', '')
         else:

@@ -14,16 +14,13 @@ class Document(XML, Source):
     ROOT_TAG = "{%(pub)s}document" % NS
     NS = Dict(**{k:NS[k] for k in NS if k in ['html', 'pub', 'epub']})
 
-    @property
     def metadata(self):
         from .metadata import Metadata
         return Metadata()
 
-    @property
     def documents(self):
         return [self]
 
-    @property
     def images(self):
         from bf.image import Image
         images = [
@@ -32,7 +29,6 @@ class Document(XML, Source):
             in self.xpath(self.root, "//html:img[@src]", namespaces=NS)]
         return images
 
-    @property
     def stylesheet(self):
         from .css import CSS
         cssfn = os.path.splitext(self.fn)[0]+'.css'
