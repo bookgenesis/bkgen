@@ -113,7 +113,8 @@ class Project(XML, Source):
             raise ValueError('Please provide a project name containing letters, numbers, hyphens, '
                 + 'underscores, and periods -- no whitespace or special characters.')
         if not os.path.exists(parent_path):
-            raise ValueError("Before creating the project, first create the parent folder, %s" % parent_path)
+            os.makedirs(parent_path)
+            # raise ValueError("Before creating the project, first create the parent folder, %s" % parent_path)
 
         project_path = os.path.join(parent_path, name)
         if not os.path.exists(project_path):
