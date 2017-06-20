@@ -414,18 +414,9 @@ def PDF_or_Image(elem, **params):
     link = elem.find("Link")
     if link is not None and link.get("LinkResourceURI") is not None:
         url = URL(link.get("LinkResourceURI"))
-        if url.scheme == 'file':
-            doc_dir = os.path.dirname(params['document_path'])
-            # find path of image relative to the interior directory
-            # ie. "DOC_DIR/INT_DIR_NAME/Links/Image.pdf" becomes "Links/Image.pdf"
-            rel_path = os.path.relpath(url.path, doc_dir)
-            rel_splits = os.path.normpath(rel_path).split(os.sep)
-            rel_splits = [re.sub("(&[\w^;]+;|[\s\&+;'])", "-", part) for part in rel_splits]
-            rel_path = os.sep.join(rel_splits)
-            rel_path += ".jpg"  # Export-Images.jsx appends '.jpg' to all asset filenames, so do likewise
-            filename = rel_path
-        else:
-            filename = str(url)
+        filename = os.path.join(
+            'Links',
+            re.sub("(&[\w^;]+;|[\s\&+;'])", "-", os.path.basename(str(url))) + '.jpg')
     else:
         filename=None
     return [B.pub.image(filename=filename)]
