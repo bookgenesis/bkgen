@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project xmlns="http://publishingxml.org/ns" xmlns:epub="http://www.idpf.org/2007/ops" name="Exemplar">
+
+	<!-- metadata: for project publication -->
+	<opf:metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:opf="http://www.idpf.org/2007/opf" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+		<dc:title id="title1">Exemplar</dc:title>
+		</opf:metadata>
+
+	<!-- resources: cover, stylesheets, ... -->
+	<resources>
+		<resource class="stylesheet" href="project.css"></resource>
+		</resources>
+
+	<!-- spine: the ordered content in the project -->
+	<spine>
+		</spine>
+
+</project>

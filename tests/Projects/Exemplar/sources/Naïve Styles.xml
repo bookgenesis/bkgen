@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<pub:document xmlns="http://www.w3.org/1999/xhtml" xmlns:container="urn:oasis:names:tc:opendocument:xmlns:container" xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:epub="http://www.idpf.org/2007/ops" xmlns:ncx="http://www.daisy.org/z3986/2005/ncx/" xmlns:opf="http://www.idpf.org/2007/opf" xmlns:pub="http://publishingxml.org/ns" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" src="Naïve Styles.docx">
+	<pub:metadata>
+	<dc:title></dc:title>
+	<dc:subject></dc:subject>
+	<dc:creator>Sean Harrison</dc:creator>
+	<cp:keywords></cp:keywords>
+	<dc:description></dc:description>
+	<cp:lastModifiedBy>Sean Harrison</cp:lastModifiedBy>
+	<cp:revision>17</cp:revision>
+	<dcterms:created xsi:type="dcterms:W3CDTF">2017-06-20T19:51:00Z</dcterms:created>
+	<dcterms:modified xsi:type="dcterms:W3CDTF">2017-06-20T20:01:00Z</dcterms:modified>
+	</pub:metadata>
+	<body>
+<section id="Naïve-Styles_s1" title="Naïve Styles">
+<h1 class="heading-1">Naïve Styles</h1>
+<p>The paragraphs are separated with double returns — the output should not. All paragraphs use the “Normal” style, except the lists which use Word’s automatically applied “List Paragraph” style.  Lists are applied using the toolbar / autoformat functions. The direct font formatting in the following paragraph should convert to spans with classes.</p>
+<p>“<span bold="toggle">Neque</span> <span ital="toggle">porro</span> <span bold="toggle" ital="toggle">quisquam</span> <span valign="superscript">est</span> <span bold="toggle" valign="subscript">qui</span> dolorem ipsum quia dolor sit amet, consectetur, adipisci velit...” [line break]<br></br>“There is no one who loves pain itself, who seeks after it and wants to have it, simply because it is pain...”</p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque varius tincidunt elit, a sodales justo interdum vel. Aenean tristique eget diam vel sollicitudin. Donec eget dolor at mauris sollicitudin rutrum. Vivamus suscipit elit eu massa laoreet posuere. Etiam iaculis tincidunt felis, sed consequat dolor rutrum vitae. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Cras egestas varius pellentesque. </p>
+</section>
+<section class="continuous" id="_s2">
+<p>This is preceded by a section break. The following should be an unordered list.</p>
+<p class="List-Paragraph">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+<p class="List-Paragraph">Aliquam ac ex pellentesque, facilisis nulla at, elementum velit.</p>
+<p class="List-Paragraph">Etiam at ligula at dui iaculis imperdiet sit amet eu ante.</p>
+<p>Integer suscipit et orci nec rhoncus. Mauris elementum purus sit amet neque fringilla, quis condimentum mi viverra. Nunc elementum hendrerit faucibus. Aenean posuere auctor arcu, eu pellentesque metus ullamcorper non. </p>
+<p>The following should be an ordered list.</p>
+<p class="List-Paragraph">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+<p class="List-Paragraph">Aliquam ac ex pellentesque, facilisis nulla at, elementum velit.</p>
+<p class="List-Paragraph">Etiam at ligula at dui iaculis imperdiet sit amet eu ante.</p>
+<p>Suspendisse aliquam ex id tellus rutrum fermentum quis ut orci. Sed ac imperdiet orci. In felis leo, maximus sed venenatis in, imperdiet nec metus. Vestibulum luctus odio vitae eros pretium iaculis. Ut nec orci iaculis, maximus ante vel, congue libero.</p>
+<p><img src="bookgenesis_type.png"></img></p>
+<p>We ought to be able just to include an embedded image without any particular fuss. The output should include the same image, and something about the image’s dimensions and placement.</p>
+</section>
+	</body>
+</pub:document>
