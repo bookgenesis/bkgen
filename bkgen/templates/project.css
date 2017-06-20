@@ -17,19 +17,23 @@ td {
 p {
     margin: 0 0 0 0;
     line-height: 1.33;
-    text-indent: 0;
-}
- 
-/* The cover image should fit to the screen in e-reading software */
-img.cover {
-    height: 99%;
+    text-indent: 1.0em;
 }
 
-.superscript {
-	vertical-align: text-top;
-	font-size: 75%;
-}
+/* == GLOBAL FONT STYLES == */
+
 .bold { font-weight: bold;}
 .italic { font-style: italic; }
 .smallcaps { font-variant: small-caps; }
 .allcaps { text-transform: uppercase; }
+.super {
+    vertical-align: text-top;
+    font-size: 75%;
+}
+.sub {
+    vertical-align: text-bottom;
+    font-size: 75%;
+}
+.under {
+    text-decoration: underline;
+}
