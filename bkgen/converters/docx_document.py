@@ -42,6 +42,7 @@ def document(elem, **params):
     root = embed_notes(root, **params) 
     root = map_para_styles_levels(root, **params)
     root = map_span_styles(root, **params)
+    root = font_attributes(root, **params)
     root = get_images(root, **params)
     root = resolve_hyperlinks(root, **params)
     root = nest_fields(root)
@@ -257,6 +258,34 @@ def map_span_styles(root, **params):
     for sp in root.xpath(".//html:span[@class]", namespaces=NS):
         cls = DOCX.classname(stylemap.get(sp.get('class')).name)
         sp.set('class', cls)
+    return root
+
+def font_attributes(root, **params):
+    """convert font attributes to styles"""
+    toggle_props = ['italic', 'bold', 'allcap', 'smcap', 'strike', 'dstrike', 'hidden']
+    for span in root.xpath(".//html:span", namespaces=NS):
+        class_list = [c for c in span.get('class', '').split(' ') if c != '']
+        # toggle properties
+        for attrib in toggle_props:
+            if span.get(attrib) is None: continue
+            val = span.attrib.pop(attrib)
+            if val in ['on', 'true', '1', 'toggle']:
+                if attrib not in class_list:
+                    class_list.append(attrib)
+            elif val in ['off', 'false', '0']:
+                if attrib in class_list:
+                    _ = class_list.pop(attrib)
+        # regular properties
+        if span.get('valign') is not None:
+            val = span.attrib.pop('valign')
+            if val=='superscript': class_list.append('super')
+            if val=='subscript': class_list.append('sub')
+        if span.get('u') is not None:
+            class_list.append('u%s' % span.attrib.pop('u'))
+        # create the span class
+        span_class = ' '.join(sorted(list(set(class_list))))
+        if span_class.strip() != '':
+            span.set('class', span_class)
     return root
 
 def get_images(root, **params):

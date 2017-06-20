@@ -184,7 +184,7 @@
             <!-- font formatting: TOGGLE PROPERTIES. They will need post-processing -->
             <!-- italic -->
             <xsl:if test="w:rPr/w:i | w:rPr/w:iCs">
-                <xsl:attribute name="ital">
+                <xsl:attribute name="italic">
                     <xsl:call-template name="toggle-property-value">
                         <xsl:with-param name="val" select="w:rPr/w:i/@w:val | w:rPr/w:iCs/@w:val"/>
                     </xsl:call-template>
@@ -200,7 +200,7 @@
             </xsl:if>
             <!-- caps -->
             <xsl:if test="w:rPr/w:caps">
-                <xsl:attribute name="caps">
+                <xsl:attribute name="allcap">
                     <xsl:call-template name="toggle-property-value">
                         <xsl:with-param name="val" select="w:rPr/w:caps/@w:val"/>
                     </xsl:call-template>
@@ -208,7 +208,7 @@
             </xsl:if>
             <!-- small caps -->
             <xsl:if test="w:rPr/w:smallCaps">
-                <xsl:attribute name="smallcaps">
+                <xsl:attribute name="smcap">
                     <xsl:call-template name="toggle-property-value">
                         <xsl:with-param name="val" select="w:rPr/w:smallCaps/@w:val"/>
                     </xsl:call-template>
