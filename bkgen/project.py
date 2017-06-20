@@ -225,9 +225,14 @@ class Project(XML, Source):
 
         return result
     
-    def import_source(self, source, documents=True, images=True, stylesheet=True, metadata=False):
+    def import_source(self, source, documents=True, images=True, stylesheet=True, metadata=False, **params):
         """import a source into the project.
             source = a Source object that contains the content source
+            documents = whether to import documents from the source
+            images = whether to import images from the source
+            stylesheet = whether to import a stylesheet from the source
+            metadata = whether to import metadata from the source
+            **params = passed to the Source.documents(**params) method
         """
         # move / copy the source into the "canonical" source file location for this project.
         source_new_fn = os.path.join(self.path, self.source_folder, self.make_basename(fn=source.fn))
@@ -238,7 +243,7 @@ class Project(XML, Source):
                 source.fn = source_new_fn
 
         # import the documents, metadata, images, and stylesheet from this source
-        if documents==True: self.import_documents(source.documents())
+        if documents==True: self.import_documents(source.documents(**params))
         if metadata==True: self.import_metadata(source.metadata())
         if images==True: self.import_images(source.images())
         if stylesheet==True:
