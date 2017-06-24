@@ -45,15 +45,16 @@ def document(elem, **params):
     root = font_attributes(root, **params)
     root = get_images(root, **params)
     root = resolve_hyperlinks(root, **params)
-    root = nest_fields(root)
-    root = field_attributes(root)
-    root = toc_fields(root)
-    root = remove_empty_spans(root)
-    root = merge_contiguous_spans(root)
-    root = remove_empty_paras(root)
+    root = nest_fields(root, **params)
+    root = field_attributes(root, **params)
+    root = toc_fields(root, **params)
+    root = remove_empty_spans(root, **params)
+    root = merge_contiguous_spans(root, **params)
+    root = remove_empty_paras(root, **params)
+    root = number_lists(root, **params)
     root = wrap_sections(root, **params)
     # root = split_level_sections(root)
-    root = sections_title_id(root)
+    root = sections_title_id(root, **params)
 
     # Post-Process
     root = paragraphs_with_newlines(root)
@@ -91,7 +92,7 @@ def embed_notes(root, **params):
         parent.replace(elem, transformer_XSLT(note_elem).getroot())
     return root
 
-def remove_empty_spans(root):
+def remove_empty_spans(root, **params):
     for span in root.xpath(".//html:span", namespaces=NS):
         if span.text in [None, ''] and len(span.getchildren())==0:
             XML.remove(span, leave_tail=True)
@@ -99,11 +100,55 @@ def remove_empty_spans(root):
             XML.replace_with_contents(span)
     return root
 
-def remove_empty_paras(root):
+def remove_empty_paras(root, **params):
     for p in root.xpath(".//html:p", namespaces=NS):
         if p.text in [None, ''] and len(p.getchildren())==0:
             XML.remove(p, leave_tail=True)
     return root        
+
+def number_lists(root, **params):
+    """interpret OOXML paragraph numbering into ordered and unordered lists"""
+    numbering = params['docx'].xml(src='word/numbering.xml')
+    the_list = None
+    first_numbered_p = XML.find(root, "//html:p[w:numPr]", namespaces=DOCX.NS)
+    while first_numbered_p is not None:
+        numPr = XML.find(first_numbered_p, "w:numPr", namespaces=DOCX.NS)
+        level = XML.find(numPr, "w:ilvl/@w:val", namespaces=DOCX.NS)
+        numId = XML.find(numPr, "w:numId/@w:val", namespaces=DOCX.NS)
+        XML.remove(numPr)
+        first_num_params = params['docx'].numbering_params(numId, level)
+        print("first_num_params: %r" % first_num_params)
+        if first_num_params.get('ul')==True:
+            the_list = B.html.ul('\n\t'); the_list.tail='\n'
+        else:
+            the_list = B.html.ol('\n\t'); the_list.tail='\n'
+            if first_num_params.get('start') is not None:
+                the_list.set('start', first_num_params.get('start'))
+        if first_num_params.get('numFmt') is not None:
+            the_list.set('class', first_num_params.get('numFmt'))
+        parent = first_numbered_p.getparent()
+        parent.insert(parent.index(first_numbered_p), the_list)
+        numbered_p = first_numbered_p.getnext()
+        li = B.html.li(first_numbered_p); li.tail='\n\t'; li.getchildren()[-1].tail = ''
+        the_list.append(li)
+        while numbered_p is not None and numbered_p.tag == "{%(html)s}p" % DOCX.NS \
+        and XML.find(numbered_p, "w:numPr", namespaces=DOCX.NS) is not None:
+            numPr = XML.find(numbered_p, "w:numPr", namespaces=DOCX.NS)
+            level = XML.find(numPr, "w:ilvl/@w:val", namespaces=DOCX.NS)
+            numId = XML.find(numPr, "w:numId/@w:val", namespaces=DOCX.NS)
+            num_params = params['docx'].numbering_params(numId, level)
+            XML.remove(numPr)
+            print("num_params: %r" % num_params)
+            if num_params == first_num_params:
+                next_p = numbered_p.getnext()
+                li = B.html.li(numbered_p); li.tail = '\n\t'; li.getchildren()[-1].tail = ''
+                the_list.append(li)
+                numbered_p = next_p
+            else:
+                numbered_p = None
+        li.tail = '\n'
+        first_numbered_p = XML.find(the_list, "following::html:p[w:numPr]", namespaces=DOCX.NS)
+    return root
 
 def wrap_sections(root, **params):
     """wrap sections divided by section breaks"""
@@ -328,7 +373,7 @@ def resolve_hyperlinks(root, **params):
         a.set('href', href)
     return root
 
-def merge_contiguous_spans(doc):
+def merge_contiguous_spans(doc, **params):
     """if spans are next to each other and have the same attributes, merge them"""
     spans = XML.xpath(doc, "//html:span", namespaces=NS)
     spans.reverse()
@@ -346,6 +391,7 @@ def paragraphs_with_newlines(root):
     """paragraphs that are not in tables, comments, footnotes, or endnotes should be followed by a newline"""
     for p in root.xpath("""//html:*[
                             not(ancestor::html:table
+                                or ancestor::html:li
                                 or ancestor::pub:comment 
                                 or ancestor::pub:footnote 
                                 or ancestor::pub:endnote)
@@ -357,7 +403,7 @@ def paragraphs_with_newlines(root):
 
 # == FIELDS == 
 
-def nest_fields(root):
+def nest_fields(root, **params):
     """fields need to be converted from a series of milestones to properly nested form"""
     
     # move TOC, ..., field_end out of parent paragraph when it's the first thing
@@ -393,7 +439,7 @@ def nest_fields(root):
         field_starts = root.xpath("//pub:field_start[1]", namespaces=NS)
     return root
 
-def field_attributes(root):
+def field_attributes(root, **params):
     """convert the Word field instructions to attributes"""
     for field in root.xpath(".//pub:field[@instr]", namespaces=NS):
         tokens = [i.strip('"') for i in re.split('(?:("[^"]+")|\s+)', field.attrib.pop('instr')) if i not in [None, '']]
@@ -427,7 +473,7 @@ def parse_field_attributes(cls, tokens):
                 attr[key] = value.strip('"').strip()
     return attr, tokens
 
-def toc_fields(root):
+def toc_fields(root, **params):
     """TOC fields usually have PAGEREF fields inside them, but the main text of each entry is not linked.
     Add a link to the main text of each entry that has a PAGEREF field but no link."""
     for toc in root.xpath("//pub:field[@class='TOC']", namespaces=NS):
@@ -525,7 +571,7 @@ FIELD_TEMPLATES = {
         r'\f': ['kind'],
         r'\g': ['range-sep'],
         r'\h': ['heading'],
-        r'\l': ['page-sep'],
+        r'\the_list': ['page-sep'],
         r'\p': ['letters'],
         r'\r': ['run-in', 'true'],
         r'\y': ['yomi', 'true']
@@ -537,14 +583,14 @@ FIELD_TEMPLATES = {
         r'\b': ['bold', 'true'],
         r'\c': ['catnum'],
         r'\i': ['ital', 'true'],
-        r'\l': ['title'],
+        r'\the_list': ['title'],
         r'\r': ['anchor'],
         r'\s': ['name']
     },
     'TC': {     # table of contents entry
         '': ['title'],
         r'\f': ['kind'],
-        r'\l': ['level'],
+        r'\the_list': ['level'],
         r'\n': ['page', 'false']
     },
     'TOA': {
@@ -556,7 +602,7 @@ FIELD_TEMPLATES = {
         r'\f': ['formatting', 'false'],
         r'\g': ['range-sep'],
         r'\h': ['headings', 'true'],
-        r'\l': ['page-sep'],
+        r'\the_list': ['page-sep'],
         r'\p': ['passim', '5']   
     },
     'TOC': {
@@ -565,7 +611,7 @@ FIELD_TEMPLATES = {
         r'\c': ['figures'],         # table of figures of the given label
         r'\d': ['seq-sep'],         # separator between sequence and page number
         r'\f': ['use-tc', 'true'],      # TOC from TC fields
-        r'\l': ['tc-level'],        # TC entry field level to use
+        r'\the_list': ['tc-level'],        # TC entry field level to use
         r'\h': ['link', 'true'],
         r'\n': ['numbers', 'false'],# don't show page numbers
         r'\o': ['levels'],         # TOC from given outline levels
@@ -639,7 +685,7 @@ FIELD_TEMPLATES = {
     },
     'STYLEREF': {
         '': ['style'],
-        r'\l': ['start', 'bottom'],
+        r'\the_list': ['start', 'bottom'],
         r'\n': ['para-number', 'copy'],
         r'\p': ['position', 'relative'],
         r'\r': ['para-number', 'relative'],
@@ -659,7 +705,7 @@ FIELD_TEMPLATES = {
     },
     'AUTONUMOUT': {},
     'LISTNUM': {
-        r'\l': ['level'],
+        r'\the_list': ['level'],
         r'\s': ['start']
     },
     'PAGE': {

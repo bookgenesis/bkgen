@@ -34,7 +34,7 @@
     xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" 
     xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
 
-    exclude-result-prefixes="a aml dt m mc mo mv o pic sl v ve w w10 w14 w15 wne wp wp14 wpc wpg wpi wps wsp wx"
+    exclude-result-prefixes="a aml dt m mc mo mv o pic sl v ve w10 w14 w15 wne wp wp14 wpc wpg wpi wps wsp wx"
     >
 
     <xsl:output method="xml" encoding="utf-8"/>
@@ -101,6 +101,21 @@
         	</xsl:if>
         	<!-- <xsl:apply-templates/> -->
         </pub:section_end>
+    </xsl:template>
+
+    <!-- paragraph numbering: replace with a simplified number definition node -->
+    <xsl:template match="w:numPr"><w:numPr><xsl:apply-templates/></w:numPr></xsl:template>
+    <xsl:template match="w:numId">
+        <w:numId>
+            <xsl:attribute name="w:val"><xsl:value-of select="@w:val"/></xsl:attribute>
+            <xsl:apply-templates/>
+        </w:numId>
+    </xsl:template>
+    <xsl:template match="w:ilvl">
+        <w:ilvl>
+            <xsl:attribute name="w:val"><xsl:value-of select="@w:val"/></xsl:attribute>
+            <xsl:apply-templates/>
+        </w:ilvl>
     </xsl:template>
 
     <xsl:template match="w:footnote">

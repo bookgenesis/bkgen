@@ -1,7 +1,9 @@
 
 import os
 from lxml import etree
+from bl.dict import Dict
 from bl.url import URL
+from bxml import XML
 import bxml.docx
 from bkgen import NS
 from bkgen.source import Source
@@ -52,3 +54,24 @@ class DOCX(bxml.docx.DOCX, Source):
 
     def stylesheet(self):
         return super().stylesheet()
+
+    def numbering_params(self, numId, level):
+        """return numbering parameters for the given w:numId an w:lvl / w:ilvl"""
+        numbering = self.xml(src='word/numbering.xml')
+        params = Dict(level=str(level))
+        num = XML.find(numbering.root, "//w:num[@w:numId='%s']" % numId, namespaces=self.NS)
+        if num is not None:
+            abstractNumId = XML.find(num, "w:abstractNumId/@w:val", namespaces=self.NS)
+            if abstractNumId is not None:
+                abstractNum = XML.find(numbering.root, "//w:abstractNum[@w:abstractNumId='%s']" % abstractNumId, namespaces=self.NS)
+                if abstractNum is not None:
+                    lvl = XML.find(abstractNum, "w:lvl[@w:ilvl='%s']" % level, namespaces=self.NS)
+                    if lvl is not None:
+                        params['start'] = XML.find(lvl, "w:start/@w:val", namespaces=self.NS)
+                        params['numFmt']  = XML.find(lvl, "w:numFmt/@w:val", namespaces=self.NS)
+                        if params['numFmt'] == 'bullet':
+                            params['ul'] = True
+                        else:
+                            params['ol'] = True
+        return params
+
