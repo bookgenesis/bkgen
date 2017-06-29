@@ -510,6 +510,7 @@ class Project(XML, Source):
             split_href = spineitem.get('href').split('#')
             log.debug(split_href)
             docfn = os.path.join(self.path, split_href[0])
+            doc_css_fns = [cfn for cfn in glob(os.path.splitext(docfn)[0]+'.css') if os.path.exists(cfn)]
             if len(split_href) > 1: 
                 d = Document.load(fn=docfn, section_id=split_href[1])
             else:
@@ -520,10 +521,6 @@ class Project(XML, Source):
                 h = d.html(fn=outfn, ext=ext, resources=resources, 
                         output_path=output_path, http_equiv_content_type=http_equiv_content_type)
                 # add the document-specific CSS, if it exists
-                doc_css_fns = [
-                    cssfn for cssfn 
-                    in [os.path.commonprefix([docfn, cssfn])+'.css' for cssfn in css_fns] 
-                    if os.path.exists(cssfn)]
                 for doc_css_fn in doc_css_fns:
                     out_css_fn = os.path.splitext(
                         os.path.join(output_path, os.path.relpath(doc_css_fn, self.path)))[0]+'.css'
