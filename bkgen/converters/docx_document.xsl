@@ -120,7 +120,7 @@
 
     <xsl:template match="w:footnote">
         <pub:footnote>
-            <xsl:attribute name="name">
+            <xsl:attribute name="id">
                 <xsl:value-of select="@w:id"/>
             </xsl:attribute>
             <xsl:apply-templates/>
@@ -130,7 +130,7 @@
 
     <xsl:template match="w:endnote">
         <pub:endnote>
-            <xsl:attribute name="name">
+            <xsl:attribute name="id">
                 <xsl:value-of select="@w:id"/>
             </xsl:attribute>
             <xsl:apply-templates/>
@@ -141,7 +141,7 @@
     <!-- COMMENTS -->
     <xsl:template match="w:comment">
         <pub:comment>
-            <xsl:attribute name="name">
+            <xsl:attribute name="id">
                 <xsl:value-of select="@w:id"/>
             </xsl:attribute>
             <xsl:attribute name="datetime">
@@ -301,6 +301,10 @@
             <xsl:apply-templates select="@*|node()"/>
         </xsl:copy>
     </xsl:template>
+
+    <xsl:template match="w:footnoteRef"><pub:footnote-ref></pub:footnote-ref></xsl:template>
+    <xsl:template match="w:endnoteRef"><pub:endnote-ref></pub:endnote-ref></xsl:template>
+    <xsl:template match="w:commentRef"><pub:comment-ref></pub:comment-ref></xsl:template>
 
     <xsl:template match="w:rPr"><xsl:apply-templates/></xsl:template>
     <xsl:template match="w:rStyle"><xsl:apply-templates/></xsl:template>

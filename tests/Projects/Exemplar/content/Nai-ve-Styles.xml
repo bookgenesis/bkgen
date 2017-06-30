@@ -13,10 +13,10 @@
 	</pub:metadata>
 	<body>
 <section class="continuous" id="Naïve-Styles_s1" title="Naïve Styles">
-<h1 class="heading-1">Naïve Styles<span class="footnote-reference"><pub:footnote name="1"><p class="footnote-text"> Footnote one at the end of a heading. </p></pub:footnote></span></h1>
-<p>The paragraphs are separated with double returns — the output should not. All paragraphs use the “Normal” style, except the lists which use Word’s automatically applied “List Paragraph” style.<span class="endnote-reference"><pub:endnote name="1"><h2 class="heading-2">Endnotes</h2><p class="endnote-text"> Endnote one in the middle of a paragraph.</p></pub:endnote></span> Lists are applied using the toolbar / autoformat functions. The direct font formatting in the following paragraph should convert to spans with classes.</p>
+<h1 class="heading-1">Naïve Styles<span class="footnote-reference"><pub:footnote id="1"><p class="footnote-text"><span class="footnote-reference"><pub:footnote-ref></pub:footnote-ref></span> Footnote one at the end of a heading. </p></pub:footnote></span></h1>
+<p>The paragraphs are separated with double returns — the output should not. All paragraphs use the “Normal” style, except the lists which use Word’s automatically applied “List Paragraph” style.<span class="endnote-reference"><pub:endnote id="1"><h2 class="heading-2">Endnotes</h2><p class="endnote-text"><span class="endnote-reference"><pub:endnote-ref></pub:endnote-ref></span> Endnote one in the middle of a paragraph.</p></pub:endnote></span> Lists are applied using the toolbar / autoformat functions. The direct font formatting in the following paragraph should convert to spans with classes.</p>
 <h2 class="heading-2">Font Formatting</h2>
-<p>“<span class="bold">Neque</span> <span class="italic">porro</span> <span class="bold italic">quisquam</span> <span class="super">est</span> <span class="bold sub">qui</span> <span class="usingle">dolorem</span> <span class="udouble">ipsum</span> <span class="uwords">quia</span> <span class="smcap">dolor</span> <span class="strike">sit</span> <span class="dstrike">amet</span>, <span class="hidden">consectetur, </span><span class="allcap">adipisci</span> velit...” [line break]<br></br>“<span highlight="yellow">There</span> is <span color="FF0000">no</span> <span color="929292">one</span> <span color="817793">who</span> <span color="FFFFFF" highlight="blue">loves</span> pain itself,<span class="footnote-reference"><pub:footnote name="2"><p class="footnote-text"> Footnote two in the middle of a paragraph.</p></pub:footnote></span> who seeks after it and wants to have it, simply because it is pain...”</p>
+<p>“<span class="bold">Neque</span> <span class="italic">porro</span> <span class="bold italic">quisquam</span> <span class="super">est</span> <span class="bold sub">qui</span> <span class="usingle">dolorem</span> <span class="udouble">ipsum</span> <span class="uwords">quia</span> <span class="smcap">dolor</span> <span class="strike">sit</span> <span class="dstrike">amet</span>, <span class="hidden">consectetur, </span><span class="allcap">adipisci</span> velit...” [line break]<br></br>“<span highlight="yellow">There</span> is <span color="FF0000">no</span> <span color="929292">one</span> <span color="817793">who</span> <span color="FFFFFF" highlight="blue">loves</span> pain itself,<span class="footnote-reference"><pub:footnote id="2"><p class="footnote-text"><span class="footnote-reference"><pub:footnote-ref></pub:footnote-ref></span> Footnote two in the middle of a paragraph.</p></pub:footnote></span> who seeks after it and wants to have it, simply because it is pain...”</p>
 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque varius tincidunt elit, a sodales justo interdum vel. Aenean tristique eget diam vel sollicitudin. Donec eget dolor at mauris sollicitudin rutrum. Vivamus suscipit elit eu massa laoreet posuere. Etiam iaculis tincidunt felis, sed consequat dolor rutrum vitae. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Cras egestas varius pellentesque. </p>
 <h2 class="heading-2">Lists</h2>
 <h3 class="heading-3">Unordered List</h3>
@@ -37,7 +37,7 @@
 </section>
 <section class="continuous" id="_s2">
 <p>Section Break. Suspendisse aliquam ex id tellus rutrum fermentum quis ut orci. Sed ac imperdiet orci. In felis leo, maximus sed venenatis in, imperdiet nec metus. Vestibulum luctus odio vitae eros pretium iaculis. Ut nec orci iaculis, maximus ante vel, congue libero.</p>
-<h2 class="heading-2">Image<span class="endnote-reference"><pub:endnote name="2"><p class="endnote-text"> Endnote two at the end of a heading</p></pub:endnote></span></h2>
+<h2 class="heading-2">Image<span class="endnote-reference"><pub:endnote id="2"><p class="endnote-text"><span class="endnote-reference"><pub:endnote-ref></pub:endnote-ref></span> Endnote two at the end of a heading</p></pub:endnote></span></h2>
 <p><img src="images/bookgenesis_type.png"></img></p>
 <p>We ought to be able just to include an embedded image without any particular fuss. The output should include the same image, and something about the image’s dimensions and placement.</p>
 <h2 class="heading-2">Table</h2>
@@ -45,11 +45,11 @@
 	<tr>
 		<td><p class="Body-Text">A</p></td>
 		<td><p class="Body-Text">small</p></td>
-		<td><p class="Body-Text">table<span class="footnote-reference"><pub:footnote name="3"><p class="footnote-text"> Footnote three in a table.</p></pub:footnote></span></p></td>
+		<td><p class="Body-Text">table<span class="footnote-reference"><pub:footnote id="3"><p class="footnote-text"><span class="footnote-reference"><pub:footnote-ref></pub:footnote-ref></span> Footnote three in a table.</p></pub:footnote></span></p></td>
 	</tr>
 	<tr>
 		<td><p class="Body-Text">with</p></td>
-		<td><p class="Body-Text">two rows<span class="endnote-reference"><pub:endnote name="3"><p class="endnote-text"> Endnote three in a table.</p></pub:endnote></span></p></td>
+		<td><p class="Body-Text">two rows<span class="endnote-reference"><pub:endnote id="3"><p class="endnote-text"><span class="endnote-reference"><pub:endnote-ref></pub:endnote-ref></span> Endnote three in a table.</p></pub:endnote></span></p></td>
 		<td><p class="Body-Text">and 3 columns.</p></td>
 	</tr>
 </table>
