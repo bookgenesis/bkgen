@@ -60,6 +60,26 @@ class Project(XML, Source):
         return os.path.dirname(os.path.abspath(self.fn))
 
     @property
+    def content_path(self):
+        return os.path.join(self.path, self.content_folder)
+
+    @property
+    def image_path(self):
+        return os.path.join(self.path, self.image_folder)
+
+    @property
+    def cover_path(self):
+        return os.path.join(self.path, self.cover_folder)
+
+    @property
+    def output_path(self):
+        return os.path.join(self.path, self.output_folder)
+
+    @property
+    def interior_path(self):
+        return os.path.join(self.path, self.interior_folder)
+
+    @property
     def output_kinds(self):
         return self.get('output_kinds') or self.OUTPUT_KINDS
 
@@ -243,7 +263,7 @@ class Project(XML, Source):
                 source.fn = source_new_fn
 
         # import the documents, metadata, images, and stylesheet from this source
-        if documents==True: self.import_documents(source.documents(**params))
+        if documents==True: self.import_documents(source.documents(output_path=self.content_path, **params))
         if metadata==True: self.import_metadata(source.metadata())
         if images==True: self.import_images(source.images())
         if stylesheet==True:
