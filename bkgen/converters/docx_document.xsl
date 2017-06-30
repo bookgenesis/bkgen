@@ -128,10 +128,6 @@
         </pub:footnote>        
     </xsl:template>
 
-    <xsl:template match="w:footnoteRef">
-        <!-- <pub:footnote-ref><xsl:apply-templates/></pub:footnote-ref> -->
-    </xsl:template>
-
     <xsl:template match="w:endnote">
         <pub:endnote>
             <xsl:attribute name="name">
@@ -140,10 +136,6 @@
             <xsl:apply-templates/>
             <xsl:text></xsl:text>
         </pub:endnote>        
-    </xsl:template>
-
-    <xsl:template match="w:endnoteRef">
-        <!-- <pub:endnote-ref><xsl:apply-templates/></pub:endnote-ref> -->
     </xsl:template>
 
     <!-- COMMENTS -->
@@ -190,7 +182,7 @@
         <span>
             <!-- class name -->
             <!-- omit when style in "CommentReference", "FootnoteReference", "EndnoteReference" because it wraps a comment/footnote/endnote or its reference -->
-            <xsl:if test="w:rPr/w:rStyle[@w:val!='CommentReference' and @w:val!='FootnoteReference' and @w:val!='EndnoteReference']">
+            <xsl:if test="w:rPr/w:rStyle">
                 <xsl:attribute name="class">
                     <xsl:value-of select="w:rPr/w:rStyle/@w:val"/>
                 </xsl:attribute>
@@ -300,8 +292,14 @@
         </xsl:choose>
     </xsl:template>
 
-    <xsl:template match="w:r[not(w:rPr[w:rStyle or w:i or w:iCs or w:b or w:bCs or w:caps or w:smallCaps or w:strike or w:dstrike or w:vertAlign or w:u or w:vanish or w:highlight or w:color])]">
+    <xsl:template match="w:r[not(w:rPr)]">
         <xsl:apply-templates/>
+    </xsl:template>
+
+    <xsl:template match="w:footnoteReference | w:endnoteReference | w:commentReference">
+        <xsl:copy>
+            <xsl:apply-templates select="@*|node()"/>
+        </xsl:copy>
     </xsl:template>
 
     <xsl:template match="w:rPr"><xsl:apply-templates/></xsl:template>
@@ -396,7 +394,6 @@
         <xsl:text>&#xA;&#x9;&#x9;</xsl:text>
         <td>
             <xsl:apply-templates/>
-            <!-- <xsl:text>&#xA;&#x9;&#x9;</xsl:text> -->
         </td>
     </xsl:template>
 

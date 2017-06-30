@@ -1,6 +1,6 @@
 # XT stylesheet to transform Word docx to pub:document
 
-import os, re, sys
+import os, re, sys, logging
 from lxml import etree
 from copy import deepcopy
 import urllib.parse
@@ -18,6 +18,7 @@ from bkgen import NS
 from bkgen.converters import Converter
 from bkgen.document import Document
 
+log = logging.getLogger(__name__)
 B = Builder(**NS)
 transformer = XT()
 transformer_XSLT = etree.XSLT(etree.parse(os.path.splitext(__file__)[0] + '.xsl'))
@@ -30,6 +31,7 @@ class DocxDocument(Converter):
 def document(elem, **params):
     # Pre-Process
     root = deepcopy(elem)
+    root = embed_notes(root, **params) 
 
     # Transform
     xsl_params = {
@@ -38,8 +40,8 @@ def document(elem, **params):
     xsl_params = {k:etree.XSLT.strparam(xsl_params[k]) for k in xsl_params.keys()}
     root = transformer_XSLT(root, **xsl_params).getroot()
 
+    # Post-Process
     root = get_document_metadata(root, **params)
-    root = embed_notes(root, **params) 
     root = map_para_styles_levels(root, **params)
     root = map_span_styles(root, **params)
     root = font_attributes(root, **params)
@@ -53,10 +55,9 @@ def document(elem, **params):
     root = remove_empty_paras(root, **params)
     root = number_lists(root, **params)
     root = wrap_sections(root, **params)
-    # root = split_level_sections(root)
+    # root = split_level_sections(root, **params)
+    # root = nest_level_sections(root, **params)
     root = sections_title_id(root, **params)
-
-    # Post-Process
     root = paragraphs_with_newlines(root)
 
     return [ root ]
@@ -75,21 +76,24 @@ def embed_notes(root, **params):
     footnotes = docx.footnotemap()
     for elem in root.xpath("//w:footnoteReference", namespaces=DOCX.NS):
         id = elem.get("{%(w)s}id" % DOCX.NS)
+        # log.debug("footnote id=%r" % id)
         note_elem = footnotes[id].elem
         parent = elem.getparent()
-        parent.replace(elem, transformer_XSLT(note_elem).getroot())
+        parent.replace(elem, note_elem)
     endnotes = docx.endnotemap()
     for elem in root.xpath("//w:endnoteReference", namespaces=DOCX.NS):
         id = elem.get("{%(w)s}id" % DOCX.NS)
+        # log.debug("endnote id=%r" % id)
         note_elem = endnotes[id].elem
         parent = elem.getparent()
-        parent.replace(elem, transformer_XSLT(note_elem).getroot())
+        parent.replace(elem, note_elem)
     comments = docx.commentmap()
     for elem in root.xpath("//w:commentReference", namespaces=DOCX.NS):
         id = elem.get("{%(w)s}id" % DOCX.NS)
+        # log.debug("comment id=%r" % id)
         note_elem = comments[id].elem
         parent = elem.getparent()
-        parent.replace(elem, transformer_XSLT(note_elem).getroot())
+        parent.replace(elem, note_elem)
     return root
 
 def remove_empty_spans(root, **params):
@@ -117,7 +121,7 @@ def number_lists(root, **params):
         numId = XML.find(numPr, "w:numId/@w:val", namespaces=DOCX.NS)
         XML.remove(numPr)
         first_num_params = params['docx'].numbering_params(numId, level)
-        print("first_num_params: %r" % first_num_params)
+        # print("first_num_params: %r" % first_num_params)
         if first_num_params.get('ul')==True:
             the_list = B.html.ul('\n\t'); the_list.tail='\n'
         else:
@@ -138,7 +142,7 @@ def number_lists(root, **params):
             numId = XML.find(numPr, "w:numId/@w:val", namespaces=DOCX.NS)
             num_params = params['docx'].numbering_params(numId, level)
             XML.remove(numPr)
-            print("num_params: %r" % num_params)
+            # print("num_params: %r" % num_params)
             if num_params == first_num_params:
                 next_p = numbered_p.getnext()
                 li = B.html.li(numbered_p); li.tail = '\n\t'; li.getchildren()[-1].tail = ''
@@ -176,7 +180,7 @@ def wrap_sections(root, **params):
 
     return root
 
-def split_level_sections(root):
+def split_level_sections(root, **params):
     """h1...h9 paragraphs indicate the beginning of a section;
         each level creates a new section.
     """
@@ -204,7 +208,7 @@ def split_level_sections(root):
             section.append(elem)
     return root
 
-def nest_level_sections(root):
+def nest_level_sections(root, **params):
     """h1...h9 paragraphs indicate the beginning of a nested section;
         each level creates a new nested section.
     """
@@ -335,6 +339,7 @@ def font_attributes(root, **params):
 
 def get_images(root, **params):
     docx = params['docx']
+    output_path = params.get('output_path') or os.path.dirname(params['fn'])
     rels = docx.xml(src='word/_rels/document.xml.rels').root
     for img in root.xpath("//html:img", namespaces=DOCX.NS):
         link_rel = XML.find(rels, "//rels:Relationship[@Id='%s']" % img.get('data-link-id'), namespaces=DOCX.NS)
@@ -345,12 +350,12 @@ def get_images(root, **params):
                 img.set('src', os.path.relpath(imgfn, os.path.dirname(params['fn'])))
         if img.get('src') is None and embed_rel is not None:
             fd = docx.read('word/' + embed_rel.get('Target'))
-            imgfn = os.path.join(os.path.dirname(params['fn']), img.attrib.pop('name'))
+            imgfn = os.path.join(output_path, 'images', img.attrib.pop('name'))
             if not os.path.isdir(os.path.dirname(imgfn)): 
                 os.makedirs(os.path.dirname(imgfn))
             with open(imgfn, 'wb') as f: 
                 f.write(fd)
-            img.set('src', os.path.relpath(imgfn, os.path.dirname(params['fn'])))
+            img.set('src', os.path.relpath(imgfn, output_path))
         if img.get('src') is not None:
             if img.get('data-link-id') is not None: _=img.attrib.pop('data-link-id')
             if img.get('data-embed-id') is not None: _=img.attrib.pop('data-embed-id')            

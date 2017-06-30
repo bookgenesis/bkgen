@@ -11,19 +11,19 @@ from bkgen.source import Source
 class DOCX(bxml.docx.DOCX, Source):
     """A Word document can be a source that is brought in, and an output format"""
 
-    def document(self, fn=None): 
+    def document(self, fn=None, **params): 
         """returns an XML document containing the content of the Word document"""
         from .converters.docx_document import DocxDocument
         converter = DocxDocument()
-        doc = converter.convert(self, fn=fn or os.path.splitext(self.fn)[0]+'.xml')
+        doc = converter.convert(self, fn=fn or os.path.splitext(self.fn)[0]+'.xml', **params)
         return doc
 
     # == Source Properties == 
 
-    def documents(self):
+    def documents(self, **params):
         """return a list of documents containing the content of the document"""
         # just the one document
-        return [self.document()]
+        return [self.document(**params)]
 
     def images(self):
         """all the images referred to in the DOCX. 
