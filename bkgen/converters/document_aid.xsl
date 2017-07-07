@@ -22,14 +22,20 @@
 			    <xsl:value-of select="@class"/>
 			</xsl:attribute>
 			<xsl:apply-templates/>
-			<xsl:if test="not(ancestor::html:td) and following::*">
-                <xsl:text>&#xA;</xsl:text>
-            </xsl:if>
 		</xsl:copy>
 		<xsl:if test="ancestor::html:td and (following-sibling::*)">
 		    <pub:x000D/>
 		</xsl:if>
+    </xsl:template>
 
+    <!-- Put a paragraph return at the end of every paragraph/heading that is not in a table and has following content.
+        The paragraph return goes at the end of the last text in the paragraph, in case there is a span or other element
+        at the end of the paragraph (which would cause InDesign to ignore the paragraph return if it were after that element). -->
+    <xsl:template match="text()">
+        <xsl:copy><xsl:apply-templates select="@*|node()"/></xsl:copy>
+        <xsl:if test="(ancestor::html:p[following::*] or ancestor::html:h1[following::*] or ancestor::html:h2[following::*] or ancestor::html:h3[following::*] or ancestor::html:h4[following::*] or ancestor::html:h5[following::*] or ancestor::html:h6[following::*] or ancestor::html:h7[following::*] or ancestor::html:h8[following::*] or ancestor::html:h9[following::*]) and not(ancestor::html:td)">
+            <xsl:text>&#xA;</xsl:text>
+        </xsl:if>
     </xsl:template>
 
     <xsl:template match="html:span[@class] | html:a[@class]">
