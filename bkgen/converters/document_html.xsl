@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <xsl:stylesheet version="1.1" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
 	xmlns="http://www.w3.org/1999/xhtml"
-	xmlns:pub="http://publishingxml.org/ns">
+	xmlns:pub="http://publishingxml.org/ns"
+	xmlns:m="http://www.w3.org/1998/Math/MathML">
 
     <xsl:output method="xml" encoding="utf-8" indent="yes"
 		doctype-system="http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" 
@@ -79,5 +80,27 @@
 		</img>	    
 		<br></br>
 	</xsl:template>
+
+	<!-- MathML: If an altimg is available, use it; otherwise, leave the MathML alone -->
+	<xsl:template match="m:math[@altimg] | math[@altimg]">
+	    <img>
+	    	<xsl:attribute name="src">
+	    	    <xsl:value-of select="@altimg"/>
+	    	</xsl:attribute>
+<!-- 	    	<xsl:if test="@altimg-valign">
+	    	    <xsl:attribute name="style">
+	    	        <xsl:text>vertical-align:</xsl:text>
+	    	        <xsl:value-of select="@altimg-valign"/>
+	    	        <xsl:text>px</xsl:text>
+	    	    </xsl:attribute>
+	    	</xsl:if>
+ -->
+	    </img>
+	</xsl:template>
+
+    <xsl:template match="m:math[not(@altimg)] | math[not(@altimg)]">
+    	<xsl:copy><xsl:apply-templates select="@*|node()"/></xsl:copy>
+	</xsl:template>
+
 
 </xsl:stylesheet>
