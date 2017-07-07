@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <xsl:stylesheet version="1.1" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-	xmlns="http://www.w3.org/1999/xhtml"
-	xmlns:pub="http://publishingxml.org/ns"
-	xmlns:m="http://www.w3.org/1998/Math/MathML">
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:pub="http://publishingxml.org/ns"
+    xmlns:m="http://www.w3.org/1998/Math/MathML"
+    exclude-result-prefixes="m pub">
 
     <xsl:output method="xml" encoding="utf-8" indent="yes"
-		doctype-system="http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" 
-		doctype-public="-//W3C//DTD XHTML 1.1//EN" />
+	    doctype-system="http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" 
+	    doctype-public="-//W3C//DTD XHTML 1.1//EN" />
 
     <xsl:template match="@*|node()">
     	<xsl:copy><xsl:apply-templates select="@*|node()"/></xsl:copy>
