@@ -341,16 +341,15 @@ def get_images(root, **params):
     docx = params['docx']
     output_path = params.get('output_path') or os.path.dirname(params['fn'])
     rels = docx.xml(src='word/_rels/document.xml.rels').root
-    for img in root.xpath("//html:img", namespaces=DOCX.NS):
+    imgs = root.xpath("//html:img", namespaces=DOCX.NS)
+    for img in imgs:
         link_rel = XML.find(rels, "//rels:Relationship[@Id='%s']" % img.get('data-link-id'), namespaces=DOCX.NS)
         embed_rel = XML.find(rels, "//rels:Relationship[@Id='%s']" % img.get('data-embed-id'), namespaces=DOCX.NS)
         if link_rel is not None:
-            imgfn = URL(link_rel.get('Target')).path
-            if os.path.isfile(imgfn):
-                img.set('src', os.path.relpath(imgfn, os.path.dirname(params['fn'])))
-        if img.get('src') is None and embed_rel is not None:
+            img.set('src', link_rel.get('Target'))
+        if embed_rel is not None:
             fd = docx.read('word/' + embed_rel.get('Target'))
-            imgfn = os.path.join(output_path, 'images', img.attrib.pop('name'))
+            imgfn = os.path.join(output_path, 'images', os.path.splitext(embed_rel.get('Target'))[-1])
             if not os.path.isdir(os.path.dirname(imgfn)): 
                 os.makedirs(os.path.dirname(imgfn))
             with open(imgfn, 'wb') as f: 
