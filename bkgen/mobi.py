@@ -19,7 +19,7 @@ class MOBI(Dict):
                             (mobi_name or os.path.basename(mobi_path.rstrip(os.path.sep)))+ext)
 
     def build(self, build_path, metadata, mobi_name=None, manifest=None, spine_items=None, cover_src=None, 
-                nav_toc=None, nav_landmarks=None, nav_page_list=None, 
+                nav_toc=None, nav_landmarks=None, nav_page_list=None, before_compile=None,
                 nav_href='nav.html', nav_title="Navigation"):
         """build MOBI (Kindle ebook) output of the given project"""
         
@@ -37,6 +37,8 @@ class MOBI(Dict):
         EPUB.unhide_toc(os.path.join(build_path, nav_href))
         EPUB.append_toc_to_spine(opffn, nav_href)
         self.size_images(opffn)
+        if before_compile is not None:
+            before_compile(build_path)
         self.compile_mobi(build_path, opffn, mobifn=mobifn)
         result.fn=mobifn
         return result

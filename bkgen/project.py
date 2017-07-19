@@ -377,7 +377,7 @@ class Project(XML, Source):
             pub:resources/pub:resource[contains(@class, 'cover') and 
                 (not(@kind) or contains(@kind, '%s'))]/@href""" % kind, namespaces=NS)        
 
-    def build_outputs(self, kind=None, cleanup=True):
+    def build_outputs(self, kind=None, cleanup=True, before_compile=None):
         """build the project outputs
             kind=None:      which kind of output to build; if None, build all
         """
@@ -389,9 +389,9 @@ class Project(XML, Source):
                 log.info("output kind=%r" % output_kind)
                 assert output_kind in self.OUTPUT_KINDS.keys()
                 if output_kind=='EPUB':
-                    result = self.build_epub(cleanup=cleanup)
+                    result = self.build_epub(cleanup=cleanup, before_compile=before_compile)
                 elif output_kind=='Kindle':
-                    result = self.build_mobi(cleanup=cleanup)
+                    result = self.build_mobi(cleanup=cleanup, before_compile=before_compile)
                 elif output_kind=='Archive':
                     result = self.build_archive()
             except:
@@ -416,7 +416,7 @@ class Project(XML, Source):
         result = Dict(fn=zipfn)
         return result
 
-    def build_epub(self, clean=True, show_nav=False, zip=True, check=True, cleanup=False, **image_args):
+    def build_epub(self, clean=True, show_nav=False, zip=True, check=True, cleanup=False, before_compile=None, **image_args):
         from .epub import EPUB
         epub_isbn = self.metadata().identifier(id_patterns=['epub', 'ebook', 'isbn'])
         if epub_isbn is not None and epub_isbn.text is not None:
@@ -433,11 +433,11 @@ class Project(XML, Source):
             ext='.xhtml', **image_args)
         result = EPUB().build(epub_path, metadata, 
             epub_name=epub_name, spine_items=spine_items, cover_src=cover_src, 
-            show_nav=show_nav, zip=zip, check=check)
+            show_nav=show_nav, before_compile=before_compile, zip=zip, check=check)
         if cleanup==True: shutil.rmtree(epub_path)
         return result
 
-    def build_mobi(self, clean=True, cleanup=False, **image_args):
+    def build_mobi(self, clean=True, cleanup=False, before_compile=None, **image_args):
         from .mobi import MOBI
         mobi_isbn = self.metadata().identifier(id_patterns=['mobi', 'ebook', 'isbn'])
         if mobi_isbn is not None:
@@ -453,7 +453,7 @@ class Project(XML, Source):
         spine_items = self.output_spineitems(output_path=mobi_path, resources=resources, 
             ext='.html', http_equiv_content_type=True, canonicalized=False, **image_args)
         result = MOBI().build(mobi_path, metadata, 
-                mobi_name=mobi_name, spine_items=spine_items, cover_src=cover_src)
+                mobi_name=mobi_name, spine_items=spine_items, cover_src=cover_src, before_compile=before_compile)
         if cleanup==True: shutil.rmtree(mobi_path)
         return result
 
@@ -582,8 +582,8 @@ class Project(XML, Source):
                     if id in ids:
                         e.set('href', os.path.relpath(ids[id], x.path)+'#'+id)
                 # images will be jpegs
-                for e in x.root.xpath("//html:img[@src]", namespaces=NS):
-                    e.set('src', os.path.splitext(e.get('src'))[0]+'.jpg')
+                # for e in x.root.xpath("//html:img[@src]", namespaces=NS):
+                #     e.set('src', os.path.splitext(e.get('src'))[0]+'.jpg')
                 x.write()
 
         return spineitems
@@ -677,8 +677,15 @@ if __name__=='__main__':
             project_path = os.path.abspath(project_path)
             if 'create' in sys.argv[1]:
                 Project.create(os.path.dirname(project_path), os.path.basename(project_path))
-            if 'import' in sys.argv[1]:
+            
+            if 'import-all' in sys.argv[1]:
                 import_all(project_path)
+            elif 'import' in sys.argv[1]:
+                project = Project(fn=os.path.join(sys.argv[2], 'project.xml'))
+                for fn in sys.argv[3:]:
+                    log.info("import %s" % fn)
+                    project.import_source_file(fn)
+            
             if 'build' in sys.argv[1]:
                 if '-epub' in sys.argv[1]: format='epub'
                 elif '-mobi' in sys.argv[1]: format='mobi'

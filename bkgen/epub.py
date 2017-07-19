@@ -139,7 +139,7 @@ class EPUB(ZIP, Source):
     def build(C, output_path, metadata, epub_name=None, manifest=None, spine_items=None, 
                 cover_src=None, cover_html=True, nav_toc=None, nav_landmarks=None, 
                 nav_page_list=None, nav_href='nav.xhtml', nav_title="Navigation", 
-                show_nav=False, zip=True, check=True):
+                show_nav=False, before_compile=None, zip=True, check=True):
         """build EPUB file output; returns EPUB object
         
         REQUIRED parameters:
@@ -222,6 +222,8 @@ class EPUB(ZIP, Source):
         
         result = Dict(
             fn=C.epub_fn(output_path, epub_name))
+        if before_compile is not None:
+            before_compile(output_path)
         if zip==True:
             the_epub = C.zip_epub(output_path, 
                 epubfn=result.epubfn,
