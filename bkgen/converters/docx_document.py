@@ -358,7 +358,7 @@ def get_images(root, **params):
         if img.get('src') is not None:
             if img.get('data-link-id') is not None: _=img.attrib.pop('data-link-id')
             if img.get('data-embed-id') is not None: _=img.attrib.pop('data-embed-id')            
-
+        log.debug(img.attrib)
     return root
 
 def resolve_hyperlinks(root, **params):
