@@ -78,5 +78,6 @@ NS = Dict(
     epub="http://www.idpf.org/2007/ops",
     ncx="http://www.daisy.org/z3986/2005/ncx/",
     cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties",    #: Microsoft
+    m="http://www.w3.org/1998/Math/MathML",                                 # MathML
 )
 
