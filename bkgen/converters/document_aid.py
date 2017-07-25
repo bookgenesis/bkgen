@@ -93,15 +93,22 @@ def image_hrefs(root, **params):
     return root
 
 def paragraph_returns(root, **params):
-    """Put a paragraph return at the end of every paragraph/heading that is not in a table and has following content.
+    """Put a paragraph return at the end of every paragraph/heading that has following content.
     The paragraph return goes at the end of the last text in the paragraph, in case there is a span or other element
     at the end of the paragraph (which would cause InDesign to ignore the paragraph return if it were after that element).
     """
     t = etree.tounicode(root).strip()
     t = re.sub('\s*\n\s*', '', t)
     root = etree.fromstring(t)
-    pp = root.xpath("//html:p[not(ancestor::html:table) and following::html:*]", namespaces=NS)
+    pp = root.xpath("//html:p[(not(ancestor::html:table) and following::html:*) or (following-sibling::html:*)]", namespaces=NS)
     log.debug('%d paragraphs in %r' % (len(pp), root.tag))
     for p in pp:
+        # following = XML.find(p, "following::*")
+        # if (following is not None 
+        #     and following.tag not in ["{%(pub)s}colbreak" % NS, "{%(pub)s}framebreak" % NS, "{%(pub)s}pagebreak" % NS]
+        # ):
         p.tail = '\n'
+    # # breaks need a line so that new paragraphs can form
+    # for br in root.xpath("//pub:colbreak | //pub:framebreak | //pub:pagebreak", namespaces=NS):
+    #     br.text = '\n'
     return root
