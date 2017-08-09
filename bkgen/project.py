@@ -25,11 +25,13 @@ from bxml.xml import XML, etree
 from bxml.builder import Builder
 
 from bkgen import NS, config, mimetypes
+from bkgen.document import Document
 from .source import Source
 
 FILENAME = os.path.abspath(__file__)
 PATH = os.path.dirname(FILENAME)
 PUB = Builder.single(NS.pub)
+HTML = Builder.single(NS.html)
 
 class Project(XML, Source):
     """Every project has a project.xml file that holds information about the project.
@@ -527,11 +529,13 @@ class Project(XML, Source):
         from .document import Document
         log.debug("project.output_spineitems()")
         output_path = output_path or os.path.join(self.path, self.output_folder)
-        if resources is None: resources = self.output_resources(output_path=output_path, **image_args)
+        if resources is None: 
+            resources = self.output_resources(output_path=output_path, **image_args)
         spineitems = [deepcopy(spineitem) for spineitem in 
                     self.root.xpath("pub:spine/pub:spineitem[not(@include='False')]", namespaces=NS)]
         outfns = []
         css_fns = glob(os.path.join(self.path, self.content_folder, '*.css'))
+        endnotes = []                   # collect endnotes and pass into and out of Document.html()
         for spineitem in spineitems:
             split_href = spineitem.get('href').split('#')
             log.debug(split_href)
@@ -544,8 +548,8 @@ class Project(XML, Source):
             outfn = os.path.splitext(os.path.join(output_path, os.path.relpath(d.fn, self.path)))[0] + ext
             if 'html' in ext:
                 # create the output html for this document
-                h = d.html(fn=outfn, ext=ext, resources=resources, 
-                        output_path=output_path, http_equiv_content_type=http_equiv_content_type)
+                h = d.html(fn=outfn, ext=ext, output_path=output_path, http_equiv_content_type=http_equiv_content_type,
+                        resources=resources, endnotes=endnotes)
                 # add the document-specific CSS, if it exists
                 for doc_css_fn in doc_css_fns:
                     out_css_fn = os.path.splitext(
@@ -569,6 +573,22 @@ class Project(XML, Source):
                         _ = self.output_image(srcfn, outfn=outfn, **image_args)
                     else:
                         log.warn("IMAGE NOT FOUND: %s" % srcfn)
+
+        if len(endnotes) > 0:           # create a new spineitem for the endnotes, and put them there
+            endnotes_html = Document().html(fn=os.path.join(output_path, self.content_folder, 'Collected-Endnotes'+ext))
+            endnotes_html.write()
+            section = HTML.section('\n', {'class': 'endnotes', 'id':'Collected-Endnotes'})
+            endnotes_html.root.append(HTML.body('\n', section, '\n'))
+            while len(endnotes) > 0:
+                endnote = endnotes.pop(0)
+                endnote.tail = '\n'
+                section.append(endnote)
+            endnotes_html.write()
+            spineitem = PUB.spineitem(
+                href= os.path.relpath(endnotes_html.fn, output_path),
+                title="Endnotes")
+            spineitems.append(spineitem)
+            outfns.append(endnotes_html.fn)
 
         if 'html' in ext:
             # collect the @ids from the content and fix the hyperlinks
