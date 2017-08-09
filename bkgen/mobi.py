@@ -75,6 +75,7 @@ class MOBI(Dict):
             x = XML(os.path.join(os.path.dirname(opffn), item.get('href')))
             for img in x.root.xpath("//html:img[@width or @height]", namespaces=self.NS):
                 srcfn = os.path.join(os.path.dirname(x.fn), img.get('src'))
+                if os.path.splitext(srcfn)[-1] in ['.svg']: continue
                 w, h = [int(i) for i in Image(fn=srcfn).identify(format="%w,%h").split(',')]
                 width, height = w, h
                 if img.get('width') is not None:
