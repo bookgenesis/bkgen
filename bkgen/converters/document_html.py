@@ -111,7 +111,7 @@ def render_footnotes(root, **params):
 def render_endnotes(root, endnotes=[], **params):
     """collect endnotes from the content in params['endnotes'], and output them at <pub:endnotes/>."""
     elem = XML.find(root, "//pub:endnote | //pub:endnotes", namespaces=NS)
-    enum = 0
+    enum = len(endnotes)
     while elem is not None:
         if elem.tag=="{%(pub)s}endnotes" % NS:      # render the collected endnotes here
             elem.tag = "{%(html)s}section" % NS
@@ -127,13 +127,14 @@ def render_endnotes(root, endnotes=[], **params):
             enrefid = "%s_enref-%d" % (section_id, enum)
             enlink = H.a(str(enum), href="#%s" % enid, id=enrefid)
             enreflink = H.a(str(enum), href="#%s" % enrefid)
-            elem.tag="{%(html)s}section" % NS
-            elem.set('class', 'endnote')
-            elem.set('id', enid)
+            endnote = H.section({'id':enid, 'class':'endnote'})
+            for e in elem.getchildren():
+                endnote.append(e)
             elem.getparent().replace(elem, enlink)
-            enref = XML.find(elem, ".//pub:endnote-ref", namespaces=NS)
+            enref = XML.find(endnote, ".//pub:endnote-ref", namespaces=NS)
             enref.getparent().replace(enref, enreflink)
-            endnotes.append(elem)
+            endnote = etree.fromstring(etree.tounicode(endnote).replace(' xmlns:pub="http://publishingxml.org/ns"',''))
+            endnotes.append(endnote)
         elem = XML.find(root, "//pub:endnote | //pub:endnotes", namespaces=NS)
     return root
 
