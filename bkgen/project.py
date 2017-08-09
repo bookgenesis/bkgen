@@ -80,6 +80,10 @@ class Project(XML, Source):
         return os.path.join(self.path, self.interior_folder)
 
     @property
+    def source_path(self):
+        return os.path.join(self.path, self.source_folder)
+
+    @property
     def output_kinds(self):
         return self.get('output_kinds') or self.OUTPUT_KINDS
 
@@ -499,6 +503,8 @@ class Project(XML, Source):
         if mimetype=='application/pdf' or f.ext().lower() == '.pdf':
             from bf.pdf import PDF
             res = PDF(fn=fn).gswrite(fn=outfn, device=format, res=res)
+        elif os.path.splitext(fn)[-1] in ['.svg']:
+            File(fn=fn).write(fn=outfn)
         elif 'image/' in mimetype:
             from bf.image import Image
             img_args=Dict(
