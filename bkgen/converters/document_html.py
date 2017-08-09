@@ -5,6 +5,7 @@ from lxml import etree
 from bxml.xt import XT
 from bxml.builder import Builder
 from bl.file import File
+from bl.string import String
 from bxml.xml import XML
 
 from bkgen import NS
@@ -46,26 +47,34 @@ def default(elem, **params):
 
 def render_footnotes(root):
     """render the footnotes within the given section at the end of the section"""
-    for section in root.xpath(".//html:section", namespaces=NS):
-        footnotes = XML.find(section, ".//html:section[@class='footnotes']", namespaces=NS)
-        if footnotes is None:
-            footnotes = H.section('\n', {'class':'footnotes'}); footnotes.tail='\n'
-            section.append(footnotes)
-        for footnote in XML.xpath(section, ".//pub:footnote", namespaces=NS):
-            log.debug("%s %r" % (footnote.tag, footnote.attrib))
+    sections = root.xpath(".//html:section", namespaces=NS)
+    for section in sections:
+        footnotes_section = XML.find(section, ".//html:section[@class='footnotes']", namespaces=NS)
+        if footnotes_section is None:
+            footnotes_section = H.section('\n', {'class':'footnotes'}); footnotes_section.tail='\n'
+            section.append(footnotes_section)
+
+        section_footnotes = XML.xpath(section, ".//pub:footnote", namespaces=NS)
+        for footnote in section_footnotes:
             parent = footnote.getparent()
-            fnid = section.get('id') + '_fn-' + footnote.get('id')
+            fnum = str(section_footnotes.index(footnote)+1)
+            fnid = (section.get('id') or 's-' + str(sections.index(section)+1)) + '_fn-' + (footnote.get('id') or fnum)
             fnrefid = fnid.replace('_fn-', '_fnref-')
-            fnlink = H.a(footnote.get('id'), href="#%s" % fnid, id=fnrefid)
+            fnlink = H.span({'class': 'footnote-reference'}, H.a(fnum, href="#%s" % fnid, id=fnrefid))
             parent.insert(parent.index(footnote), fnlink)
-            firstp = XML.find(footnote, "./html:p", namespaces=NS)
-            fnreflink = H.a(footnote.get('id'), href="#%s" % fnrefid, id=fnid)
-            firstp.insert(0, fnreflink)
-            XML.remove(footnote)
-            footnotes.append(footnote)
-            # XML.replace_with_contents(footnote)
-        if len(footnotes.getchildren())==0:
-            XML.remove(footnotes)
+            XML.remove(footnote, leave_tail=True)
+            fnref = XML.find(footnote, ".//pub:footnote-ref", namespaces=NS) 
+            fnreflink = H.a(fnum, href="#%s" % fnrefid, id=fnid)
+            fnref_parent = fnref.getparent()
+            if fnref is not None:
+                fnref_parent.replace(fnref,  fnreflink)
+            else:
+                fnref_parent.insert(0, fnreflink)
+            # fnreflink.tail, firstp.text = ' ' + (firstp.text or ''), ''
+            footnotes_section.append(footnote)
+            XML.replace_with_contents(footnote)
+        if len(footnotes_section.getchildren())==0:
+            XML.remove(footnotes_section)
     return root
 
 def fill_head(root, **params):
