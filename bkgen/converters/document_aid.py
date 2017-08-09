@@ -18,6 +18,7 @@ B = Builder(**NS)
 H = Builder.single(NS.html)
 transformer = XT()
 transformer_XSLT = etree.XSLT(etree.parse(os.path.splitext(__file__)[0] + '.xsl'))
+transformer_XSLT2 = etree.XSLT(etree.parse(os.path.splitext(__file__)[0] + '-2.xsl'))
 
 log = logging.getLogger(__name__)
 logging.basicConfig(**config.Logging)
@@ -33,6 +34,7 @@ class DocumentAid(Converter):
 def default(elem, **params):
     root = get_includes(elem, **params)
     root = transformer_XSLT(root).getroot()
+    root = transformer_XSLT2(root).getroot()
     root = image_hrefs(root, **params)
     root = paragraph_returns(root, **params)
     # root = special_characters(root, **params)
