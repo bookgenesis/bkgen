@@ -271,6 +271,12 @@
                     <xsl:value-of select="w:rPr/w:color/@w:val"/>
                 </xsl:attribute>
             </xsl:if>
+            <!-- fill -->
+            <xsl:if test="w:rPr/w:shd/@w:fill">
+                <xsl:attribute name="fill">
+                    <xsl:value-of select="w:rPr/w:shd/@w:fill"/>
+                </xsl:attribute>
+            </xsl:if>
 
             <!-- finally, recurse -->
             <xsl:apply-templates/>
