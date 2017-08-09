@@ -1,0 +1,3 @@
+Validating using EPUB version 3.0.1 rules.
+No errors or warnings detected.
+epubcheck completed
