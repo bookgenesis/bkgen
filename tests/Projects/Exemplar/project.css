@@ -4,6 +4,23 @@ body {
 	font-size: 1.0em;
 }
 
+img {
+    max-height: 99%;
+    max-width: 99%;
+}
+
+p {
+    margin: 0 0 0 0;
+    line-height: 1.33;
+    text-indent: 0em;
+}
+
+section.footnotes {
+    margin-top: 2em;
+    border-top: 1px solid #aaaaaa;
+    padding-top: 1em;
+}
+
 table {
     border-collapse: collapse;
 }
@@ -14,18 +31,13 @@ td {
     vertical-align: top;
 }
  
-p {
-    margin: 0 0 0 0;
-    line-height: 1.33;
-    text-indent: 1.0em;
-}
-
 /* == GLOBAL FONT STYLES == */
 
+.hidden { display: none; }
 .bold { font-weight: bold;}
 .italic { font-style: italic; }
-.smallcaps { font-variant: small-caps; }
-.allcaps { text-transform: uppercase; }
+.smcap { font-variant: small-caps; }
+.allcap { text-transform: uppercase; }
 .super {
     vertical-align: text-top;
     font-size: 75%;
@@ -34,6 +46,9 @@ p {
     vertical-align: text-bottom;
     font-size: 75%;
 }
-.under {
+.usingle, .udouble, .uwords {
     text-decoration: underline;
+}
+.strike, .dstrike {
+    text-decoration: line-through;
 }

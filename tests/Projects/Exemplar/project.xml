@@ -13,8 +13,8 @@
 
 	<!-- spine: the ordered content in the project -->
 	<spine>
-		<spineitem href="content/Nai-ve-Styles.xml#Naïve-Styles_s1" title="Naïve Styles"></spineitem>
-		<spineitem href="content/Nai-ve-Styles.xml#_s2"></spineitem>
+		<spineitem href="content/Nai-ve-Styles.xml#s1_Na-ve-Styles" title="Naïve Styles"></spineitem>
+		<spineitem href="content/Nai-ve-Styles.xml#s2"></spineitem>
 		</spine>
 
 </project>
