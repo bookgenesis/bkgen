@@ -1,6 +1,6 @@
 # XT stylesheet to transform Word docx to pub:document
 
-import os, re, sys, logging
+import os, re, shutil, sys, logging
 from lxml import etree
 from copy import deepcopy
 import urllib.parse
@@ -343,19 +343,23 @@ def get_images(root, **params):
     rels = docx.xml(src='word/_rels/document.xml.rels').root
     imgs = root.xpath("//html:img", namespaces=DOCX.NS)
     for img in imgs:
-        link_rel = XML.find(rels, "//rels:Relationship[@Id='%s']" % img.get('data-link-id'), namespaces=DOCX.NS)
         embed_rel = XML.find(rels, "//rels:Relationship[@Id='%s']" % img.get('data-embed-id'), namespaces=DOCX.NS)
-        if link_rel is not None:
-            img.set('src', link_rel.get('Target'))
+        link_rel = XML.find(rels, "//rels:Relationship[@Id='%s']" % img.get('data-link-id'), namespaces=DOCX.NS)
         if embed_rel is not None:
             fd = docx.read('word/' + embed_rel.get('Target'))
-            imgfn = os.path.join(output_path, 'images', os.path.splitext(embed_rel.get('Target'))[-1])
+            imgfn = os.path.join(output_path, 'images', img.get('name') or os.path.split(embed_rel.get('Target'))[-1])
             if not os.path.isdir(os.path.dirname(imgfn)): 
                 os.makedirs(os.path.dirname(imgfn))
             with open(imgfn, 'wb') as f: 
                 f.write(fd)
             img.set('src', os.path.relpath(imgfn, output_path))
+        elif link_rel is not None:
+            img.set('src', link_rel.get('Target'))
         if img.get('src') is not None:
+            srcfn = os.path.join(os.path.dirname(params['docx'].fn), img.get('src'))
+            outfn = os.path.join(output_path, img.get('src'))
+            if os.path.exists(srcfn) and not os.path.exists(outfn):
+                shutil.copy(srcfn, outfn)
             if img.get('data-link-id') is not None: _=img.attrib.pop('data-link-id')
             if img.get('data-embed-id') is not None: _=img.attrib.pop('data-embed-id')            
         log.debug(img.attrib)
