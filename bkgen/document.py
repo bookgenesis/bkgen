@@ -49,7 +49,7 @@ class Document(XML, Source):
         if section is not None:
             body_elem = B._.body('\n', section)
             x.root = B.pub.document('\n\t', body_elem, '\n')
-            x.fn = os.path.splitext(x.fn)[0] + '_' + section.get('id') + '.xml'
+            x.fn = os.path.splitext(x.fn)[0] + '_' + (section.get('id') or '') + '.xml'
         return x
 
     def icml(self, **params):
