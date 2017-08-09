@@ -270,7 +270,7 @@ def sections_title_id(root, **params):
                     title = String(c.replace('-', ' ')).titleify()
                 section.set('title', title)
 
-        id = '%s_s%d' % (String(section.get('title') or '').nameify(), len(section_ids)+1)
+        id = ('s%d_%s' % (len(section_ids)+1, String(section.get('title') or '').nameify(ascii=True))).strip('_')
         section.set('id', id)
         section_ids.append(id)
     return root
