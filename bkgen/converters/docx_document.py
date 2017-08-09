@@ -357,7 +357,7 @@ def get_images(root, **params):
         link_rel = XML.find(rels, "//rels:Relationship[@Id='%s']" % img.get('data-link-id'), namespaces=DOCX.NS)
         if embed_rel is not None:
             fd = docx.read('word/' + embed_rel.get('Target'))
-            imgfn = os.path.join(output_path, 'images', img.get('name') or os.path.split(embed_rel.get('Target'))[-1])
+            imgfn = os.path.join(output_path, 'images', img.get('title') or os.path.split(embed_rel.get('Target'))[-1])
             if not os.path.isdir(os.path.dirname(imgfn)): 
                 os.makedirs(os.path.dirname(imgfn))
             with open(imgfn, 'wb') as f: 

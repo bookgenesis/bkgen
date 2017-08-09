@@ -34,8 +34,7 @@
     xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" 
     xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
 
-    exclude-result-prefixes="a aml dt m mc mo mv o pic r sl v ve w10 w14 w15 wne wp wp14 wpc wpg wpi wps wsp wx opf epub container cp dc dcmitype dcterms ncx w xsi"
-    >
+    exclude-result-prefixes="a aml dt m mc mo mv o pic r sl v ve w10 w14 w15 wne wp wp14 wpc wpg wpi wps wsp wx opf epub container cp dc dcmitype dcterms ncx w xsi">
 
     <xsl:output method="xml" encoding="utf-8"/>
 
@@ -43,9 +42,7 @@
 
     <!-- This default template matches everything and passes it through unchanged. -->
     <xsl:template match="@*|node()">
-        <xsl:copy>
-            <xsl:apply-templates select="@*|node()"/>
-        </xsl:copy>
+        <xsl:copy><xsl:apply-templates select="@*|node()"/></xsl:copy>
     </xsl:template>
 
     <xsl:template match="w:document">
@@ -99,7 +96,7 @@
         	        <xsl:value-of select="w:type/@w:val"/>
         	    </xsl:attribute>
         	</xsl:if>
-        	<!-- <xsl:apply-templates/> -->
+        	<!-- ** TODO: Capture the section numbering parameters for this (just-ended) section ** -->
         </pub:section_end>
     </xsl:template>
 
@@ -138,7 +135,6 @@
         </pub:endnote>        
     </xsl:template>
 
-    <!-- COMMENTS -->
     <xsl:template match="w:comment">
         <pub:comment>
             <xsl:attribute name="id">
@@ -161,7 +157,7 @@
     <xsl:template match="w:commentRangeStart">
         <a class="comment-range">
             <xsl:attribute name="id">
-                <xsl:text>start_comment_</xsl:text>
+                <xsl:text>comment_</xsl:text>
                 <xsl:value-of select="@w:id"/>
             </xsl:attribute>
         </a>
@@ -170,8 +166,9 @@
     <xsl:template match="w:commentRangeEnd">
         <a class="comment-range">
             <xsl:attribute name="id">
-                <xsl:text>end_comment_</xsl:text>
+                <xsl:text>comment_</xsl:text>
                 <xsl:value-of select="@w:id"/>
+                <xsl:text>_end</xsl:text>
             </xsl:attribute>
         </a>
     </xsl:template>
@@ -303,9 +300,7 @@
     </xsl:template>
 
     <xsl:template match="w:footnoteReference | w:endnoteReference | w:commentReference">
-        <xsl:copy>
-            <xsl:apply-templates select="@*|node()"/>
-        </xsl:copy>
+        <xsl:copy><xsl:apply-templates select="@*|node()"/></xsl:copy>
     </xsl:template>
 
     <xsl:template match="w:footnoteRef"><pub:footnote-ref></pub:footnote-ref></xsl:template>
@@ -349,7 +344,7 @@
     </xsl:template>
 
     <xsl:template match="w:tab">
-        <xsl:text>&#x9;</xsl:text>
+        <pub:tab></pub:tab>
     </xsl:template>
 
     <xsl:template match="w:t">
@@ -462,7 +457,7 @@
 
     <xsl:template match="pic:pic">
         <img>
-            <xsl:attribute name="name">
+            <xsl:attribute name="title">
                 <xsl:value-of select="pic:nvPicPr/pic:cNvPr/@name"/>
             </xsl:attribute>
             <xsl:if test=".//a:blip/@r:embed">
