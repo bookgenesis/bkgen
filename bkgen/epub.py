@@ -568,6 +568,12 @@ class EPUB(ZIP, Source):
         DC = Builder(default=C.NS.dc, **C.NS)._
         metadata_elem = deepcopy(metadata)
 
+        # dc:identifier is required; create UUID if not given
+        if metadata_elem.find("{%(dc)s}language" % C.NS) is None:
+            from uuid import uuid4
+            uuid = str(uuid4())
+            metadata_elem.append(DC.identifier(uuid, id='uuid'))
+
         # dc:language is required
         if metadata_elem.find("{%(dc)s}language" % C.NS) is None:
             metadata_elem.append(DC.language(xml_lang))
