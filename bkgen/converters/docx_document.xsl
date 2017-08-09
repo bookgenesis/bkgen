@@ -34,7 +34,7 @@
     xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" 
     xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
 
-    exclude-result-prefixes="a aml dt m mc mo mv o pic sl v ve w10 w14 w15 wne wp wp14 wpc wpg wpi wps wsp wx"
+    exclude-result-prefixes="a aml dt m mc mo mv o pic r sl v ve w10 w14 w15 wne wp wp14 wpc wpg wpi wps wsp wx opf epub container cp dc dcmitype dcterms ncx w xsi"
     >
 
     <xsl:output method="xml" encoding="utf-8"/>

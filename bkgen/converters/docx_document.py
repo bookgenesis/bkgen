@@ -19,7 +19,7 @@ from bkgen.converters import Converter
 from bkgen.document import Document
 
 log = logging.getLogger(__name__)
-B = Builder(**NS)
+B = Builder(default=NS.html, **{'html': NS.html, 'pub': NS.pub})
 transformer = XT()
 transformer_XSLT = etree.XSLT(etree.parse(os.path.splitext(__file__)[0] + '.xsl'))
 
@@ -310,7 +310,7 @@ def map_span_styles(root, **params):
     return root
 
 def font_attributes(root, **params):
-    """convert font attributes to styles"""
+    """convert font attributes to classes and styles"""
     toggle_props = ['italic', 'bold', 'allcap', 'smcap', 'strike', 'dstrike', 'hidden']
     for span in root.xpath(".//html:span", namespaces=NS):
         class_list = [c for c in span.get('class', '').split(' ') if c != '']
@@ -335,6 +335,16 @@ def font_attributes(root, **params):
         span_class = ' '.join(sorted(list(set(class_list))))
         if span_class.strip() != '':
             span.set('class', span_class)
+        # style properties -- not converted to classes
+        styles = []
+        if span.get('highlight') is not None:
+            styles.append('background-color:%s' % span.attrib.pop('highlight'))
+        elif span.get('fill') is not None:
+            styles.append('background-color:#%s' % span.attrib.pop('fill'))
+        if span.get('color') is not None:
+            styles.append('color:#%s' % span.attrib.pop('color'))
+        if len(styles) > 0:
+            span.set('style', ';'.join(styles))
     return root
 
 def get_images(root, **params):
