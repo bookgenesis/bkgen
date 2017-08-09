@@ -68,16 +68,19 @@ mimetypes.init(files=[config.Resources.mimetypes])
 NS = Dict(
     pub="http://publishingxml.org/ns",
     html="http://www.w3.org/1999/xhtml",
-    dc="http://purl.org/dc/elements/1.1/",                                   # Dublin Core & friends
+    aid="http://ns.adobe.com/AdobeInDesign/4.0/",                                   # InDesign
+    aid5="http://ns.adobe.com/AdobeInDesign/5.0/",
+    dc="http://purl.org/dc/elements/1.1/",                                          # Dublin Core etc.
     dcterms="http://purl.org/dc/terms/", 
     dcmitype="http://purl.org/dc/dcmitype/", 
-    xsi="http://www.w3.org/2001/XMLSchema-instance",                         # XML & friends
+    xsi="http://www.w3.org/2001/XMLSchema-instance",                                # XML
     xml="http://www.w3.org/XML/1998/namespace",
-    opf="http://www.idpf.org/2007/opf",                                      #: Digital Publishing
+    opf="http://www.idpf.org/2007/opf",                                             # EPUB etc.
     container="urn:oasis:names:tc:opendocument:xmlns:container", 
     epub="http://www.idpf.org/2007/ops",
     ncx="http://www.daisy.org/z3986/2005/ncx/",
-    cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties",    #: Microsoft
-    m="http://www.w3.org/1998/Math/MathML",                                 # MathML
+    cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties",   # Microsoft
+    m="http://www.w3.org/1998/Math/MathML",                                         # MathML
+    db="http://docbook.org/ns/docbook",                                             # DocBook
 )
 
