@@ -474,7 +474,7 @@ class Project(XML, Source):
             if resource.get('class')=='stylesheet':
                 outfn = self.output_stylesheet(f.fn, output_path)
             elif resource.get('class') in ['cover', 'cover-digital', 'image']:
-                outfn = self.output_image(f.fn, output_path, **image_args)
+                outfn = self.output_image(f.fn, output_path=output_path, **image_args)
             else:                                                               # other resource as-is
                 outfn = os.path.join(output_path, os.path.relpath(f.fn, os.path.dirname(self.fn)))
                 f.write(fn=outfn)
@@ -494,25 +494,29 @@ class Project(XML, Source):
             File(fn=fn).write(fn=outfn)
         return outfn
 
-    def output_image(self, fn, output_path=None, outfn=None, 
-            format='jpeg', ext='.jpg', res=300, quality=80, maxwh=2048, maxpixels=4e6):
+    def output_image(self, fn, output_path=None, outfn=None, svg=True,
+            format='jpeg', ext='.jpg', res=300, quality=80, maxwh=2048, maxpixels=4e6, geometry=None):
         f = File(fn=fn)
         mimetype = f.mimetype() or ''
         output_path = output_path or os.path.join(self.path, self.output_folder)
-        outfn = outfn or os.path.splitext(os.path.join(output_path, f.relpath(dirpath=self.path)))[0] + ext
+        outfn = outfn or os.path.splitext(os.path.join(output_path, f.relpath(self.path)))[0] + ext
         if not os.path.exists(os.path.dirname(outfn)):
             os.makedirs(os.path.dirname(outfn))
         if mimetype=='application/pdf' or f.ext().lower() == '.pdf':
             from bf.pdf import PDF
             res = PDF(fn=fn).gswrite(fn=outfn, device=format, res=res)
-        elif os.path.splitext(fn)[-1] in ['.svg']:
+        elif os.path.splitext(fn)[-1] in ['.svg'] and svg==True:
+            outfn = os.path.splitext(outfn)[0] + '.svg'
             File(fn=fn).write(fn=outfn)
         elif 'image/' in mimetype:
             from bf.image import Image
             img_args=Dict(
                 format=format.upper(), 
-                density="%dx%d" % (res,res),
-                geometry="%dx%d>" % (maxwh, maxwh))
+                density="%dx%d" % (res,res))
+            if geometry is not None:
+                img_args.update(geometry=geometry)
+            else:
+                img_args.update(geometry="%dx%d>" % (maxwh, maxwh))
             if format.lower() in ['jpeg', 'jpg']:
                 img_args.update(quality=quality)
             w,h = [int(i) for i in Image(fn=fn).identify(format="%w,%h").split(',')]
@@ -521,6 +525,7 @@ class Project(XML, Source):
             res = Image(fn=fn).convert(outfn, **img_args)
         else:
             res = None
+        log.debug("img: %r %r" % (outfn, img_args))
         return outfn
 
     def output_spineitems(self, output_path=None, ext='.xhtml', resources=None, 
@@ -561,18 +566,26 @@ class Project(XML, Source):
                         href = os.path.relpath(out_css_fn, h.dirpath())
                         link = etree.Element("{%(html)s}link" % NS, rel="stylesheet", href=href, type="text/css")
                         head.append(link)
-                h.write(doctype="<!DOCTYPE html>", canonicalized=canonicalized)
-                outfns.append(h.fn)
-                spineitem.set('href', os.path.relpath(h.fn, output_path))
 
                 # output any images that are referenced from the document and are locally available
                 for img in h.root.xpath("//html:img", namespaces=NS):
                     srcfn = os.path.join(d.path, img.get('src'))
-                    outfn = os.path.join(h.path, img.get('src'))
                     if os.path.exists(srcfn):
-                        _ = self.output_image(srcfn, outfn=outfn, **image_args)
+                        args = dict(**image_args)
+                        # if img.get('width') is not None and img.get('height') is not None:
+                        #     args.update(geometry="%dx%d" % (int(img.get('width')), int(img.get('height'))))
+                        # elif img.get('width') is not None:
+                        #     args.update(geometry="%d" % img.get('width'))
+                        # elif img.get('height') is not None:
+                        #     args.update(geometry="x%d" % img.get('height'))
+                        outfn = self.output_image(srcfn, output_path=output_path, **args)
+                        img.set('src', os.path.relpath(outfn, h.path))
                     else:
                         log.warn("IMAGE NOT FOUND: %s" % srcfn)
+
+                h.write(doctype="<!DOCTYPE html>", canonicalized=canonicalized)
+                outfns.append(h.fn)
+                spineitem.set('href', os.path.relpath(h.fn, output_path))
 
         if len(endnotes) > 0:           # create a new spineitem for the endnotes, and put them there
             endnotes_html = Document().html(fn=os.path.join(output_path, self.content_folder, 'Collected-Endnotes'+ext))
