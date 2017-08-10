@@ -81,12 +81,22 @@ section.footnotes {
     padding-top: 1em;
 }
 
+span.endnote-reference {
+    font-size: 0.7em;
+    vertical-align: 0.5em;
+}
+
+span.footnote-reference {
+    font-size: 0.7em;
+    vertical-align: 0.5em;
+}
+
 table {
     border-collapse: collapse;
 }
 
 td {
-    border: 1px solid black;
+    border: 1px solid #AAAAAA;
     padding: 4pt 4pt 2pt 4pt;
     vertical-align: top;
 }
@@ -108,7 +118,7 @@ td {
 .allcap, .allcaps { 
     text-transform: uppercase; 
 }
-.sup { 
+.sup, .super { 
     font-size: 0.7em; 
     vertical-align: 0.5em; 
 }
@@ -116,7 +126,7 @@ td {
     font-size: 0.7em; 
     vertical-align: bottom; 
 }
-.usingle, .udouble, .uwords { 
+.under, .usingle, .udouble, .uwords { 
     text-decoration: underline; 
 }
 .strike, .dstrike { 

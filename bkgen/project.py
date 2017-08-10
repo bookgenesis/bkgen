@@ -589,7 +589,11 @@ class Project(XML, Source):
 
         if len(endnotes) > 0:           # create a new spineitem for the endnotes, and put them there
             endnotes_html = Document().html(fn=os.path.join(output_path, self.content_folder, 'Collected-Endnotes'+ext))
-            endnotes_html.write()
+            project_css_fn = os.path.join(output_path, self.find(self.root, "pub:resources/pub:resource[@class='stylesheet']/@href", namespaces=NS) or 'project.css')
+            print(os.path.exists(project_css_fn), project_css_fn)
+            if os.path.exists(project_css_fn):
+                head = endnotes_html.find(endnotes_html.root, "html:head", namespaces=NS)
+                head.append(HTML.link(rel="stylesheet", type="text/css", href=os.path.relpath(project_css_fn, endnotes_html.path)))
             section = HTML.section('\n', {'class': 'endnotes', 'id':'Collected-Endnotes'})
             endnotes_html.root.append(HTML.body('\n', section, '\n'))
             while len(endnotes) > 0:
