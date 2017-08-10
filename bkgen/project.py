@@ -207,7 +207,7 @@ class Project(XML, Source):
         ext = os.path.splitext(fn)[-1].lower()
         result = Dict()
 
-        log.info("%r.import_source_file(%r, **%r)" % (self, fn, args))
+        log.debug("%r.import_source_file(%r, **%r)" % (self, fn, args))
         
         # .DOCX files
         if (content_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -680,12 +680,12 @@ def import_all(project_path):
     for fn in fns:
         project.import_image(fn, **{'class':'cover', 'kind':'digital'})
 
-def build_project(project_path, format=None):
-    log.info("== BUILD PROJECT == %s" % os.path.basename(project_path))
+def build_project(project_path, format=None, check=None):
+    log.debug("== BUILD PROJECT == %s" % os.path.basename(project_path))
     project = Project(fn=os.path.join(project_path, 'project.xml'), **(config.Project or {}))
     image_args = config.EPUB.images or {}
     if format is None or 'epub' in format:
-        project.build_epub(**image_args)
+        project.build_epub(check=check, **image_args)
     if format is None or 'mobi' in format:
         project.build_mobi(**image_args)
     if format=='archive':
@@ -693,10 +693,9 @@ def build_project(project_path, format=None):
 
 def cleanup_project(project_path):
     project = Project(fn=os.path.join(project_path, 'project.xml'), **(config.Project or {}))
-    ebooks_path = os.path.join(path, 'ebooks')
-    dirs = [d for d in glob(ebooks_path+'/*') if os.path.isdir(d)]
+    dirs = [d for d in glob(project.output_path+'/*') if os.path.isdir(d)]
     for d in dirs:
-        log.debug("Removing: %s" % d)
+        log.info("cleanup: %s" % d)
         shutil.rmtree(d)
 
 def zip_project(project_path):
@@ -712,28 +711,28 @@ if __name__=='__main__':
     if len(sys.argv) < 2:
         log.warn("Usage: python -m bkgen.project command project_path [project_path] ...")
     else:
-        for project_path in sys.argv[2:]:
-            project_path = os.path.abspath(project_path)
-            if 'create' in sys.argv[1]:
-                Project.create(os.path.dirname(project_path), os.path.basename(project_path))
-            
-            if 'import-all' in sys.argv[1]:
-                import_all(project_path)
-            elif 'import' in sys.argv[1]:
-                project = Project(fn=os.path.join(sys.argv[2], 'project.xml'))
-                for fn in sys.argv[3:]:
-                    log.info("import %s" % fn)
-                    project.import_source_file(fn)
-            
-            if 'build' in sys.argv[1]:
-                if '-epub' in sys.argv[1]: format='epub'
-                elif '-mobi' in sys.argv[1]: format='mobi'
-                elif '-archive' in sys.argv[1]: format='archive'
-                else: format = None
-                build_project(project_path, format=format)
-            if 'cleanup' in sys.argv[1]:
-                cleanup_project(project_path)
-            if 'zip' in sys.argv[1]:
-                zip_project(project_path)
-            if 'remove' in sys.argv[1]:
-                remove_project(project_path)
+        project_path = os.path.abspath(sys.argv[2])
+        log.info("project path = %s" % project_path)
+        if 'create' in sys.argv[1]:
+            Project.create(os.path.dirname(project_path), os.path.basename(project_path))
+        
+        if 'import-all' in sys.argv[1]:
+            import_all(project_path)
+        elif 'import' in sys.argv[1]:
+            project = Project(fn=os.path.join(sys.argv[2], 'project.xml'))
+            for fn in sys.argv[3:]:
+                log.info("import %s" % fn)
+                project.import_source_file(fn)
+        
+        if 'build' in sys.argv[1]:
+            if '-epub' in sys.argv[1]: args=dict(format='epub', check='check' in sys.argv[1])
+            elif '-mobi' in sys.argv[1]: args=dict(format='mobi')
+            elif '-archive' in sys.argv[1]: args=dict(format='archive')
+            else: args=dict()
+            build_project(project_path, **args)
+        if 'clean' in sys.argv[1]:
+            cleanup_project(project_path)
+        if 'zip' in sys.argv[1]:
+            zip_project(project_path)
+        if 'remove' in sys.argv[1]:
+            remove_project(project_path)
