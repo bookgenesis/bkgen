@@ -88,7 +88,7 @@ def render_footnotes(root, **params):
         section_footnotes = XML.xpath(section, ".//pub:footnote", namespaces=NS)
         for footnote in section_footnotes:
             parent = footnote.getparent()
-            fnum = str(section_footnotes.index(footnote)+1)
+            fnum = footnote.get('title') or str(section_footnotes.index(footnote)+1)
             fnid = (section.get('id') or 's-' + str(sections.index(section)+1)) + '_fn-' + (footnote.get('id') or fnum)
             fnrefid = fnid.replace('_fn-', '_fnref-')
             fnlink = H.span({'class': 'footnote-reference'}, H.a(fnum, href="#%s" % fnid, id=fnrefid))
@@ -111,7 +111,6 @@ def render_footnotes(root, **params):
 def render_endnotes(root, endnotes=[], **params):
     """collect endnotes from the content in params['endnotes'], and output them at <pub:endnotes/>."""
     elem = XML.find(root, "//pub:endnote | //pub:endnotes", namespaces=NS)
-    enum = len(endnotes)
     while elem is not None:
         if elem.tag=="{%(pub)s}endnotes" % NS:      # render the collected endnotes here
             elem.tag = "{%(html)s}section" % NS
@@ -121,13 +120,13 @@ def render_endnotes(root, endnotes=[], **params):
                 elem.append(endnote)
                 endnote.tail='\n'
         else:                                       # render the endnote reference link here and collect the endnote
-            enum += 1
+            enum = elem.get('title') or str(len(endnotes)+1)
             section_id = XML.find(elem, "ancestor::html:section[@id][last()]/@id", namespaces=NS)
-            enid = "%s_en-%d" % (section_id, enum)
-            enrefid = "%s_enref-%d" % (section_id, enum)
-            enlink = H.a(str(enum), href="#%s" % enid, id=enrefid)
-            enreflink = H.a(str(enum), href="#%s" % enrefid)
-            endnote = H.section({'id':enid, 'class':'endnote'})
+            enid = "%s_en-%s" % (section_id, enum)
+            enrefid = "%s_enref-%s" % (section_id, enum)
+            enlink = H.a(enum, href="#%s" % enid, id=enrefid)
+            enreflink = H.a(enum, href="#%s" % enrefid)
+            endnote = H.section({'id':enid, 'class':'endnote', 'title':elem.get('title') or enum})
             for e in elem.getchildren():
                 endnote.append(e)
             elem.getparent().replace(elem, enlink)

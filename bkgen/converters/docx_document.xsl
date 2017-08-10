@@ -96,7 +96,39 @@
         	        <xsl:value-of select="w:type/@w:val"/>
         	    </xsl:attribute>
         	</xsl:if>
-        	<!-- ** TODO: Capture the section numbering parameters for this (just-ended) section ** -->
+        	<!-- section numbering parameters for this (just-ended) section -->
+            <xsl:if test="w:footnotePr/w:numFmt or w:footnotePr/w:numStart or w:footnotePr/w:numRestart or w:endnotePr/w:numFmt or w:endnotePr/w:numStart or w:endnotePr/w:numRestart">
+            </xsl:if>
+            <xsl:if test="w:footnotePr/w:numFmt">
+                <xsl:attribute name="pub:footnote-format">
+                    <xsl:value-of select="w:footnotePr/w:numFmt/@w:val"></xsl:value-of>
+                </xsl:attribute>
+            </xsl:if>
+            <xsl:if test="w:footnotePr/w:numStart">
+                <xsl:attribute name="pub:footnote-start">
+                    <xsl:value-of select="w:footnotePr/w:numStart/@w:val"></xsl:value-of>
+                </xsl:attribute>
+            </xsl:if>
+            <xsl:if test="w:footnotePr/w:numRestart">
+                <xsl:attribute name="pub:footnote-restart">
+                    <xsl:value-of select="w:footnotePr/w:numRestart/@w:val"></xsl:value-of>
+                </xsl:attribute>
+            </xsl:if>
+            <xsl:if test="w:endnotePr/w:numFmt">
+                <xsl:attribute name="pub:endnote-format">
+                    <xsl:value-of select="w:endnotePr/w:numFmt/@w:val"></xsl:value-of>
+                </xsl:attribute>
+            </xsl:if>
+            <xsl:if test="w:endnotePr/w:numStart">
+                <xsl:attribute name="pub:endnote-start">
+                    <xsl:value-of select="w:endnotePr/w:numStart/@w:val"></xsl:value-of>
+                </xsl:attribute>
+            </xsl:if>
+            <xsl:if test="w:endnotePr/w:numRestart">
+                <xsl:attribute name="pub:endnote-restart">
+                    <xsl:value-of select="w:endnotePr/w:numRestart/@w:val"></xsl:value-of>
+                </xsl:attribute>
+            </xsl:if>
         </pub:section_end>
     </xsl:template>
 

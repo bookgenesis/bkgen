@@ -1,6 +1,6 @@
 # XT stylesheet to transform Word docx to pub:document
 
-import os, re, shutil, sys, logging
+import math, os, re, shutil, sys, logging
 from lxml import etree
 from copy import deepcopy
 import urllib.parse
@@ -8,6 +8,7 @@ import urllib.parse
 from bl.dict import Dict
 from bl.string import String
 from bl.url import URL
+from bl.int import Int
 from bxml.docx import DOCX
 from bxml.xml import XML
 from bxml.xt import XT
@@ -58,6 +59,7 @@ def document(elem, **params):
     # root = split_level_sections(root, **params)
     # root = nest_level_sections(root, **params)
     root = sections_title_id(root, **params)
+    root = section_note_numbering(root, **params)
     root = paragraphs_with_newlines(root)
 
     return [ root ]
@@ -273,6 +275,55 @@ def sections_title_id(root, **params):
         id = ('s%d_%s' % (len(section_ids)+1, String(section.get('title') or '').nameify(ascii=True))).strip('_')
         section.set('id', id)
         section_ids.append(id)
+    return root
+
+# non-integer note numbers
+NOTE_NUMBERS = dict(
+    lowerLetter='abcdefghijklmnopqrstuvwxyz',
+    upperLetter='ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    chicago=['*','\u2020','\u2021','\u00A7'],
+)
+
+def section_note_numbering(root, **params):
+    """assign note numbering to the sections, as indicated by the note options on each section"""
+    note_options = {
+        'footnote-start':'1', 'footnote-format':'decimal', 'footnote-restart':'continuous',
+        'endnote-start':'1', 'endnote-format':'lowerLetter', 'endnote-restart':'continuous',}
+    fnum = enum = 1
+    for section in root.xpath("//html:section", namespaces=NS):
+        for key in ['footnote-start', 'footnote-format', 'footnote-restart', 'endnote-start', 'endnote-format', 'endnote-restart']:
+            val = section.get('{%s}%s' % (NS.pub, key))
+            if val is not None:
+                note_options.update(**{key:val})
+        if note_options['footnote-restart'] != 'continuous':
+            fnum = int(note_options['footnote-start'])
+        if note_options['endnote-restart'] != 'continuous':
+            enum = int(note_options['endnote-start'])
+        for footnote in section.xpath('.//pub:footnote', namespaces=NS):
+            if note_options['footnote-format'] == 'lowerRoman':
+                footnote.set('title', Int(fnum).roman().lower())
+            elif note_options['footnote-format'] == 'upperRoman':
+                footnote.set('title', Int(fnum).roman().upper())
+            elif note_options['footnote-format'] in NOTE_NUMBERS.keys():
+                i = (fnum-1) % len(NOTE_NUMBERS[note_options['footnote-format']])
+                n = math.ceil(fnum / len(NOTE_NUMBERS[note_options['footnote-format']]))
+                footnote.set('title', NOTE_NUMBERS[note_options['footnote-format']][i]*n)
+            else:   # default to decimal
+                footnote.set('title', str(fnum))
+            fnum += 1
+        for endnote in section.xpath('.//pub:endnote', namespaces=NS):
+            if note_options['endnote-format'] == 'lowerRoman':
+                endnote.set('title', Int(enum).roman().lower())
+            elif note_options['endnote-format'] == 'upperRoman':
+                endnote.set('title', Int(enum).roman().upper())
+            elif note_options['endnote-format'] in NOTE_NUMBERS.keys():
+                i = (enum-1) % len(NOTE_NUMBERS[note_options['endnote-format']])
+                n = math.ceil(enum / len(NOTE_NUMBERS[note_options['endnote-format']]))
+                endnote.set('title', NOTE_NUMBERS[note_options['endnote-format']][i]*n)
+            else:   # default to decimal
+                endnote.set('title', str(enum))
+            enum += 1
+        log.debug("Note options: %r" % note_options)
     return root
 
 def map_para_styles_levels(root, **params):

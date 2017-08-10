@@ -7,17 +7,17 @@
 	<cp:keywords></cp:keywords>
 	<dc:description></dc:description>
 	<cp:lastModifiedBy>Sean Harrison</cp:lastModifiedBy>
-	<cp:revision>54</cp:revision>
+	<cp:revision>59</cp:revision>
 	<dcterms:created xsi:type="dcterms:W3CDTF">2017-06-20T19:51:00Z</dcterms:created>
-	<dcterms:modified xsi:type="dcterms:W3CDTF">2017-08-09T19:19:00Z</dcterms:modified>
+	<dcterms:modified xsi:type="dcterms:W3CDTF">2017-08-10T17:16:00Z</dcterms:modified>
 	</pub:metadata>
 	<body>
-<section class="continuous" id="s1_Na-ve-Styles" title="Naïve Styles">
-<h1 class="heading-1">Naïve Styles<span class="footnote-reference"><pub:footnote id="1"><p class="footnote-text"><span class="footnote-reference"><pub:footnote-ref></pub:footnote-ref></span> Footnote 1 at the end of a heading. </p></pub:footnote></span></h1>
-<p>The paragraphs are separated with double returns — the output should not. All paragraphs use the “Normal” style, except the lists which use Word’s automatically applied “List Paragraph” style.<span class="endnote-reference"><pub:endnote id="1"><h2 class="heading-2">Endnotes</h2><p class="endnote-text"><span class="endnote-reference"><pub:endnote-ref></pub:endnote-ref></span> Endnote 1 in the middle of a paragraph.</p></pub:endnote></span> Lists are applied using the toolbar / autoformat functions. The direct font formatting in the following paragraph should convert to spans with classes.</p>
+<section class="continuous" id="s1_Na-ve-Styles" title="Naïve Styles" pub:endnote-format="lowerLetter" pub:footnote-restart="eachSect">
+<h1 class="heading-1">Naïve Styles<span class="footnote-reference"><pub:footnote id="1" title="1"><p class="footnote-text"><span class="footnote-reference"><pub:footnote-ref></pub:footnote-ref></span> Footnote 1 at the end of a heading. </p></pub:footnote></span></h1>
+<p>The paragraphs are separated with double returns — the output should not. All paragraphs use the “Normal” style, except the lists which use Word’s automatically applied “List Paragraph” style.<span class="endnote-reference"><pub:endnote id="1" title="a"><h2 class="heading-2">Endnotes</h2><p class="endnote-text"><span class="endnote-reference"><pub:endnote-ref></pub:endnote-ref></span> Endnote 1 in the middle of a paragraph.</p></pub:endnote></span> Lists are applied using the toolbar / autoformat functions. The direct font formatting in the following paragraph should convert to spans with classes.</p>
 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque varius tincidunt elit, a sodales justo interdum vel. Aenean tristique eget diam vel sollicitudin. Donec eget dolor at mauris sollicitudin rutrum. Vivamus suscipit elit eu massa laoreet posuere. Etiam iaculis tincidunt felis, sed consequat dolor rutrum vitae. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Cras egestas varius pellentesque. </p>
 <h2 class="heading-2">Font Formatting</h2>
-<p>“<span class="bold">Bold</span> <span class="italic">Italic</span> <span class="bold italic">Bold Italic</span> <span class="super">Superscript</span> <span class="bold sub">Bold Subscript</span> <span class="usingle">Underline</span> <span class="udouble">Double Underline</span> <span class="uwords">Word Underline</span> <span class="smcap">Small Caps</span> <span class="strike">Strikethrough</span> <span class="dstrike">Double Strikethrough</span>, <span class="hidden">Hidden, </span><span class="allcap">All-Caps</span> Roman...” [line break]<br></br>“<span style="background-color:yellow">Highlight</span> <span style="color:#FF0000">Red</span> <span style="color:#929292">Light-Grey</span> <span style="color:#817793">Medium-Grey</span> <span style="background-color:#0432FF;color:#FFFFFF">White with Blue Background</span>.”<span class="footnote-reference"><pub:footnote id="2"><p class="footnote-text"><span class="footnote-reference"><pub:footnote-ref></pub:footnote-ref></span> Footnote 2 in the middle of a paragraph.</p></pub:footnote></span></p>
+<p>“<span class="bold">Bold</span> <span class="italic">Italic</span> <span class="bold italic">Bold Italic</span> <span class="super">Superscript</span> <span class="bold sub">Bold Subscript</span> <span class="usingle">Underline</span> <span class="udouble">Double Underline</span> <span class="uwords">Word Underline</span> <span class="smcap">Small Caps</span> <span class="strike">Strikethrough</span> <span class="dstrike">Double Strikethrough</span>, <span class="hidden">Hidden, </span><span class="allcap">All-Caps</span> Roman...” [line break]<br></br>“<span style="background-color:yellow">Highlight</span> <span style="color:#FF0000">Red</span> <span style="color:#929292">Light-Grey</span> <span style="color:#817793">Medium-Grey</span> <span style="background-color:#0432FF;color:#FFFFFF">White with Blue Background</span>.”<span class="footnote-reference"><pub:footnote id="2" title="2"><p class="footnote-text"><span class="footnote-reference"><pub:footnote-ref></pub:footnote-ref></span> Footnote 2 in the middle of a paragraph.</p></pub:footnote></span></p>
 <h2 class="heading-2">Lists</h2>
 <h3 class="heading-3">Unordered List</h3>
 <p>The following should be an unordered (bulleted) list.</p>
@@ -65,9 +65,9 @@
 <p class="List-Paragraph">Bullet 3</p>
 <p>If that works, we should be in business.</p>
 </section>
-<section class="continuous" id="s2">
+<section class="continuous" id="s2" pub:endnote-format="lowerLetter" pub:footnote-restart="eachSect">
 <p>Section Break. Suspendisse aliquam ex id tellus rutrum fermentum quis ut orci. Sed ac imperdiet orci. In felis leo, maximus sed venenatis in, imperdiet nec metus. Vestibulum luctus odio vitae eros pretium iaculis. Ut nec orci iaculis, maximus ante vel, congue libero.</p>
-<h2 class="heading-2">Image<span class="endnote-reference"><pub:endnote id="2"><p class="endnote-text"><span class="endnote-reference"><pub:endnote-ref></pub:endnote-ref></span> Endnote 2 at the end of a heading</p></pub:endnote></span></h2>
+<h2 class="heading-2">Image<span class="endnote-reference"><pub:endnote id="2" title="b"><p class="endnote-text"><span class="endnote-reference"><pub:endnote-ref></pub:endnote-ref></span> Endnote 2 at the end of a heading</p></pub:endnote></span></h2>
 <p><img height="48" src="images/bookgenesis_type.png" title="bookgenesis_type.png" width="241"></img></p>
 <p>We ought to be able just to include an embedded image without any particular fuss. The output should include the same image, and something about the image’s dimensions and placement.</p>
 <h2 class="heading-2">Table</h2>
@@ -75,11 +75,11 @@
 	<tr>
 		<td><p class="Body-Text">A</p></td>
 		<td><p class="Body-Text">small</p></td>
-		<td><p class="Body-Text">table<span class="footnote-reference"><pub:footnote id="3"><p class="footnote-text"><span class="footnote-reference"><pub:footnote-ref></pub:footnote-ref></span> Footnote 3 in a table.</p></pub:footnote></span></p></td>
+		<td><p class="Body-Text">table<span class="footnote-reference"><pub:footnote id="3" title="1"><p class="footnote-text"><span class="footnote-reference"><pub:footnote-ref></pub:footnote-ref></span> Footnote 3 in a table.</p></pub:footnote></span></p></td>
 	</tr>
 	<tr>
 		<td><p class="Body-Text">with</p></td>
-		<td><p class="Body-Text">two rows<span class="endnote-reference"><pub:endnote id="3"><p class="endnote-text"><span class="endnote-reference"><pub:endnote-ref></pub:endnote-ref></span> Endnote 3 in a table.</p></pub:endnote></span></p></td>
+		<td><p class="Body-Text">two rows<span class="endnote-reference"><pub:endnote id="3" title="c"><p class="endnote-text"><span class="endnote-reference"><pub:endnote-ref></pub:endnote-ref></span> Endnote 3 in a table.</p></pub:endnote></span></p></td>
 		<td><p class="Body-Text">and 3 columns.</p></td>
 	</tr>
 </table>
