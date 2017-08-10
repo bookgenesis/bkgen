@@ -1,9 +1,10 @@
 h1.heading-1 {
 	font-size: 1.83em;
-	line-spacing: 2em;
+	line-height: 2em;
 	margin-bottom: 0.5em;
 	margin-top: 1.5em;
 	page-break-after: avoid;
+	page-break-before: always;
 }
 
 h2.heading-2 {
@@ -26,20 +27,20 @@ p.Body-Text {
 }
 
 p.List-Paragraph {
-	line-spacing: 1.33em;
+	line-height: 1.33em;
 }
 
 p.Normal {
-	line-spacing: 1.33em;
+	line-height: 1.33em;
 }
 
 span.endnote-reference {
-	font-size: 75%;
-	vertical-align: text-top;
+	font-size: 0.7em;
+	vertical-align: 0.5em;
 }
 
 span.footnote-reference {
-	font-size: 75%;
-	vertical-align: text-top;
+	font-size: 0.7em;
+	vertical-align: 0.5em;
 }
 

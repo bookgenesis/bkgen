@@ -1,7 +1,40 @@
 /* == GLOBAL STYLES == */
  
 body {
-	font-size: 1.0em;
+	font-size: 100%;
+}
+
+h1 {
+    font-size: 2.0em;
+    font-weight: normal;
+    font-style: normal;
+    line-height: 1.0em;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    page-break-before: always;
+    page-break-after: avoid;
+}
+
+h2 {
+    font-size: 1.25em;
+    font-weight: bold;
+    font-style: normal;
+    line-height: 1.0em;
+    margin-top: 1.0em;
+    margin-bottom: 0.5em;
+    page-break-before: always;
+    page-break-after: avoid;
+}
+
+h3 {
+    font-size: 1.0em;
+    font-weight: normal;
+    font-style: italic;
+    line-height: 1.0em;
+    margin-top: 1.0em;
+    margin-bottom: 0.5em;
+    page-break-before: always;
+    page-break-after: avoid;
 }
 
 img {
@@ -9,18 +42,37 @@ img {
     max-width: 99%;
 }
 
-ol.lowerLetter {
-   list-style-type: lower-latin; 
+li p {
+    margin-bottom: 0;
 }
 
-ol.lowerRoman {
-    list-style-type: lower-roman;
+ol, ul {
+    margin: 0 0 0.5em 0;
 }
+
+ol.decimal { list-style-type: decimal; }
+ol.lowerLetter { list-style-type: lower-latin; }
+ol.upperLetter { list-style-type: upper-latin; }
+ol.lowerRoman { list-style-type: lower-roman; }
+ol.upperRoman { list-style-type: upper-roman; }
+ol.none, ul.none { list-style-type: none; }
+ol.bullet, ul.bullet { list-style-type: disc; }
+ol.circle, ul.circle { list-style-type: circle; }
+ol.square, ul.square { list-style-type: square; }
 
 p {
     margin: 0 0 0 0;
     line-height: 1.33;
-    text-indent: 0em;
+    text-indent: 0;
+    margin-bottom: 0.5em;
+}
+
+p.footnote-text, p.endnote-text {
+    font-size: 0.90em;
+    line-height: 1.0;
+    margin-bottom: 0.25em;
+    margin-left: 0.5em;
+    text-indent: -0.5em;
 }
 
 section.footnotes {
@@ -32,7 +84,7 @@ section.footnotes {
 table {
     border-collapse: collapse;
 }
- 
+
 td {
     border: 1px solid black;
     padding: 4pt 4pt 2pt 4pt;
@@ -41,22 +93,35 @@ td {
  
 /* == GLOBAL FONT STYLES == */
 
-.hidden { display: none; }
-.bold { font-weight: bold;}
-.italic { font-style: italic; }
-.smcap { font-variant: small-caps; }
-.allcap { text-transform: uppercase; }
-.super {
-    vertical-align: text-top;
-    font-size: 75%;
+.hidden { 
+    display: none; 
 }
-.sub {
-    vertical-align: text-bottom;
-    font-size: 75%;
+.bold { 
+    font-weight: bold;
 }
-.usingle, .udouble, .uwords {
-    text-decoration: underline;
+.ital, .italic { 
+    font-style: italic; 
 }
-.strike, .dstrike {
-    text-decoration: line-through;
+.smcap, .smallcaps { 
+    font-variant: small-caps; 
+}
+.allcap, .allcaps { 
+    text-transform: uppercase; 
+}
+.sup { 
+    font-size: 0.7em; 
+    vertical-align: 0.5em; 
+}
+.sub { 
+    font-size: 0.7em; 
+    vertical-align: bottom; 
+}
+.usingle, .udouble, .uwords { 
+    text-decoration: underline; 
+}
+.strike, .dstrike { 
+    text-decoration: line-through; 
+}
+.over {
+    text-decoration: overline;
 }

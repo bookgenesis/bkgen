@@ -372,7 +372,7 @@ def font_attributes(root, **params):
         # regular properties
         if span.get('valign') is not None:
             val = span.attrib.pop('valign')
-            if val=='superscript': class_list.append('super')
+            if val=='superscript': class_list.append('sup')
             if val=='subscript': class_list.append('sub')
         if span.get('u') is not None:
             class_list.append('u%s' % span.attrib.pop('u'))
