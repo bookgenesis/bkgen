@@ -96,12 +96,12 @@ def render_footnotes(root, **params):
             XML.remove(footnote, leave_tail=True)
             fnref = XML.find(footnote, ".//pub:footnote-ref", namespaces=NS) 
             fnreflink = H.a(fnum, href="#%s" % fnrefid, id=fnid)
-            fnref_parent = fnref.getparent()
             if fnref is not None:
-                fnref_parent.replace(fnref,  fnreflink)
+                fnref.getparent().replace(fnref,  fnreflink)
             else:
-                fnref_parent.insert(0, fnreflink)
-            # fnreflink.tail, firstp.text = ' ' + (firstp.text or ''), ''
+                firstp = XML.find(footnote, "html:p", namespaces=NS)
+                firstp.insert(0, fnreflink)
+                firstp.text, fnreflink.tail = '', firstp.text or ''
             footnotes_section.append(footnote)
             XML.replace_with_contents(footnote)
         if len(footnotes_section.getchildren())==0:
