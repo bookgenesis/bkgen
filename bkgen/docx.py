@@ -61,6 +61,7 @@ class DOCX(bxml.docx.DOCX, Source):
         params = Dict(level=str(level))
         num = XML.find(numbering.root, "//w:num[@w:numId='%s']" % numId, namespaces=self.NS)
         if num is not None:
+            params.update(id=numId)
             abstractNumId = XML.find(num, "w:abstractNumId/@w:val", namespaces=self.NS)
             if abstractNumId is not None:
                 abstractNum = XML.find(numbering.root, "//w:abstractNum[@w:abstractNumId='%s']" % abstractNumId, namespaces=self.NS)
