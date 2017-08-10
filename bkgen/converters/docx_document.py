@@ -277,12 +277,29 @@ def sections_title_id(root, **params):
         section_ids.append(id)
     return root
 
-# non-integer note numbers
-NOTE_NUMBERS = dict(
+# Numbered Elements: Notes and Lists
+
+# supported non-integer number formats used in .docx (unsupported formats default to decimal)
+NUMBERS_FORMATS = dict(
     lowerLetter='abcdefghijklmnopqrstuvwxyz',
     upperLetter='ABCDEFGHIJKLMNOPQRSTUVWXYZ',
     chicago=['*','\u2020','\u2021','\u00A7'],
 )
+
+def formatted_number(number, format):
+    """return the number that should be displayed for the given number and format"""    
+    num = Int(number)
+    if format == 'lowerRoman':
+        fmt_num = num.roman().lower()
+    elif format == 'upperRoman':
+        fmt_num = num.roman().upper()
+    elif format in NUMBERS_FORMATS.keys():
+        i = (num-1) % len(NUMBERS_FORMATS[format])
+        n = math.ceil(num / len(NUMBERS_FORMATS[format]))
+        fmt_num = NUMBERS_FORMATS[format][i]*n
+    else:   # default to decimal
+        fmt_num = str(num)
+    return fmt_num
 
 def section_note_numbering(root, **params):
     """assign note numbering to the sections, as indicated by the note options on each section"""
@@ -300,28 +317,10 @@ def section_note_numbering(root, **params):
         if note_options['endnote-restart'] != 'continuous':
             enum = int(note_options['endnote-start'])
         for footnote in section.xpath('.//pub:footnote', namespaces=NS):
-            if note_options['footnote-format'] == 'lowerRoman':
-                footnote.set('title', Int(fnum).roman().lower())
-            elif note_options['footnote-format'] == 'upperRoman':
-                footnote.set('title', Int(fnum).roman().upper())
-            elif note_options['footnote-format'] in NOTE_NUMBERS.keys():
-                i = (fnum-1) % len(NOTE_NUMBERS[note_options['footnote-format']])
-                n = math.ceil(fnum / len(NOTE_NUMBERS[note_options['footnote-format']]))
-                footnote.set('title', NOTE_NUMBERS[note_options['footnote-format']][i]*n)
-            else:   # default to decimal
-                footnote.set('title', str(fnum))
+            footnote.set('title', formatted_number(fnum, note_options['footnote-format']))
             fnum += 1
         for endnote in section.xpath('.//pub:endnote', namespaces=NS):
-            if note_options['endnote-format'] == 'lowerRoman':
-                endnote.set('title', Int(enum).roman().lower())
-            elif note_options['endnote-format'] == 'upperRoman':
-                endnote.set('title', Int(enum).roman().upper())
-            elif note_options['endnote-format'] in NOTE_NUMBERS.keys():
-                i = (enum-1) % len(NOTE_NUMBERS[note_options['endnote-format']])
-                n = math.ceil(enum / len(NOTE_NUMBERS[note_options['endnote-format']]))
-                endnote.set('title', NOTE_NUMBERS[note_options['endnote-format']][i]*n)
-            else:   # default to decimal
-                endnote.set('title', str(enum))
+            endnote.set('title', formatted_number(enum, note_options['endnote-format']))
             enum += 1
         log.debug("Note options: %r" % note_options)
     return root
