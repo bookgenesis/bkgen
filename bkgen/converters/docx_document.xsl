@@ -482,7 +482,7 @@
                 </xsl:attribute>
             </xsl:if>
             <!-- image offset, measurements in EMUs -->
-            <xsl:if test=".//pic:spPr/a:xfrm/a:off/@x != 0 or .//pic:spPr/a:xfrm/a:off/@y != 0">
+<!--             <xsl:if test=".//pic:spPr/a:xfrm/a:off/@x != 0 or .//pic:spPr/a:xfrm/a:off/@y != 0">
                 <xsl:attribute name="style">
                     <xsl:if test=".//pic:spPr/a:xfrm/a:off/@y != 0">
                         <xsl:text>vertical-align: </xsl:text>
@@ -495,7 +495,7 @@
                         <xsl:text>pt;</xsl:text>
                     </xsl:if>
                 </xsl:attribute>
-            </xsl:if>
+            </xsl:if> -->
         </img>
     </xsl:template>
 
