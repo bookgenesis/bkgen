@@ -470,6 +470,32 @@
                     <xsl:value-of select=".//a:blip/@r:link"/>
                 </xsl:attribute>    
             </xsl:if>
+            <!-- image width and height, measurements in EMUs: 1 inch = 72 pt = 914,400 EMUs, so 1 pt = 12,700 EMUs -->
+            <xsl:if test=".//pic:spPr/a:xfrm/a:ext">
+                <xsl:attribute name="width">
+                    <xsl:value-of select="round(.//pic:spPr/a:xfrm/a:ext/@cx div 12700)"></xsl:value-of>
+                    <!-- <xsl:text>pt</xsl:text> -->
+                </xsl:attribute>
+                <xsl:attribute name="height">
+                    <xsl:value-of select="round(.//pic:spPr/a:xfrm/a:ext/@cy div 12700)"></xsl:value-of>
+                    <!-- <xsl:text>pt</xsl:text> -->
+                </xsl:attribute>
+            </xsl:if>
+            <!-- image offset, measurements in EMUs -->
+            <xsl:if test=".//pic:spPr/a:xfrm/a:off/@x != 0 or .//pic:spPr/a:xfrm/a:off/@y != 0">
+                <xsl:attribute name="style">
+                    <xsl:if test=".//pic:spPr/a:xfrm/a:off/@y != 0">
+                        <xsl:text>vertical-align: </xsl:text>
+                        <xsl:value-of select="round(.//pic:spPr/a:xfrm/a:off/@y div 12700)"></xsl:value-of>
+                        <xsl:text>pt;</xsl:text>
+                    </xsl:if>
+                    <xsl:if test=".//pic:spPr/a:xfrm/a:off/@x != 0">
+                        <xsl:text>margin-left: </xsl:text>
+                        <xsl:value-of select="round(.//pic:spPr/a:xfrm/a:off/@y div 12700)"></xsl:value-of>
+                        <xsl:text>pt;</xsl:text>
+                    </xsl:if>
+                </xsl:attribute>
+            </xsl:if>
         </img>
     </xsl:template>
 

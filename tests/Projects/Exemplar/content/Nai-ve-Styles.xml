@@ -68,7 +68,7 @@
 <section class="continuous" id="s2">
 <p>Section Break. Suspendisse aliquam ex id tellus rutrum fermentum quis ut orci. Sed ac imperdiet orci. In felis leo, maximus sed venenatis in, imperdiet nec metus. Vestibulum luctus odio vitae eros pretium iaculis. Ut nec orci iaculis, maximus ante vel, congue libero.</p>
 <h2 class="heading-2">Image<span class="endnote-reference"><pub:endnote id="2"><p class="endnote-text"><span class="endnote-reference"><pub:endnote-ref></pub:endnote-ref></span> Endnote 2 at the end of a heading</p></pub:endnote></span></h2>
-<p><img src="images/bookgenesis_type.png" title="bookgenesis_type.png"></img></p>
+<p><img height="48" src="images/bookgenesis_type.png" title="bookgenesis_type.png" width="241"></img></p>
 <p>We ought to be able just to include an embedded image without any particular fuss. The output should include the same image, and something about the image’s dimensions and placement.</p>
 <h2 class="heading-2">Table</h2>
 <table>
