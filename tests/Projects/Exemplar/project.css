@@ -9,6 +9,14 @@ img {
     max-width: 99%;
 }
 
+ol.lowerLetter {
+   list-style-type: lower-latin; 
+}
+
+ol.lowerRoman {
+    list-style-type: lower-roman;
+}
+
 p {
     margin: 0 0 0 0;
     line-height: 1.33;

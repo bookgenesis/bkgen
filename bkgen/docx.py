@@ -66,7 +66,7 @@ class DOCX(bxml.docx.DOCX, Source):
             if abstractNumId is not None:
                 abstractNum = XML.find(numbering.root, "//w:abstractNum[@w:abstractNumId='%s']" % abstractNumId, namespaces=self.NS)
                 if abstractNum is not None:
-                    lvl = XML.find(abstractNum, "w:lvl[@w:ilvl='%s']" % level, namespaces=self.NS)
+                    lvl = XML.find(abstractNum, "w:lvl[@w:ilvl='%s']" % params.level, namespaces=self.NS)
                     if lvl is not None:
                         params['start'] = XML.find(lvl, "w:start/@w:val", namespaces=self.NS)
                         params['numFmt']  = XML.find(lvl, "w:numFmt/@w:val", namespaces=self.NS)

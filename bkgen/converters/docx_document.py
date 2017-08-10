@@ -284,49 +284,40 @@ def section_note_numbering(root, **params):
 def number_lists(root, **params):
     """interpret OOXML paragraph numbering into ordered and unordered lists"""
     numbering = params['docx'].xml(src='word/numbering.xml')
-    the_list = None
     numbered_p = XML.find(root, "//html:p[w:numPr]", namespaces=DOCX.NS)
-    prev_numbered_p = None
-    prev_num_params = None
+    prev_num_params = Dict()
+    lists = Dict()
     while numbered_p is not None:
+        # build the num_params
         numPr = XML.find(numbered_p, "w:numPr", namespaces=DOCX.NS)
         numId = XML.find(numPr, "w:numId/@w:val", namespaces=DOCX.NS)
-        level = XML.find(numPr, "w:ilvl/@w:val", namespaces=DOCX.NS)
-        XML.remove(numPr, leave_tail=True)
+        level = int(XML.find(numPr, "w:ilvl/@w:val", namespaces=DOCX.NS))
         num_params = params['docx'].numbering_params(numId, level)
         log.debug("num_params: %r" % num_params)
-        if num_params.get('ul')==True:
-            the_list = B.html.ul('\n\t'); the_list.tail='\n'
-        else:
-            the_list = B.html.ol('\n\t'); the_list.tail='\n'
-            if num_params.get('start') is not None:
-                the_list.set('start', num_params.get('start'))
-        if num_params.get('numFmt') is not None:
-            the_list.set('class', num_params.get('numFmt'))
-        parent = numbered_p.getparent()
-        parent.insert(parent.index(numbered_p), the_list)
-        numbered_p = numbered_p.getnext()
-        li = B.html.li(numbered_p); li.tail='\n\t'; li.getchildren()[-1].tail = ''
-        the_list.append(li)
-        while numbered_p is not None and numbered_p.tag == "{%(html)s}p" % DOCX.NS \
-        and XML.find(numbered_p, "w:numPr", namespaces=DOCX.NS) is not None:
-            numPr = XML.find(numbered_p, "w:numPr", namespaces=DOCX.NS)
-            level = XML.find(numPr, "w:ilvl/@w:val", namespaces=DOCX.NS)
-            numId = XML.find(numPr, "w:numId/@w:val", namespaces=DOCX.NS)
-            num_params = params['docx'].numbering_params(numId, level)
-            XML.remove(numPr)
-            # print("num_params: %r" % num_params)
-            if num_params == num_params:
-                next_p = numbered_p.getnext()
-                li = B.html.li(numbered_p); li.tail = '\n\t'; li.getchildren()[-1].tail = ''
-                the_list.append(li)
-                numbered_p = next_p
+        XML.remove(numPr, leave_tail=True)
+
+        if (num_params.id != prev_num_params.id                 # new list
+        or prev_num_params.level is None 
+        or num_params.level > prev_num_params.level):           # new nested list
+            if num_params.get('ul')==True:
+                lists[level] = B.html.ul('\n' + '\t'*(level+1)); lists[level].tail='\n' + '\t'*(level)
             else:
-                numbered_p = None
-        li.tail = '\n'
-        prev_numbered_p = numbered_p
+                lists[level] = B.html.ol('\n' + '\t'*(level+1)); lists[level].tail='\n' + '\t'*(level)
+                if num_params.get('start') is not None:
+                    lists[level].set('start', num_params.get('start'))
+            if num_params.get('numFmt') is not None:
+                lists[level].set('class', num_params.get('numFmt'))
+            if int(level) > 0 and lists.get(level-1) is not None:
+                lists[level-1][-1][-1].tail = '\n' + '\t'*(level+1)
+                lists[level-1][-1].append(lists[level])
+            else:
+                parent = numbered_p.getparent()
+                parent.insert(parent.index(numbered_p), lists[level])
+
+        li = B.html.li(numbered_p); li.tail='\n' + '\t'*(level+1); li.getchildren()[-1].tail = ''
+        lists[level].append(li)
         prev_num_params = num_params
-        numbered_p = XML.find(the_list, "following::html:p[w:numPr]", namespaces=DOCX.NS)
+        numbered_p = XML.find(lists[0], "following::html:p[w:numPr]", namespaces=DOCX.NS)
     return root
 
 def map_para_styles_levels(root, **params):

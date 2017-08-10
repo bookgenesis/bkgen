@@ -7,9 +7,9 @@
 	<cp:keywords></cp:keywords>
 	<dc:description></dc:description>
 	<cp:lastModifiedBy>Sean Harrison</cp:lastModifiedBy>
-	<cp:revision>59</cp:revision>
+	<cp:revision>61</cp:revision>
 	<dcterms:created xsi:type="dcterms:W3CDTF">2017-06-20T19:51:00Z</dcterms:created>
-	<dcterms:modified xsi:type="dcterms:W3CDTF">2017-08-10T17:16:00Z</dcterms:modified>
+	<dcterms:modified xsi:type="dcterms:W3CDTF">2017-08-10T19:26:00Z</dcterms:modified>
 	</pub:metadata>
 	<body>
 <section class="continuous" id="s1_Na-ve-Styles" title="Naïve Styles" pub:endnote-format="lowerLetter" pub:footnote-restart="eachSect">
@@ -25,7 +25,7 @@
 	<li><p class="List-Paragraph">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p></li>
 	<li><p class="List-Paragraph">Aliquam ac ex pellentesque, facilisis nulla at, elementum velit.</p></li>
 	<li><p class="List-Paragraph">Etiam at ligula at dui iaculis imperdiet sit amet eu ante.</p></li>
-</ul>
+	</ul>
 <p>Integer suscipit et orci nec rhoncus. Mauris elementum purus sit amet neque fringilla, quis condimentum mi viverra. Nunc elementum hendrerit faucibus. Aenean posuere auctor arcu, eu pellentesque metus ullamcorper non. </p>
 <h3 class="heading-3">Ordered List</h3>
 <p>The following should be an ordered (numbered) list.</p>
@@ -33,36 +33,45 @@
 	<li><p class="List-Paragraph">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p></li>
 	<li><p class="List-Paragraph">Aliquam ac ex pellentesque, facilisis nulla at, elementum velit.</p></li>
 	<li><p class="List-Paragraph">Etiam at ligula at dui iaculis imperdiet sit amet eu ante.</p></li>
-</ol>
+	</ol>
 <h3 class="heading-3">Nested Lists</h3>
 <p>The following should be a two-level numbered list:</p>
 <ol class="decimal" start="1">
-	<li><p class="List-Paragraph">Item 1.</p></li>
-</ol>
-<p class="List-Paragraph">Item 1.a.</p>
-<ol class="lowerLetter" start="1">
-	<li><p class="List-Paragraph">Item 1.b.</p></li>
-</ol>
-<p class="List-Paragraph">Item 2.</p>
-<ol class="lowerLetter" start="1">
-	<li><p class="List-Paragraph">Item 2.a.</p></li>
-	<li><p class="List-Paragraph">Item 2.b.</p></li>
-</ol>
-<p class="List-Paragraph">Item 3.</p>
+	<li><p class="List-Paragraph">Item 1.</p>
+		<ol class="lowerLetter" start="1">
+		<li><p class="List-Paragraph">Item 1.a.</p>
+			<ol class="lowerRoman" start="1">
+			<li><p class="List-Paragraph">Item 1.a.i</p></li>
+			<li><p class="List-Paragraph">Item 1.a.ii</p></li>
+			</ol>
+		</li>
+		<li><p class="List-Paragraph">Item 1.b.</p></li>
+		</ol>
+	</li>
+	<li><p class="List-Paragraph">Item 2.</p>
+		<ol class="lowerLetter" start="1">
+		<li><p class="List-Paragraph">Item 2.a.</p></li>
+		<li><p class="List-Paragraph">Item 2.b.</p></li>
+		</ol>
+	</li>
+	<li><p class="List-Paragraph">Item 3.</p></li>
+	</ol>
 <p>And here we should have a numbered list inside each item of a bulleted list.</p>
 <ul class="bullet">
-	<li><p class="List-Paragraph">Bullet 1</p></li>
-</ul>
-<p class="List-Paragraph">Bullet 1 Item 1</p>
-<ol class="decimal" start="1">
-	<li><p class="List-Paragraph">Bullet 1 Item 2</p></li>
-</ol>
-<p class="List-Paragraph">Bullet 2</p>
-<ol class="decimal" start="1">
-	<li><p class="List-Paragraph">Bullet 2 Item 1</p></li>
-	<li><p class="List-Paragraph">Bullet 2 Item 2</p></li>
-</ol>
-<p class="List-Paragraph">Bullet 3</p>
+	<li><p class="List-Paragraph">Bullet 1</p>
+		<ol class="decimal" start="1">
+		<li><p class="List-Paragraph">Bullet 1 Item 1</p></li>
+		<li><p class="List-Paragraph">Bullet 1 Item 2</p></li>
+		</ol>
+	</li>
+	<li><p class="List-Paragraph">Bullet 2</p>
+		<ol class="decimal" start="1">
+		<li><p class="List-Paragraph">Bullet 2 Item 1</p></li>
+		<li><p class="List-Paragraph">Bullet 2 Item 2</p></li>
+		</ol>
+	</li>
+	<li><p class="List-Paragraph">Bullet 3</p></li>
+	</ul>
 <p>If that works, we should be in business.</p>
 </section>
 <section class="continuous" id="s2" pub:endnote-format="lowerLetter" pub:footnote-restart="eachSect">
