@@ -261,7 +261,7 @@ class Project(XML, Source):
             **params = passed to the Source.documents(**params) method
         """
         # move / copy the source into the "canonical" source file location for this project.
-        source_new_fn = os.path.join(self.path, self.source_folder, self.make_basename(fn=source.fn))
+        source_new_fn = os.path.join(self.path, self.source_folder, self.make_basename(source.fn))
         if source_new_fn != source.fn:
             # copy it if it's not inside the project folder
             if self.path not in os.path.commonprefix([self.fn, source.fn]):
@@ -275,7 +275,7 @@ class Project(XML, Source):
         if stylesheet==True:
             ss = source.stylesheet()
             if ss is not None:
-                ss.fn = os.path.join(self.path, self.content_folder, self.make_basename(fn=source.fn, ext='.css'))
+                ss.fn = os.path.join(self.path, self.content_folder, self.make_basename(source.fn, ext='.css'))
                 ss.write()
 
         self.write()
@@ -293,7 +293,7 @@ class Project(XML, Source):
         ]
         for doc in documents:
             # save the document, overwriting any existing document in that location
-            doc.fn = os.path.join(self.path, self.content_folder, self.make_basename(fn=doc.fn))
+            doc.fn = os.path.join(self.path, self.content_folder, self.make_basename(doc.fn))
             doc.write()
 
             # update the project spine element: append anything that is new.
@@ -338,7 +338,7 @@ class Project(XML, Source):
 
     def import_image(self, fn, **params):
         """import the image from a local file. Process through GraphicsMagick to ensure clean."""
-        basename = re.sub("(&[\w^;]+;|[\s\&+;'])", "-", os.path.basename(os.path.splitext(fn)[0]+'.jpg'))
+        basename = re.sub("(&[\w^;]+;|[\s\&+;'])", "-", self.make_basename(fn, ext='.jpg'))
         outfn = os.path.join(self.path, self.image_folder, basename)
         log.debug('image: %s' % os.path.relpath(fn, self.path))
         ext = os.path.splitext(fn)[-1].lower()
@@ -609,7 +609,7 @@ class Project(XML, Source):
 
         if 'html' in ext:
             # collect the @ids from the content and fix the hyperlinks
-            basenames = [os.path.basename(f) for f in outfns]
+            basenames = [self.make_basename(f) for f in outfns]
             ids = Dict()
             for outfn in outfns:
                 for elem in XML(fn=outfn).root.xpath("//*[@id]"):
