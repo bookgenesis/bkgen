@@ -89,8 +89,8 @@ def render_footnotes(root, **params):
         for footnote in section_footnotes:
             parent = footnote.getparent()
             fnum = footnote.get('title') or str(section_footnotes.index(footnote)+1)
-            fnid = (section.get('id') or 's-' + str(sections.index(section)+1)) + '_fn-' + (footnote.get('id') or fnum)
-            fnrefid = fnid.replace('_fn-', '_fnref-')
+            fnid = footnote.get('id') or "fn-%s" % fnum
+            fnrefid = XML.find(footnote, "pub:footnote-ref/@id", namespaces=NS) or fnid.replace('fn-', 'fnref-')
             fnlink = H.a(fnum, href="#%s" % fnid, id=fnrefid)
             parent.insert(parent.index(footnote), fnlink)
             XML.remove(footnote, leave_tail=True)
@@ -129,8 +129,8 @@ def process_endnotes(root, endnotes=[], insert_endnotes=False, **params):
         else:                                       # render the endnote reference link here and collect the endnote
             enum = elem.get('title') or str(len(endnotes)+1)
             section_id = XML.find(elem, "ancestor::html:section[@id][last()]/@id", namespaces=NS)
-            enid = "%s_en-%s" % (section_id, enum)
-            enrefid = "%s_enref-%s" % (section_id, enum)
+            enid = elem.get('id') or "en-%s" % enum
+            enrefid = XML.find(elem, "pub:endnote-ref/@id", namespaces=NS) or enid.replace('fn-', 'fnref-')
             enlink = H.a(enum, href="#%s" % enid, id=enrefid)
             enreflink = H.a(enum, href="#%s" % enrefid)
             endnote = H.section({'id':enid, 'class':'endnote', 'title':elem.get('title') or enum})

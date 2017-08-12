@@ -150,6 +150,7 @@
     <xsl:template match="w:footnote">
         <pub:footnote>
             <xsl:attribute name="id">
+                <xsl:text>fn-</xsl:text>
                 <xsl:value-of select="@w:id"/>
             </xsl:attribute>
             <xsl:apply-templates/>
@@ -160,6 +161,7 @@
     <xsl:template match="w:endnote">
         <pub:endnote>
             <xsl:attribute name="id">
+                <xsl:text>en-</xsl:text>
                 <xsl:value-of select="@w:id"/>
             </xsl:attribute>
             <xsl:apply-templates/>
@@ -170,6 +172,7 @@
     <xsl:template match="w:comment">
         <pub:comment>
             <xsl:attribute name="id">
+                <xsl:text>comment-</xsl:text>
                 <xsl:value-of select="@w:id"/>
             </xsl:attribute>
             <xsl:attribute name="datetime">
@@ -189,8 +192,9 @@
     <xsl:template match="w:commentRangeStart">
         <a class="comment-range">
             <xsl:attribute name="id">
-                <xsl:text>comment_</xsl:text>
+                <xsl:text>comment-</xsl:text>
                 <xsl:value-of select="@w:id"/>
+                <xsl:text>_start</xsl:text>
             </xsl:attribute>
         </a>
     </xsl:template>
@@ -198,7 +202,7 @@
     <xsl:template match="w:commentRangeEnd">
         <a class="comment-range">
             <xsl:attribute name="id">
-                <xsl:text>comment_</xsl:text>
+                <xsl:text>comment-</xsl:text>
                 <xsl:value-of select="@w:id"/>
                 <xsl:text>_end</xsl:text>
             </xsl:attribute>
@@ -335,8 +339,22 @@
         <xsl:copy><xsl:apply-templates select="@*|node()"/></xsl:copy>
     </xsl:template>
 
-    <xsl:template match="w:footnoteRef"><pub:footnote-ref></pub:footnote-ref></xsl:template>
-    <xsl:template match="w:endnoteRef"><pub:endnote-ref></pub:endnote-ref></xsl:template>
+    <xsl:template match="w:footnoteRef">
+        <pub:footnote-ref>
+            <xsl:attribute name="id">
+                <xsl:text>fnref-</xsl:text>
+                <xsl:value-of select="ancestor::w:footnote/@w:id"></xsl:value-of>
+            </xsl:attribute>
+        </pub:footnote-ref>
+    </xsl:template>
+    <xsl:template match="w:endnoteRef">
+        <pub:endnote-ref>
+            <xsl:attribute name="id">
+                <xsl:text>enref-</xsl:text>
+                <xsl:value-of select="ancestor::w:footnote/@w:id"></xsl:value-of>
+            </xsl:attribute>
+        </pub:endnote-ref>
+    </xsl:template>
     <xsl:template match="w:commentRef"><pub:comment-ref></pub:comment-ref></xsl:template>
 
     <xsl:template match="w:rPr"><xsl:apply-templates/></xsl:template>
