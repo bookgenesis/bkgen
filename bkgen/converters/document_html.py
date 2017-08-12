@@ -15,7 +15,7 @@ from bkgen.document import Document
 
 log = logging.getLogger(__name__)
 
-B = Builder(**NS)
+B = Builder(default=NS.html, **{'html':NS.html, 'pub':NS.pub})
 H = Builder.single(NS.html)
 transformer = XT()
 transformer_XSLT = etree.XSLT(etree.parse(os.path.splitext(__file__)[0] + '.xsl'))
@@ -34,7 +34,7 @@ def default(elem, **params):
     root = omit_print_conditions(root, **params)
     root = omit_unsupported_font_formatting(root, **params)
     root = render_footnotes(root, **params)
-    root = render_endnotes(root, **params)
+    root = process_endnotes(root, **params)
     return [ root ]
 
 def fill_head(root, **params):
@@ -108,17 +108,24 @@ def render_footnotes(root, **params):
             XML.remove(footnotes_section)
     return root
 
-def render_endnotes(root, endnotes=[], **params):
-    """collect endnotes from the content in params['endnotes'], and output them at <pub:endnotes/>."""
+def render_endnotes(endnotes_elem, endnotes):
+    """insert the collected endnotes into the given endnotes_elem"""
+    endnotes_elem.tag = "{%(html)s}section" % NS
+    endnotes_elem.set('class', 'endnotes')
+    endnotes_elem.text = endnotes_elem.tail = '\n'
+    for endnote in endnotes:
+        endnotes_elem.append(endnote)
+        endnote.tail='\n'
+    return endnotes_elem
+
+def process_endnotes(root, endnotes=[], insert_endnotes=False, **params):
+    """collect endnotes from the content in params['endnotes'], and output them at <pub:endnotes/>.
+    If insert_endnotes=True, then insert any remaining endnotes at the end of the document.
+    """
     elem = XML.find(root, "//pub:endnote | //pub:endnotes", namespaces=NS)
     while elem is not None:
         if elem.tag=="{%(pub)s}endnotes" % NS:      # render the collected endnotes here
-            elem.tag = "{%(html)s}section" % NS
-            elem.set('class', 'endnotes')
-            elem.text = elem.tail = '\n'
-            for endnote in endnotes:
-                elem.append(endnote)
-                endnote.tail='\n'
+            elem = render_endnotes(elem, endnotes)
         else:                                       # render the endnote reference link here and collect the endnote
             enum = elem.get('title') or str(len(endnotes)+1)
             section_id = XML.find(elem, "ancestor::html:section[@id][last()]/@id", namespaces=NS)
@@ -135,5 +142,8 @@ def render_endnotes(root, endnotes=[], **params):
             endnote = etree.fromstring(etree.tounicode(endnote).replace(' xmlns:pub="http://publishingxml.org/ns"',''))
             endnotes.append(endnote)
         elem = XML.find(root, "//pub:endnote | //pub:endnotes", namespaces=NS)
+    if insert_endnotes==True and len(endnotes) > 0:
+        body = XML.find(root, "html:body", namespaces=NS)
+        body.append(render_endnotes(B.pub.endnotes(), endnotes))
     return root
 
