@@ -115,14 +115,14 @@ class Project(XML, Source):
         ]
         return images
 
-    def stylesheet(self, href=None):
+    def stylesheet(self):
         """the master .css for this project is the resource class="stylesheet"."""
         csshref = self.find(self.root, "pub:resources/pub:resource[@class='stylesheet']/@href", namespaces=NS)
         if csshref is not None:
             cssfn = os.path.join(self.path, csshref)
             return CSS(fn=cssfn)
 
-    def content_stylesheet(self, href=None):
+    def content_stylesheet(self, href=None, fn=None):
         """If href is not None and the target document has an associated stylesheet, 
             combine the document stylesheet with the project stylesheet(s) to provide a single stylesheet,
             giving precedence to the project stylesheet(s).
@@ -133,7 +133,7 @@ class Project(XML, Source):
             doc_cssfn = os.path.splitext(docfn)[0] + '.css'
             if os.path.exists(doc_cssfn):
                 css = CSS.merge_stylesheets(css.fn, doc_cssfn)
-                css.fn = None
+        css.fn = fn
         return css
 
     # CLASSMETHODS
