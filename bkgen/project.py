@@ -253,11 +253,11 @@ class Project(XML, Source):
     
     def import_source(self, source, documents=True, images=True, stylesheet=True, metadata=False, **params):
         """import a source into the project.
-            source = a Source object that contains the content source
-            documents = whether to import documents from the source
-            images = whether to import images from the source
-            stylesheet = whether to import a stylesheet from the source
-            metadata = whether to import metadata from the source
+            source = a Source object that contains the content source [REQUIRED]
+            documents = whether to import documents from the source (default=True)
+            images = whether to import images from the source (default=True)
+            stylesheet = whether to import a stylesheet from the source (default=True)
+            metadata = whether to import metadata from the source (default=False)
             **params = passed to the Source.documents(**params) method
         """
         # move / copy the source into the "canonical" source file location for this project.
@@ -547,7 +547,7 @@ class Project(XML, Source):
             docfn = os.path.join(self.path, split_href[0])
             doc_css_fns = [cfn for cfn in glob(os.path.splitext(docfn)[0]+'.css') if os.path.exists(cfn)]
             if len(split_href) > 1: 
-                d = Document.load(fn=docfn, section_id=split_href[1])
+                d = Document.load(fn=docfn, id=split_href[1])
             else:
                 d = Document.load(fn=docfn)
             outfn = os.path.splitext(os.path.join(output_path, os.path.relpath(d.fn, self.path)))[0] + ext

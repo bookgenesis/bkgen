@@ -36,16 +36,16 @@ class Document(XML, Source):
             return CSS(fn=cssfn)
 
     @classmethod
-    def load(C, fn, section_id=None, **args):
-        log.debug("fn=%r, section_id=%r, **%r" % (fn, section_id, args))
+    def load(C, fn, id=None, **args):
+        log.debug("fn=%r, id=%r, **%r" % (fn, id, args))
         B = Builder(default=C.NS.html, **C.NS)
         x = C(fn=fn, **args)
         x.fn = fn
-        if section_id is not None:
-            section = C.find(x.root, "//html:section[@id='%s']" % section_id, namespaces=C.NS)
+        if id not in [None, '']:
+            section = x.find(x.root, "//*[@id='%s']/ancestor-or-self::html:section[last()]" % id, namespaces=C.NS)
         else:
             section = C.find(x.root, "//html:section", namespaces=C.NS)
-        log.debug("%s: %r" % (section_id, section.attrib if section is not None else None))
+        log.info("Load %s#%s: %r" % (os.path.basename(fn), id, section.attrib if section is not None else None))
         if section is not None:
             body_elem = B._.body('\n', section)
             x.root = B.pub.document('\n\t', body_elem, '\n')
@@ -74,8 +74,8 @@ class Document(XML, Source):
     def html_content(self, fn=None, output_path=None, resources=[], **args):
         h = self.html(fn=fn, output_path=output_path, resources=resources, **args)
         return "\n".join([
-                etree.tounicode(e, with_tail=True)
-                for e in h.find(h.root, "html:body", namespaces=NS).getchildren()])  
+            etree.tounicode(e, with_tail=True)
+            for e in h.find(h.root, "html:body", namespaces=NS).getchildren()])  
 
     def render_includes(self):
         """put included content into the <pub:include> elements in the document."""
