@@ -122,6 +122,20 @@ class Project(XML, Source):
             cssfn = os.path.join(self.path, csshref)
             return CSS(fn=cssfn)
 
+    def content_stylesheet(self, href=None):
+        """If href is not None and the target document has an associated stylesheet, 
+            combine the document stylesheet with the project stylesheet(s) to provide a single stylesheet,
+            giving precedence to the project stylesheet(s).
+        """
+        css = self.stylesheet()
+        if href is not None:
+            docfn = os.path.join(self.path, href.split('#')[0])
+            doc_cssfn = os.path.splitext(docfn)[0] + '.css'
+            if os.path.exists(doc_cssfn):
+                css = CSS.merge_stylesheets(css.fn, doc_cssfn)
+                css.fn = None
+        return css
+
     # CLASSMETHODS
 
     @classmethod
