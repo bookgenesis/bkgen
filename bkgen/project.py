@@ -461,10 +461,10 @@ class Project(XML, Source):
         from .mobi import MOBI
         mobi_isbn = self.metadata().identifier(id_patterns=['mobi', 'ebook', 'isbn'])
         if mobi_isbn is not None:
-            mobi_name = mobi_isbn.text.replace('-', '')
+            mobi_name = mobi_isbn.text.replace('-', '') + '_Kindle'
         else:
-            mobi_name = self.name
-        mobi_path = os.path.join(self.path, self.output_folder, mobi_name+"_MOBI")
+            mobi_name = self.name + '_Kindle'
+        mobi_path = os.path.join(self.path, self.output_folder, mobi_name)
         if clean==True and os.path.isdir(mobi_path): shutil.rmtree(mobi_path)
         if not os.path.isdir(mobi_path): os.makedirs(mobi_path)
         resources = self.output_resources(output_path=mobi_path, **image_args)
@@ -612,7 +612,6 @@ class Project(XML, Source):
         if len(endnotes) > 0:           # create a new spineitem for the endnotes, and put them there
             endnotes_html = Document().html(fn=os.path.join(output_path, self.content_folder, 'Collected-Endnotes'+ext))
             project_css_fn = os.path.join(output_path, self.find(self.root, "pub:resources/pub:resource[@class='stylesheet']/@href", namespaces=NS) or 'project.css')
-            print(os.path.exists(project_css_fn), project_css_fn)
             if os.path.exists(project_css_fn):
                 head = endnotes_html.find(endnotes_html.root, "html:head", namespaces=NS)
                 head.append(HTML.link(rel="stylesheet", type="text/css", href=os.path.relpath(project_css_fn, endnotes_html.path)))
