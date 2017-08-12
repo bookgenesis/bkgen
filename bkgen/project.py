@@ -27,6 +27,7 @@ from bxml.builder import Builder
 from bkgen import NS, config, mimetypes
 from bkgen.document import Document
 from .source import Source
+from .css import CSS
 
 FILENAME = os.path.abspath(__file__)
 PATH = os.path.dirname(FILENAME)
@@ -114,14 +115,13 @@ class Project(XML, Source):
         ]
         return images
 
-    def stylesheet(self):
+    def stylesheet(self, href=None):
         """the master .css for this project is the resource class="stylesheet"."""
-        from .css import CSS
         csshref = self.find(self.root, "pub:resources/pub:resource[@class='stylesheet']/@href", namespaces=NS)
         if csshref is not None:
             cssfn = os.path.join(self.path, csshref)
             return CSS(fn=cssfn)
- 
+
     # CLASSMETHODS
 
     @classmethod
@@ -556,13 +556,21 @@ class Project(XML, Source):
                 h = d.html(fn=outfn, ext=ext, output_path=output_path, http_equiv_content_type=http_equiv_content_type,
                         resources=resources, endnotes=endnotes)
                 # add the document-specific CSS, if it exists
-                for doc_css_fn in doc_css_fns:
-                    out_css_fn = os.path.splitext(
-                        os.path.join(output_path, os.path.relpath(doc_css_fn, self.path)))[0]+'.css'
-                    if os.path.exists(doc_css_fn) and not os.path.exists(out_css_fn):
-                        Text(fn=doc_css_fn).write(fn=out_css_fn)
-                    if os.path.exists(out_css_fn):
-                        head = h.find(h.root, "//html:head", namespaces=NS)
+                if len(doc_css_fns) > 0:
+                    css_fns = []
+                    head = h.find(h.root, "html:head", namespaces=NS)
+                    for css_link in h.xpath(head, "html:link[@rel='stylesheet' and @href]", namespaces=NS):
+                        css_fns.append(os.path.abspath(os.path.join(h.path, css_link.get('href'))))
+                        head.remove(css_link)    # we won't need the project stylesheets separately, because we're merging
+                    for doc_css_fn in doc_css_fns:
+                        out_css_fn = os.path.splitext(
+                            os.path.join(output_path, os.path.relpath(doc_css_fn, self.path))
+                            )[0]+'.css'
+                        if not os.path.exists(out_css_fn):
+                            merge_css_fns = css_fns + [doc_css_fn]
+                            out_css = CSS.merge_stylesheets(merge_css_fns[0], *merge_css_fns[1:])
+                            out_css.fn = out_css_fn
+                            out_css.write()
                         href = os.path.relpath(out_css_fn, h.dirpath())
                         link = etree.Element("{%(html)s}link" % NS, rel="stylesheet", href=href, type="text/css")
                         head.append(link)
