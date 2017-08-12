@@ -351,7 +351,7 @@
         <pub:endnote-ref>
             <xsl:attribute name="id">
                 <xsl:text>enref-</xsl:text>
-                <xsl:value-of select="ancestor::w:footnote/@w:id"></xsl:value-of>
+                <xsl:value-of select="ancestor::w:endnote/@w:id"></xsl:value-of>
             </xsl:attribute>
         </pub:endnote-ref>
     </xsl:template>

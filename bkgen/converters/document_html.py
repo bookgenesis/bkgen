@@ -128,9 +128,8 @@ def process_endnotes(root, endnotes=[], insert_endnotes=False, **params):
             elem = render_endnotes(elem, endnotes)
         else:                                       # render the endnote reference link here and collect the endnote
             enum = elem.get('title') or str(len(endnotes)+1)
-            section_id = XML.find(elem, "ancestor::html:section[@id][last()]/@id", namespaces=NS)
             enid = elem.get('id') or "en-%s" % enum
-            enrefid = XML.find(elem, "pub:endnote-ref/@id", namespaces=NS) or enid.replace('fn-', 'fnref-')
+            enrefid = XML.find(elem, ".//pub:endnote-ref/@id", namespaces=NS) or enid.replace('en-', 'enref-')
             enlink = H.a(enum, href="#%s" % enid, id=enrefid)
             enreflink = H.a(enum, href="#%s" % enrefid)
             endnote = H.section({'id':enid, 'class':'endnote', 'title':elem.get('title') or enum})
