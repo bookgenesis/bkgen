@@ -251,7 +251,7 @@ class Project(XML, Source):
         # Images
         elif (content_type in ['image/jpeg', 'image/png', 'image/bmp', 'image/tiff', 'application/pdf']
                 or ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff', '.pdf']):
-            project.import_image(fn)
+            self.import_image(fn)
 
         # not a matching file type
         else:
@@ -376,7 +376,7 @@ class Project(XML, Source):
 
         resources = self.find(self.root, "pub:resources", namespaces=NS)
 
-        if 'cover' in resource.get('class'):
+        if 'cover' in (resource.get('class') or ''):
             if ((params.get('kind') is None or 'digital' in params.get('kind')) 
             and os.path.splitext(resource.fn)[-1]=='.jpg'):
                 existing_cover_digital = self.find(self.root, 
