@@ -224,12 +224,12 @@ class Project(XML, Source):
         log.debug("%r.import_source_file(%r, **%r)" % (self, fn, args))
         
         # .DOCX files
-        if (content_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                or ext == '.docx'):
+        if (content_type=='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                or ext=='.docx'):
             # write the content data to a temporary folder
             from .docx import DOCX
             self.import_source(DOCX(fn=fn), **args)
-    
+
         # .EPUB files
         elif (content_type=='application/epub+zip'
                 or ext == '.epub'):
@@ -352,6 +352,7 @@ class Project(XML, Source):
 
     def import_image(self, fn, **params):
         """import the image from a local file. Process through GraphicsMagick to ensure clean."""
+        # import the image to the project image folder
         basename = re.sub("(&[\w^;]+;|[\s\&+;'])", "-", self.make_basename(fn, ext='.jpg'))
         outfn = os.path.join(self.path, self.image_folder, basename)
         log.debug('image: %s' % os.path.relpath(fn, self.path))
@@ -361,16 +362,12 @@ class Project(XML, Source):
             PDF(fn=fn).gswrite(fn=outfn, device='jpeg', res=600)
         else:
             from bf.image import Image
-            Image(fn=fn).convert(outfn, format='jpg', quality=90)
+            Image(fn=fn).convert(outfn, format='jpg', quality=100)
 
-        # move the image to the Project folder
-        # and create a resource for it
-        f = File(fn=outfn)
-        resource_fn = os.path.join(self.path, self.image_folder, basename)
-        log.debug("resource = %s" % os.path.relpath(resource_fn, self.path))
-        f.write(fn=resource_fn)
-        log.debug(os.path.relpath(resource_fn, self.path))
-        href = os.path.relpath(resource_fn, self.path)
+        # create / update the resource for the image
+        image_file = File(fn=outfn)
+        log.debug("resource = %s" % os.path.relpath(image_file.fn, self.path))
+        href = os.path.relpath(image_file.fn, self.path)
         resource = self.find(self.root, "//pub:resource[@href='%s']" % href, namespaces=NS)
         if resource is None:
             resource = etree.Element("{%(pub)s}resource" % NS, href=href, **params)
@@ -381,7 +378,7 @@ class Project(XML, Source):
 
         if 'cover' in resource.get('class'):
             if ((params.get('kind') is None or 'digital' in params.get('kind')) 
-            and os.path.splitext(resource_fn)[-1]=='.jpg'):
+            and os.path.splitext(resource.fn)[-1]=='.jpg'):
                 existing_cover_digital = self.find(self.root, 
                     "//pub:resource[contains(@class,'cover') and (@kind='%s' or not(@kind))]" 
                     % params.get('kind') or 'digital', namespaces=NS)
