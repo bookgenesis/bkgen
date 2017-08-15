@@ -136,6 +136,26 @@ class Project(XML, Source):
         css.fn = fn
         return css
 
+    def content_files(self):
+        """Return a list of files in the content folder"""
+        return [
+            f for f in File(fn=self.content_path).file_list()
+            if os.path.basename(f.fn)[0]!='.'
+        ]
+
+    def source_files(self):
+        """Return a list of files in the source folder"""
+        return [
+            f for f in File(fn=self.source_path).file_list()
+            if os.path.basename(f.fn)[0]!='.'
+        ]
+
+    def output_files(self):
+        return [
+            f for f in File(fn=self.output_path).file_list()
+            if os.path.basename(f.fn)[0]!='.'
+        ]
+
     # CLASSMETHODS
 
     @classmethod
