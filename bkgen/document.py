@@ -44,7 +44,7 @@ class Document(XML, Source):
         if id not in [None, '']:
             section = x.find(x.root, "//*[@id='%s']/ancestor-or-self::html:section[last()]" % id, namespaces=C.NS)
         else:
-            section = C.find(x.root, "//html:section", namespaces=C.NS)
+            section = None
         log.info("Load %s#%s: %r" % (os.path.basename(fn), id, section.attrib if section is not None else None))
         if section is not None:
             body_elem = B._.body('\n', section)
