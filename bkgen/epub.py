@@ -245,7 +245,7 @@ class EPUB(ZIP, Source):
         cover_html_relpath = os.path.splitext(cover_src)[0]+'.xhtml'
         cover_html.fn = os.path.join(output_path, cover_html_relpath)
         img = XML.find(cover_html.root, "//html:img", namespaces=EPUB.NS)
-        img.set('src', os.path.basename(cover_src))
+        img.set('src', os.path.splitext(os.path.basename(cover_src))[0]+'.jpg')
         cover_html.write(doctype="<!DOCTYPE html>")
         return cover_html.fn
 
@@ -607,7 +607,7 @@ class EPUB(ZIP, Source):
 
         # include a <meta name="cover"...> element if cover_src is given
         if cover_src is not None and metadata_elem.find("meta[@name='cover']") is None:
-            cover = C.OPF.meta({'name': 'cover', 'content': C.href_to_id(cover_src)})
+            cover = C.OPF.meta({'name': 'cover', 'content': C.href_to_id(os.path.splitext(cover_src)[0]+'.jpg')})
             metadata_elem.append(cover)
      
         # add the ibooks specified fonts instruction to the end of the metadata section if not present
