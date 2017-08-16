@@ -26,9 +26,10 @@ def document(elem, **params):
     root = transformer_XSLT(elem).getroot()
     root = wrap_sections(root)
     root = sections_ids(root)
-    root = p_ids(root)
+    # root = p_ids(root)
     root = hrefs_to_xml(root)
     root = remove_empty_spans(root)
+    root = remove_event_attributes(root)
     return [root]
 
 def wrap_sections(root, body_xpath=None):
@@ -88,7 +89,9 @@ def sections_ids(root):
                 else:
                     title_text = String(etree.tounicode(title_elems[0], method='text', with_tail=False)).titleify()
                 section.set('title', title_text)
-        id = String(section.get('title') or '').identifier() + '_s%d' % (sections.index(section)+1,)
+        id = "s%d" % (sections.index(section)+1,)
+        if section.get('title') is not None:
+            id += '_' + String(section.get('title') or '').hyphenify(ascii=True)
         section.set('id', id)
     return root
 
@@ -118,3 +121,11 @@ def remove_empty_spans(root):
                 if span.text in [None, ''] and len(span.getchildren())==0]:
         XML.remove(span, leave_tail=True)
     return root
+
+def remove_event_attributes(root):
+    """all event attributes (onLoad, etc.) should be removed."""
+    for elem in root.xpath("//*[@*[starts-with(name(),'on')]]"):
+        for key in [key for key in elem.attrib.keys() if key[:2]=='on']:
+            _ = elem.attrib.pop(key)
+    return root
+

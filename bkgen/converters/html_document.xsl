@@ -19,13 +19,7 @@
         </pub:document>
     </xsl:template>
 
-    <xsl:template match="html:head">
-        <xsl:text>&#xA;&#x9;</xsl:text>
-        <xsl:copy>
-            <xsl:text>&#xA;&#x9;</xsl:text>
-            <xsl:apply-templates select="@*|node()"/>
-        </xsl:copy>
-    </xsl:template>
+    <xsl:template match="html:head"></xsl:template>
 
     <xsl:template match="html:body">
         <xsl:text>&#xA;&#x9;</xsl:text>
@@ -46,14 +40,7 @@
         </xsl:copy>
     </xsl:template>    
 
-    <xsl:template match="html:head/*">
-        <xsl:text>&#x9;</xsl:text>
-        <xsl:copy>
-            <xsl:apply-templates select="@*|node()"/>
-        </xsl:copy>
-        <xsl:text>&#xA;&#x9;</xsl:text>
-    </xsl:template>
-
-    <xsl:template match="html:meta[@http-equiv='content-type']"/>
+    <!-- don't allow scripts in the HTML -->
+    <xsl:template match="script | html:script"></xsl:template>
 
 </xsl:stylesheet>
