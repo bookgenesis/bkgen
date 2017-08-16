@@ -580,12 +580,15 @@ class EPUB(ZIP, Source):
 
         # dc:date cannot have certain attribs: xsi:type
         for date_elem in metadata_elem.xpath("dc:date", namespaces=C.NS):
-            popped = Dict()
-            for k in [k for k in date_elem.attrib.keys() 
-                        if k not in ALLOWED_DATE_PROPERTIES]:
-                popped[k] = date_elem.attrib.pop(k)
-            # if len(popped.keys()) > 0:
-            #     log.warn("attributes removed from dc:date:", popped)
+            if (date_elem.text or '').strip() == '':
+                metadata_elem.remove(date_elem)
+            else:
+                popped = Dict()
+                for k in [k for k in date_elem.attrib.keys() 
+                            if k not in ALLOWED_DATE_PROPERTIES]:
+                    popped[k] = date_elem.attrib.pop(k)
+                # if len(popped.keys()) > 0:
+                #     log.warn("attributes removed from dc:date:", popped)
 
         # only certain non-namespaced opf:meta @property values are allowed in EPUB3
         for meta_elem in metadata_elem.xpath("opf:meta[@property]", namespaces=C.NS):
