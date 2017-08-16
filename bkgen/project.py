@@ -448,8 +448,7 @@ class Project(XML, Source):
             except:
                 msg = (str(String(sys.exc_info()[0].__name__).camelsplit()) + ' ' + str(sys.exc_info()[1])).strip()
                 result = Dict(kind=output_kind, message=msg, traceback=traceback.format_exc())
-                log.error(result.msg)
-                log.debug(result.traceback)
+                log.error(result.traceback)
             results.append(result)
 
         outputs_elem = self.find(self.root, "pub:outputs", namespaces=NS)
@@ -521,9 +520,9 @@ class Project(XML, Source):
             elif resource.get('class') in ['cover', 'cover-digital', 'image']:
                 outfn = self.output_image(f.fn, output_path=output_path, **image_args)
             else:                                                               # other resource as-is
-                outfn = os.path.join(output_path, os.path.relpath(f.fn, os.path.dirname(self.fn)))
+                outfn = os.path.join(output_path, f.relpath(os.path.dirname(self.fn)))
                 f.write(fn=outfn)
-            resource.set('href', os.path.relpath(outfn, output_path))
+            resource.set('href', File(fn=outfn).relpath(output_path))
             log.debug(resource.attrib)
         return resources
 
