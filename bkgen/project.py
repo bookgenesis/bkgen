@@ -250,6 +250,20 @@ class Project(XML, Source):
             from .docx import DOCX
             self.import_source(DOCX(fn=fn), **args)
 
+        # .HTML files
+        elif (content_type in ['text/html', 'application/xhtml+xml']
+                or ext in ['.htm', '.html', '.xhtml']):
+            # write the content data to a temporary folder
+            from .html import HTML
+            self.import_source(HTML(fn=fn), **args)
+
+        # .MD files
+        elif (content_type=='text/x-markdown'
+                or ext in ['.md', '.txt']):
+            # write the content data to a temporary folder
+            from .markdown import Markdown
+            self.import_source(Markdown(fn=fn), **args)
+
         # .EPUB files
         elif (content_type=='application/epub+zip'
                 or ext == '.epub'):

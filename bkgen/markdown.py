@@ -4,21 +4,28 @@ from lxml import etree
 from bl.text import Text
 from bxml.builder import Builder
 from bkgen import NS
-from bkgen.document import Document
+from bkgen.html import HTML
 from bkgen.source import Source
 B = Builder(default=NS.html, **{'html':NS.html,'pub':NS.pub})
 
 class Markdown(Text, Source):
 
-    def document(self, fn=None, **params):
+    def document(self, **params):
         """convert a markdown file into a pub:document via HTML"""
-        from markdown import markdown
-        content = markdown(self.text, output_format='xhtml5', lazy_ol=False)
-        section = etree.fromstring("""<section id="s1" xmlns="%s">\n%s\n</section>""" % (NS.html, content))
-        root = B.pub.document('\n\t', B.html.body('\n', section, '\n\t'), '\n')
-        doc = Document(root=root, fn=fn or os.path.splitext(self.fn)[0]+'.xml')
+        doc = self.html().document()
         return doc
 
     def documents(self, **params):
         return [self.document(**params)]
 
+    def html(self, reload=False):        
+        if reload==True or self.__HTML is None:
+            from markdown import markdown
+            content = markdown(self.text, output_format='xhtml5', lazy_ol=False)
+            body = etree.fromstring("""<body xmlns="%s">\n%s\n</body>""" % (NS.html, content))
+            root = B.html.html('\n\t', body, '\n')
+            self.__HTML = HTML(root=root, fn=os.path.splitext(self.fn)[0]+'.html')
+        return self.__HTML
+
+    def stylesheet(self):
+        return self.html().stylesheet()
