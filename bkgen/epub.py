@@ -569,7 +569,7 @@ class EPUB(ZIP, Source):
         metadata_elem = deepcopy(metadata)
 
         # dc:identifier is required; create UUID if not given
-        if metadata_elem.find("{%(dc)s}language" % C.NS) is None:
+        if metadata_elem.find("{%(dc)s}identifier" % C.NS) is None:
             from uuid import uuid4
             uuid = str(uuid4())
             metadata_elem.append(DC.identifier(uuid, id='uuid'))
