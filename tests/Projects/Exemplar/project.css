@@ -76,8 +76,9 @@ p.footnote-text, p.endnote-text {
 }
 
 section.footnotes {
-    margin-top: 2em;
     border-top: 1px solid #aaaaaa;
+    margin-top: 2em;
+    margin-bottom: 2em;
     padding-top: 1em;
 }
 
