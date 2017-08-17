@@ -8,7 +8,7 @@ docutils==0.13.1
 imagesize==0.7.1
 Jinja2==2.9.6
 libsass==0.12.3
-lxml==3.7.3
+lxml==3.8.0
 Markdown==2.6.8
 MarkupSafe==1.0
 packaging==16.8
@@ -24,7 +24,7 @@ sphinxcontrib-websupport==1.0.1
 typing==3.6.1
 Unum==4.1.3
 -e git+https://github.com/BlackEarth/bf@f6e003735b506313badfb58c03c304485922a2d0#egg=bf
--e git+https://gitlab.com/bookgenesis/bkgen.git@2b54de6580246ab38b453d862f30ff2b1de8974a#egg=bkgen
 -e git+https://github.com/BlackEarth/bl.git@4a4c2858522aba8cc8bfce32f67b3b0d40b405dc#egg=bl
 -e git+https://github.com/BlackEarth/bsql.git@9c79fd099d1cb75dbed4dffd68f61675026d9ba8#egg=bsql
 -e git+https://github.com/BlackEarth/bxml@8fbf1411a98f1c0d1d4eb55eba9044734b5fdec0#egg=bxml
+-e .
