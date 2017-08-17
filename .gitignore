@@ -2,3 +2,10 @@ docs/_build
 tests/Projects/Exemplar/sources/Naïve Styles
 tests/Projects/Exemplar/outputs/Exemplar_EPUB
 Exemplar_EPUB.epub
+*.egg-info
+*.ini
+__pycache__
+build
+dist
+venv
+*.pyc
