@@ -1,13 +1,13 @@
 config = {
     "name": "bkgen",
-    "version": "0.0.1",
+    "version": "0.9.0",
     "description": "Core functionality for bookgenesis",
-    "url": "https://gitlab.com/BlackEarth/bkgen",
+    "url": "https://gitlab.com/bookgenesis/bkgen",
     "author": "Sean Harrison",
     "author_email": "sah@blackearth.us",
     "license": "All rights reserved.",
     "classifiers": [
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Programming Language :: Python :: 3"
     ],
