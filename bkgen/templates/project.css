@@ -45,7 +45,6 @@ li p {
 }
 
 ol, ul {
-    margin: 0 0 0.5em 0;
 }
 
 ol.decimal { list-style-type: decimal; }
