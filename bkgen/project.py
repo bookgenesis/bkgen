@@ -393,7 +393,7 @@ class Project(XML, Source):
     def import_image(self, fn, **params):
         """import the image from a local file. Process through GraphicsMagick to ensure clean."""
         # import the image to the project image folder
-        basename = re.sub("(&[\w^;]+;|[\s\&+;'])", "-", self.make_basename(fn, ext='.jpg'))
+        basename = self.make_basename(fn, ext='.jpg')
         outfn = os.path.join(self.path, self.image_folder, basename)
         log.debug('image: %s' % os.path.relpath(fn, self.path))
         ext = os.path.splitext(fn)[-1].lower()

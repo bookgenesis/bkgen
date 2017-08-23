@@ -28,6 +28,7 @@ def document(elem, **params):
     root = sections_ids(root)
     # root = p_ids(root)
     root = hrefs_to_xml(root)
+    root = normalize_img_src(root)
     root = remove_empty_spans(root)
     root = remove_event_attributes(root)
     return [root]
@@ -113,6 +114,13 @@ def hrefs_to_xml(root):
         if url.host in ['', None] and 'html' in url.path:
             url.path = os.path.splitext(url.path)[0]+'.xml'
         a.set('href', str(url))
+    return root
+
+def normalize_img_src(root):
+    for e in root.xpath("//html:img[@src]", namespaces=NS):
+        src = e.get('src')
+        e.set('src', '/'.join(
+            os.path.dirname(src), String(os.path.basename(src).hyphenify())))
     return root
 
 def remove_empty_spans(root):
