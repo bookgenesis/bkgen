@@ -1,5 +1,5 @@
 
-import os, logging, subprocess
+import os, logging, re, subprocess
 from bl.dict import Dict
 from bf.image import Image
 from bxml.xml import XML, etree
@@ -79,11 +79,11 @@ class MOBI(Dict):
                 w, h = [int(i) for i in Image(fn=srcfn).identify(format="%w,%h").split(',')]
                 width, height = w, h
                 if img.get('width') is not None:
-                    width = int(img.attrib.pop('width'))
+                    width = int(re.sub(r'\D', '', img.attrib.pop('width')))     # treat as pixels
                     if img.get('height') is None:
                         height = int(h * (width/w))
                 if img.get('height') is not None:
-                    height = int(img.attrib.pop('height'))
+                    height = int(re.sub(r'\D', '', img.attrib.pop('height')))   # treat as pixels
                     if img.get('width') is None:
                         width = int(w * (height/h))
                 if width != w or height != h:
