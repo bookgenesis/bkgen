@@ -486,7 +486,15 @@
     <!-- DRAWINGS AND IMAGES -->
 
     <xsl:template match="w:drawing">
-        <xsl:apply-templates/>
+        <div>
+            <xsl:if test=".//wp:positionH/wp:align">
+                <xsl:attribute name="class">
+                    <xsl:text>float-</xsl:text>
+                    <xsl:value-of select=".//wp:positionH/wp:align/text()"></xsl:value-of>
+                </xsl:attribute>
+            </xsl:if>
+           <xsl:apply-templates/>
+        </div>
     </xsl:template>
 
     <xsl:template match="wp:inline">
