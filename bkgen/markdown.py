@@ -24,6 +24,10 @@ class Markdown(Text, Source):
             content = markdown(self.text, output_format='xhtml5', lazy_ol=False)
             body = etree.fromstring("""<body xmlns="%s">\n%s\n</body>""" % (NS.html, content))
             root = B.html.html('\n\t', body, '\n')
+            for e in root.xpath("//*[contains(@href, '.md')]"):
+                l = e.get('href').split('#')
+                l[0] = os.path.splitext(l[0])[0] + '.html'
+                e.set('href', '#'.join(l))
             self.__HTML = HTML(root=root, fn=os.path.splitext(self.fn)[0]+'.html')
         return self.__HTML
 
