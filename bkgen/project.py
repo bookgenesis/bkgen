@@ -535,15 +535,16 @@ class Project(XML, Source):
         return resources
 
     def output_stylesheet(self, fn, output_path=None):
-        log.debug("project.output_stylesheet()")
         output_path = output_path or os.path.join(self.path, self.output_folder)
         outfn = os.path.join(output_path, os.path.relpath(fn, self.path))
-        if os.path.splitext(fn)[-1] == '.scss':
+        log.debug("project.output_stylesheet(): %r" % outfn)
+        css = self.stylesheet()
+        if os.path.splitext(css.fn)[-1] == '.scss':
             from bf.scss import SCSS
             outfn = os.path.splitext(outfn)[0]+'.css'
-            SCSS(fn=fn).render_css().write(fn=outfn)
+            SCSS(fn=css.fn).render_css().write(fn=outfn)
         else:
-            File(fn=fn).write(fn=outfn)
+            css.write(fn=outfn)
         return outfn
 
     def output_image(self, fn, output_path=None, outfn=None, svg=True,
@@ -623,6 +624,7 @@ class Project(XML, Source):
                             out_css = CSS.merge_stylesheets(merge_css_fns[0], *merge_css_fns[1:])
                             out_css.fn = out_css_fn
                             out_css.write()
+                        log.debug("doc_css: %r" % out_css_fn)
                         href = os.path.relpath(out_css_fn, h.dirpath())
                         link = etree.Element("{%(html)s}link" % NS, rel="stylesheet", href=href, type="text/css")
                         head.append(link)
@@ -677,12 +679,24 @@ class Project(XML, Source):
                 log.debug(outfn)
                 x = XML(fn=outfn)
                 for e in [
-                        e for e in x.root.xpath("//*[contains(@href, '#')]") 
-                        if (e.get('href')[0]=='#'
-                            or e.get('href').split('#')[0] not in basenames)]:
-                    id = e.get('href').split("#")[-1]
-                    if id in ids:
-                        e.set('href', os.path.relpath(ids[id], x.path)+'#'+id)
+                    e for e in x.root.xpath("//html:a[@href]", namespaces=NS) 
+                    if (e.get('href')[0]=='#'
+                        or e.get('href').split('#')[0] not in basenames)
+                ]:
+                    hreflist = e.get('href').split('#')
+                    if len(hreflist) > 1:      # we have an id -- use it to resolve the link
+                        id = hreflist[1]
+                        if id in ids:
+                            e.set('href', os.path.relpath(ids[id], x.path)+'#'+id)
+                    else:               # only a filename
+                        outfb = os.path.splitext(
+                            os.path.abspath(
+                                os.path.join(
+                                    os.path.dirname(outfn), hreflist[0])))[0]
+                        for hfn in outfns:
+                            if outfb in hfn:
+                                e.set('href', os.path.relpath(hfn, os.path.dirname(outfn)))
+                                break
                 # images will be jpegs
                 # for e in x.root.xpath("//html:img[@src]", namespaces=NS):
                 #     e.set('src', os.path.splitext(e.get('src'))[0]+'.jpg')
