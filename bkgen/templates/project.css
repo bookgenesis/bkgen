@@ -155,7 +155,9 @@ td {
 }
 .float-left {
     float: left;
+    margin-right: 0.5em;
 }
 .float-right {
     float: right;
+    margin-left: 0.5em;
 }
