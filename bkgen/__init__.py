@@ -46,7 +46,7 @@ bkgen.NS
     =========== =========================================================================   =========================
 """
 
-import os, mimetypes
+import os, sys, mimetypes
 from bl.dict import Dict
 from bl.config import Config
 
@@ -59,7 +59,11 @@ config.Resources = Dict(
     publishingxml=os.path.join(resources_path, 'publishing-xml'),
     schemas=os.path.join(resources_path, 'publishing-xml', 'schemas'),
     epubcheck=os.path.join(resources_path, 'epubcheck-4.0.2/epubcheck.jar'),
-    kindlegen=os.path.join(resources_path, 'KindleGen_Mac_i386_v2_9/kindlegen'),
+    kindlegen=os.path.join(resources_path,
+        ('darwin' in sys.platform and 'KindleGen_Mac_i386_v2_9/kindlegen')
+        or ('linux' in sys.platform and 'kindlegen_linux_2.6_i386_v2_9/kindlegen')
+        or ('win32' in sys.platform and 'kindlegen_win32_v2_9/kindlegen.exe')
+        or None),
     mimetypes=os.path.join(resources_path, 'mime.types'),
 )
 
