@@ -24,7 +24,7 @@ from bl.zip import ZIP
 from bxml.xml import XML, etree
 from bxml.builder import Builder
 
-from bkgen import NS, config, mimetypes
+from bkgen import NS, config, mimetypes, PATH
 from bkgen.document import Document
 from .source import Source
 from .css import CSS
@@ -120,6 +120,8 @@ class Project(XML, Source):
         csshref = self.find(self.root, "pub:resources/pub:resource[@class='stylesheet']/@href", namespaces=NS)
         if csshref is not None:
             cssfn = os.path.join(self.path, csshref)
+            if not os.path.exists(cssfn):
+                cssfn = os.path.join(PATH, 'templates', 'project.css')
             return CSS(fn=cssfn)
 
     def content_stylesheet(self, href=None, fn=None):
@@ -165,7 +167,7 @@ class Project(XML, Source):
     # CLASSMETHODS
 
     @classmethod
-    def create(Class, parent_path, title, name=None, **project_params):
+    def create(Class, parent_path, title, name=None, include_stylesheet=True, **project_params):
         """create a new project.
             parent_path = the filesystem path to the parent folder that this project is in
             title = the title for the project
@@ -215,7 +217,7 @@ class Project(XML, Source):
             stylesheet_fn = os.path.join(project.path, 'project.css')
             stylesheet_href = os.path.relpath(stylesheet_fn, project.path)
             project.add_resource(stylesheet_href, 'stylesheet')
-            if not os.path.exists(stylesheet_fn):
+            if not os.path.exists(stylesheet_fn) and include_stylesheet==True:
                 log.debug("stylesheet does not exist, creating")
                 from bl.text import Text
                 stylesheet = Text(fn=os.path.join(PATH, 'templates', 'project.css'))

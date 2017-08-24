@@ -3,6 +3,7 @@
 import os, re, sys
 from lxml import etree
 from bl.id import random_id
+from bl.file import File
 from bl.string import String
 from bl.url import URL
 from bxml.xslt import XSLT
@@ -118,9 +119,8 @@ def hrefs_to_xml(root):
 
 def normalize_img_src(root):
     for e in root.xpath("//html:img[@src]", namespaces=NS):
-        src = e.get('src')
-        e.set('src', '/'.join(
-            os.path.dirname(src), String(os.path.basename(src).hyphenify())))
+        src = os.path.splitext(File(fn=e.get('src')).clean_filename())[0]+'.jpg'
+        e.set('src', src)
     return root
 
 def remove_empty_spans(root):
