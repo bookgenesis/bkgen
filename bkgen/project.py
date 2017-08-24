@@ -130,9 +130,11 @@ class Project(XML, Source):
             giving precedence to the project stylesheet(s).
         """
         css = self.stylesheet()
+        log.debug("href = %r" % href)
         if href is not None:
-            docfn = os.path.join(self.path, href.split('#')[0])
+            docfn = os.path.join(self.content_path, href.split('#')[0])
             doc_cssfn = os.path.splitext(docfn)[0] + '.css'
+            log.debug("doc_cssfn = %r" % doc_cssfn)
             if os.path.exists(doc_cssfn):
                 css = CSS.merge_stylesheets(css.fn, doc_cssfn)
         css.fn = fn

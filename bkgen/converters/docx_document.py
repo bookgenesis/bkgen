@@ -61,6 +61,7 @@ def document(elem, **params):
     root = sections_title_id(root, **params)
     root = section_note_numbering(root, **params)
     root = paragraphs_with_newlines(root)
+    root = anchors_in_paragraphs(root)
 
     return [ root ]
 
@@ -462,6 +463,22 @@ def paragraphs_with_newlines(root):
                                 or name()='h5' or name()='h6' or name()='h7' or name()='h8' or name()='h9')]
                         """, namespaces=NS):
         p.tail = '\n'
+    return root
+
+def anchors_in_paragraphs(root):
+    """make sure anchors are inside paragraphs"""
+    for a in root.xpath("""//html:a[not(
+        ancestor::html:p or ancestor::html:h1 or ancestor::html:h2 or ancestor::html:h3 
+        or ancestor::html:h4 or ancestor::html:h5 or ancestor::html:h6 or ancestor::html:h7 
+        or ancestor::html:h8 or ancestor::html:h9)]""", namespaces=NS
+    ):
+        nextp = XML.find(a, """following::html:p | following::html:h1 | following::html:h2 
+            | following::html:h3 | following::html:h4 | following::html:h5 | following::html:h6 
+            | following::html:h7 | following::html:h8 | following::html:h9""", namespaces=NS)
+        if nextp is not None:
+            XML.remove(a, leave_tail=True)
+            nextp.insert(0, a)
+            nextp.text, a.tail = '', nextp.text or ''
     return root
 
 # == FIELDS == 

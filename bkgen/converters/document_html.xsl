@@ -22,6 +22,19 @@
 
 	<xsl:template match="pub:metadata"/>
 
+<!-- 	<xsl:template match="pub:field[@class='REF' and @anchor]">
+		<a>
+			<xsl:attribute name='class'>
+				<xsl:value-of select="@class"></xsl:value-of>
+			</xsl:attribute>
+			<xsl:attribute name="href">
+				<xsl:text>#</xsl:text>
+				<xsl:value-of select="@anchor"></xsl:value-of>
+			</xsl:attribute>
+			<xsl:apply-templates></xsl:apply-templates>
+		</a>
+	</xsl:template> -->
+
 	<xsl:template match="pub:field">
 	    <xsl:apply-templates/>
 	</xsl:template>

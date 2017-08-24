@@ -72,6 +72,11 @@ li p {
 }
 
 ol, ul {
+    margin-left: 1em;
+}
+
+ol ol, ol ul, ul ol, ul ul {
+    margin-left: 0;
 }
 
 ol.decimal { list-style-type: decimal; }
@@ -101,12 +106,12 @@ section.footnotes {
 
 span.endnote-reference {
     font-size: 0.7em;
-    vertical-align: 0.5em;
+    vertical-align: top;
 }
 
 span.footnote-reference {
     font-size: 0.7em;
-    vertical-align: 0.5em;
+    vertical-align: top;
 }
 
 table {
@@ -138,7 +143,7 @@ td {
 }
 .sup, .super { 
     font-size: 0.7em; 
-    vertical-align: 0.5em; 
+    vertical-align: top; 
 }
 .sub { 
     font-size: 0.7em; 

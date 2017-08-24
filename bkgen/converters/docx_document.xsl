@@ -404,7 +404,7 @@
     </xsl:template>
 
     <xsl:template match="w:bookmarkStart">
-        <xsl:if test="not(contains(@w:name,'_GoBack'))">
+        <xsl:if test="not(starts-with(@w:name,'_'))">
             <a class="anchor">
                 <xsl:attribute name="id">
                     <xsl:value-of select="@w:name"/>
@@ -417,7 +417,7 @@
     <xsl:template match="w:bookmarkEnd">
     	<xsl:param name="id" select="@w:id"/>
         <xsl:param name="anchor" select="//w:bookmarkStart[@w:id=$id]/@w:name"/>
-        <xsl:if test="not(contains($anchor, '_GoBack'))">
+        <xsl:if test="not(starts-with($anchor, '_'))">
             <a class="anchor">
                 <xsl:attribute name="id">
                     <xsl:value-of select="$anchor"/><xsl:text>_end</xsl:text>
