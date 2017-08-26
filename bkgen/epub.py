@@ -39,7 +39,7 @@ class EPUB(ZIP, Source):
         """use epubcheck to validate the epub"""
         checkfn = self.fn + '.epubcheck.txt'
         checkf = open(checkfn, 'wb')
-        cmd = ['java', '-jar', config.Resources.epubcheck, self.fn]
+        cmd = ['java', '-jar', config.Resources.epubcheck, '-out', os.path.splitext(checkfn)[0]+'.xml', self.fn]
         subprocess.call(cmd, stdout=checkf, stderr=checkf)
         checkf.close()
         log.info("epubcheck log: %s" % checkfn)
