@@ -578,9 +578,9 @@ class Project(XML, Source):
             if w*h > maxpixels:
                 img_args.geometry = "%dx%d>" % (maxpixels**.5, maxpixels**.5)
             res = Image(fn=fn).convert(outfn, **img_args)
+            log.debug("img: %r %r" % (outfn, img_args))
         else:
             res = None
-        log.debug("img: %r %r" % (outfn, img_args))
         return outfn
 
     def output_spineitems(self, output_path=None, ext='.xhtml', resources=None, 
@@ -682,7 +682,8 @@ class Project(XML, Source):
                 x = XML(fn=outfn)
                 for e in [
                     e for e in x.root.xpath("//html:a[@href]", namespaces=NS) 
-                    if (e.get('href')[0]=='#'
+                    if len(e.get('href')) > 0 and (
+                        e.get('href')[0]=='#'
                         or e.get('href').split('#')[0] not in basenames)
                 ]:
                     hreflist = e.get('href').split('#')
