@@ -14,7 +14,6 @@ from bkgen import NS
 from bkgen.source import Source
 
 class IDML(ZIP, Source):
-    POINTS_PER_EM = ICML.POINTS_PER_EM
     NS = ICML.NS
 
     @property
@@ -111,11 +110,10 @@ class IDML(ZIP, Source):
             log.debug(document.fn)
         return documents
 
-    def stylesheet(self, fn=None, points_per_em=POINTS_PER_EM):
+    def stylesheet(self, fn=None):
         """return a stylesheet from the .idml file's style definitions"""
         if fn is None:
             fn = os.path.join(self.output_path, os.path.basename(self.output_path)+'.css')
         return ICML(root=self.read('Resources/Styles.xml')).stylesheet(
-            fn=fn, 
-            points_per_em=points_per_em)
+            fn=fn)
 

@@ -1,5 +1,5 @@
 
-import os, re, traceback, logging
+import os, re, sys, traceback, logging
 import glob
 from lxml import etree
 from time import time
@@ -16,7 +16,6 @@ log = logging.getLogger(__name__)
 class ICML(XML, Source):
     "model for working with ICML files (also idPkg:Story xml)"
     ROOT_TAG = "Document"
-    POINTS_PER_EM = 12
     NS = Dict(**{
             'idPkg': "http://ns.adobe.com/AdobeInDesign/idml/1.0/packaging"
         })
@@ -45,13 +44,11 @@ class ICML(XML, Source):
         # nothing for now
         return etree.Element("{%(pub)s}metadata" % bkgen.NS)
 
-    def stylesheet(self, fn=None, points_per_em=None):
+    def stylesheet(self, fn=None):
         """create a CSS stylesheet, using the style definitions in the ICML file."""
 
         from bl.file import File
         from bf.styles import Styles
-
-        if points_per_em is None: points_per_em = self.POINTS_PER_EM
 
         styles = Styles()
         for style in self.root.xpath("//CharacterStyle | //ParagraphStyle"):
@@ -71,8 +68,7 @@ class ICML(XML, Source):
                             % style.get('Self'))) > 0:
                         selector += ', div.' + clsname
 
-            styles[selector] = self.style_block(style, points_per_em=points_per_em)
-            # print(selector, styles[selector])
+            styles[selector] = self.style_block(style)
 
         ss = Text(fn=fn or os.path.splitext(self.fn)[0]+'.css', text=Styles.render(styles))
         return ss
@@ -91,146 +87,177 @@ class ICML(XML, Source):
     # its value based on what is there. Work by CSS attributes rather
     # than by ICML properties -- treat the style element as data to query
 
-    def style_block(self, elem, points_per_em=None):
-        "query style elem and return a style definition block"
-        points_per_em = points_per_em or self.POINTS_PER_EM
-        s = self.style_attributes(elem, points_per_em=points_per_em)
+    def style_block(self, elem):
+        """query style elem and return a style definition block
+        """
+        style = Dict()
 
-        # inheritance -- unpack, more reliable than using @extend
+        # inheritance via recursion
         based_on = elem.find('Properties/BasedOn')
         if based_on is not None:
-            based_on_styles = elem.xpath("//%s[@Self='%s']" % (elem.tag, based_on.text))
-            if len(based_on_styles) > 0:
-                # recursive -- each style can override its base style, which is correct inheritance
-                bs = self.style_block(based_on_styles[0], points_per_em=points_per_em)
-                for k in bs.keys():
-                    if k not in s.keys():
-                        s[k] = bs[k]
-        return s
+            based_on_elem = XML.find(elem, "//*[@Self='%s']" % based_on.text)
+            if based_on_elem is not None:
+                style = self.style_block(based_on_elem)
+
+        # local definitions will override base definitions
+        style.update(**self.style_attribute(elem))
+
+        return style
 
     def include_mixin(self, style, mixin):
         if style.get('@include') is None:
             style['@include'] = ''
         style['@include'] += ' ' + mixin
 
-    def style_attributes(self, elem, points_per_em=None):
+    @classmethod
+    def lang_attribute(Class, elem):
+        import pycountry
+        if elem.get('AppliedLanguage') is not None:
+            lang = pycountry.languages.lookup(elem.get(key).split('/')[-1].split(':')[0])
+            if lang is not None:
+                return lang.alpha_2
+            else:
+                log.warn('AppliedLanguage=%r' % elem.get('AppliedLanguage'))
+
+    @classmethod
+    def style_attribute(Class, elem):
         """query style elem for attributes and return a CSS style definition block.
         """
         log.debug(elem.attrib)
+        style = Dict()
 
-        points_per_em = points_per_em or self.POINTS_PER_EM
-        s = Dict()
+        # capitalization
+        cap = elem.get('Capitalization')
+        if cap in ['SmallCaps', 'CapToSmallCap']:
+            style['font-variant:'] = 'small-caps'
+        elif cap=='AllCaps':
+            style['text-transform:'] = 'uppercase'
+        elif cap=='Normal':
+            style['text-transform:'] = 'none'
+            style['font-variant:'] = 'normal'
+        elif cap is not None:
+            log.warn('Capitalization=%r' % cap)
 
         # color
         if elem.get('FillColor') is not None:
             color = elem.get('FillColor').split('/')[-1]
-            if re.match("\d+\d+\d", color) is not None:
-                r,g,b = [c.split('=')[-1] for c in color.split(' ')]
-                s['color:'] = 'rgb(%s,%s,%s)' % (r,g,b)
+            cmyk = re.match(r'^C=(\d+) M=(\d+) Y=(\d+) K=(\d+)$', color)
+            rgb = re.match(r'^R=(\d+) G=(\d+) B=(\d+)$', color)
+            if cmyk is not None:
+                style['color:'] = ('cmyk(%s%%, %s%%, %s%%, %s%%)' 
+                    % (cmyk.group(1), cmyk.group(2), cmyk.group(3), cmyk.group(4)))
+            elif rgb is not None:
+                style['color:'] = ('rgb(%s%%, %s%%, %s%%, %s%%)' 
+                    % (rgb.group(1), rgb.group(2), rgb.group(3)))
             elif color=='Black':
-                s['color:'] = 'rgb(0,0,0)'
+                style['color:'] = 'rgb(0,0,0)'
             elif color=='Paper':
-                s['color:'] = 'rgb(255,255,255)'
+                style['color:'] = 'rgb(255,255,255)'
             else:
-                s['color:'] = '"%s"' % color
+                style['color:'] = '"%s"' % color
+                log.warn("color=%r" % color)
 
-        # direction -- can't be included in epub
-        # if elem.get('CharacterDirection') == 'LeftToRightDirection':
-        #     s['direction:'] = 'ltr'
-        # elif elem.get('CharacterDirection') == 'RightToLeftDirection':
-        #     s['direction:'] = 'rtl'
-
-        # font-size
-        if elem.get('PointSize') is not None:
-            s['font-size:'] = "%.01fem" % round(float(elem.get('PointSize'))/points_per_em, 2)
+        # direction
+        direction = elem.get('CharacterDirection')
+        if direction is not None:
+            if direction == 'LeftToRightDirection':
+                style['direction:'] = 'ltr'
+            elif direction == 'RightToLeftDirection':
+                style['direction:'] = 'rtl'
+            elif direction != 'DefaultDirection':
+                log.warn("CharacterDirection=%r" % direction)
 
         # font-family
         if elem.find('Properties/AppliedFont') is not None:
-            s['font-family:'] = '"%s"' % elem.find('Properties/AppliedFont').text
+            style['font-family:'] = '"%s"' % elem.find('Properties/AppliedFont').text
+
+        # font-size
+        if elem.get('PointSize') is not None:
+            style['font-size:'] = "%.02fpt" % float(elem.get('PointSize'))
 
         # font-style and font-weight
         fs = elem.get('FontStyle')
         if fs is not None:
-            fs = fs.lower()
-            if 'bold' in fs or 'black' in fs or 'heavy' in fs:
-                s['font-weight:'] = 'bold'
-            if 'italic' in fs or 'oblique' in fs:
-                s['font-style:'] = 'italic'
+            if 'Italic' in fs or 'Oblique' in fs:
+                style['font-style:'] = 'italic'
 
-        # font-variant
-        fv = []
-        if elem.get('Capitalization')=='SmallCaps':
-            fv.append('small-caps')
-        if len(fv) > 0: 
-            s['font-variant:'] = ' '.join(fv)
-
+            if 'semibold' in fs.lower():
+                style['font-weight:'] = '600'
+            elif 'Bold' in fs:
+                style['font-weight:'] = 'bold'
+            elif 'Heavy' in fs:
+                style['font-weight:'] = '800'
+            elif 'Black' in fs:
+                style['font-weight:'] = '900'
+            elif 'Medium' in fs or 'Regular' in fs:
+                style['font-weight:'] = 'normal'
+            elif 'Extralight' in fs or 'Thin' in fs:
+                style['font-weight:'] = '100'
+            elif 'Light' in fs:
+                style['font-weight:'] = '200'
+            elif re.match('^\d+$', fs):
+                style['font-weight'] = fs
+            elif fs in ['Italic', 'Oblique']:
+                style['font-weight:'] = 'normal'
+                style['font-style:'] = 'italic'
+            else:
+                log.warn("FontStyle=%r" % fs)
+            
         # hyphens
-        # if elem.get('Hyphenation') == 'false':
-        #     s['hyphens:'] = 'none'
-        #     s['-webkit-hyphens:'] = 'none'
+        if elem.get('Hyphenation') == 'false':
+            style['hyphens:'] = 'none'
+            style['-webkit-hyphens:'] = 'none'
 
         # letter-spacing
         if elem.get('DesiredLetterSpacing') is not None:
             n = int(elem.get('DesiredLetterSpacing'))
             if n != 0:
-                s['letter-spacing:'] = "%d%%" % n
+                style['letter-spacing:'] = "%d%%" % n
 
         # margin-left
         if elem.get('LeftIndent') is not None:
-            leftindent = float(elem.get('LeftIndent') or 0)/points_per_em
-            # firstindent = float(elem.get('FirstLineIndent') or 0)/points_per_em
-            # if firstindent < 0:  # hanging indent
-            #     val = "%.01fem" % round(leftindent + firstindent, 2)
-            # else:               # regular indent
-            #     val = "%.01fem" % round(leftindent, 2)
-            # s['margin-left:'] = val
-            s['margin-left:'] = "%.01fem" % round(leftindent, 2)
+            style['margin-left:'] = "%.02fpt" % float(elem.get('LeftIndent'))
 
         # margin-right
         if elem.get('RightIndent') is not None:
-            val = "%.01fem" % round(float(elem.get('RightIndent'))/points_per_em, 2)
-            s['margin-right:'] = val
+            style['margin-right:'] = "%.02fpt" % float(elem.get('RightIndent'))
 
         # margin-top
         if elem.get('SpaceBefore') is not None:
-            val = "%.01fem" % round(float(elem.get('SpaceBefore'))/points_per_em, 2)
-            s['margin-top:'] = val
+            style['margin-top:'] = "%.02fpt" % float(elem.get('SpaceBefore'))
 
         # margin-bottom
         if elem.get('SpaceAfter') is not None:
-            val = "%.01fem" % round(float(elem.get('SpaceAfter'))/points_per_em, 2)
-            s['margin-bottom:'] = val
+            style['margin-bottom:'] = "%.02fpt" % float(elem.get('SpaceAfter'))
 
         # text-indent
         if elem.get('FirstLineIndent') is not None:
-            indent = float(elem.get('FirstLineIndent'))/points_per_em
-            val = "%.01fem" % round(indent, 2)
-            s['text-indent:'] = val
+            style['text-indent:'] = "%.02fpt" % float(elem.get('FirstLineIndent'))
 
         # page-break-before
         if elem.get('StartParagraph') in ['NextColumn', 'NextFrame', 'NextPage']:
-            s['page-break-before:'] = 'always'
+            style['page-break-before:'] = 'always'
         elif elem.get('StartParagraph') == 'NextOddPage':
-            s['page-break-before:'] = 'right'
+            style['page-break-before:'] = 'right'
         elif elem.get('StartParagraph') == 'NextEvenPage':
-            s['page-break-before:'] = 'left'
+            style['page-break-before:'] = 'left'
         elif elem.get('KeepWithPrevious') not in [None, 'false']:
-            s['page-break-before:'] = 'avoid'
+            style['page-break-before:'] = 'avoid'
 
         # page-break-after
         if elem.get('KeepWithNext') not in [None, 'false']:
-            s['page-break-after:'] = 'avoid'
+            style['page-break-after:'] = 'avoid'
 
         # text-align
         elem.get('Justification')
         if elem.get('Justification') in ['LeftAlign', 'ToBindingSide']:
-            s['text-align:'] = 'left'
+            style['text-align:'] = 'left'
         elif elem.get('Justification') == 'CenterAlign':
-            s['text-align:'] = 'center'
+            style['text-align:'] = 'center'
         elif elem.get('Justification') in ['RightAlign', 'AwayFromBindingSide']:
-            s['text-align:'] = 'right'
+            style['text-align:'] = 'right'
         elif elem.get('Justification') in ['LeftJustified', 'RightJustified', 'CenterJustified', 'FullyJustified']:
-            s['text-align:'] = 'justify'
+            style['text-align:'] = 'justify'
 
         # text-decoration (underline, strikethrough)
         td = []
@@ -239,32 +266,31 @@ class ICML(XML, Source):
         if elem.get('Underline') == 'true':
             td.append('underline')
         if len(td) > 0:
-            s['text-decoration:'] = ' '.join(td)
-
-        # text-transform
-        if elem.get('Capitalization')=='AllCaps':
-            s['text-transform:'] = 'uppercase'
+            style['text-decoration:'] = ' '.join(td)
 
         # vertical-align
-        if elem.get('Position') in ['Superscript', 'OTSuperscript']:
-            s['vertical-align:'] = 'text-top'
-            s['font-size:'] = '70%'
-        elif elem.get('Position') in ['Subscript', 'OTSubscript']:
-            s['vertical-align:'] = 'bottom'
-            s['font-size:'] = '70%'
-        elif elem.get('CharacterAlignment') in ['AlignBaseline', 'AlignEmBottom', 'AlignICFBottom']:
-            s['vertical-align:'] = 'text-bottom'
-        elif elem.get('CharacterAlignment') in ['AlignEmCenter']:
-            s['vertical-align:'] = 'middle'
-        elif elem.get('CharacterAlignment') in ['AlignEmTop', 'AlignICFTop']:
-            s['vertical-align:'] = 'text-top'
+        position, alignment = elem.get('Position'), elem.get('CharacterAlignment')
+        if position in ['Superscript', 'OTSuperscript']:
+            style['vertical-align:'] = 'super'
+        elif position in ['Subscript', 'OTSubscript']:
+            style['vertical-align:'] = 'sub'
+        elif position=='Normal':
+            style['vertical-align:'] = 'baseline'
+        elif alignment in ['AlignBaseline', 'AlignEmBottom', 'AlignICFBottom']:
+            style['vertical-align:'] = 'text-bottom'
+        elif alignment in ['AlignEmCenter']:
+            style['vertical-align:'] = 'middle'
+        elif alignment in ['AlignEmTop', 'AlignICFTop']:
+            style['vertical-align:'] = 'text-top'
+        elif position is not None or alignment is not None:
+            log.warn("Position=%r, CharacterAlignment=%r" % (position, alignment))
 
         # word-spacing
         if elem.get('DesiredWordSpacing') is not None:
             n = int(float(elem.get('DesiredWordSpacing'))) - 100
             if n != 0:
-                s['word-spacing:'] = "%d%%" % n
+                style['word-spacing:'] = "%d%%" % n
 
-        log.debug("=> style: %r" % s)
-        return s
+        log.debug("=> style: %r" % style)
+        return style
 

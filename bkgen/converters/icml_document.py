@@ -4,6 +4,7 @@ import logging
 log = logging.getLogger(__name__)
 
 import os, re, json, sys
+import urllib.parse
 from lxml import etree
 import pycountry
 from bl.id import random_id
@@ -17,8 +18,9 @@ from bxml.builder import Builder
 from bkgen.icml import ICML
 from bkgen.converters import Converter
 from bkgen.document import Document
-NS = Document.NS
+import bkgen
 
+NS = Document.NS; NS.update(**{k:bkgen.NS[k] for k in bkgen.NS if 'aid' in k})
 B = Builder(default=NS.html, **NS)
 transformer = XT()
 
@@ -101,76 +103,12 @@ def CharacterStyleRange(elem, **params):
 def character_attribs(elem):
     """return common character attributes on elem"""
     attrib = Dict()
-    style = Dict()
-    for key in elem.attrib:
-        if elem.get(key) is None:
-            pass
-        elif key=='Capitalization':
-            val = elem.get(key)
-            if val in ['SmallCaps', 'CapToSmallCap']:
-                style['font-variant'] = 'small-caps'
-            elif val == 'AllCaps':
-                style['text-transform'] = 'uppercase'
-            elif val == 'Normal':
-                style['text-transform'] = 'none'
-                style['font-variant'] = 'normal'
-            else:
-                log.warn('%s=%r' % (key, elem.get(key)))
-        elif key=='FontStyle':
-            for val in elem.get(key).split():
-                if val == 'Italic':
-                    style['font-style'] = 'italic'
-                elif val == 'Bold':
-                    style['font-weight'] = 'bold'
-                elif val == 'Semibold':
-                    style['font-weight'] = '600'
-                elif val == 'Condensed':
-                    style['font-stretch'] = 'condensed'
-                elif val == 'Regular':
-                    style['font-style'] = 'normal'
-                    style['font-weight'] = 'normal'
-                else:
-                    log.warn('%s=%r' % (key, elem.get(key)))
-        elif key=='PointSize':
-            style['font-size'] = elem.get(key)+'pt'
-        elif key=='Position':
-            if elem.get(key)=='Superscript':
-                style['vertical-align'] = 'super'
-            elif elem.get(key)=='Subscript':
-                style['vertical-align'] = 'sub'
-            elif elem.get(key)=='Normal':
-                style['vertical-align'] = 'baseline'
-            else:
-                log.warn('%s=%r' % (key, elem.get(key)))
-        elif key == 'CharacterDirection':
-            if elem.get(key)=='LeftToRightDirection':
-                style['direction'] = 'ltr'
-            elif elem.get(key)=='RightToLeftDirection':
-                style['direction'] = 'rtl'
-            elif elem.get(key) != 'DefaultDirection':
-                log.warn('%s=%r' % (key, elem.get(key)))
-        elif key == 'AppliedLanguage':
-            try:
-                # look up the language using the lovely pycountry.languages database
-                lang = pycountry.languages.lookup(elem.get(key).split('/')[-1].split(':')[0])
-                if lang is not None:
-                    attrib.lang = lang.alpha_2
-                else:
-                    log.warn('%s=%r' % (key, elem.get(key)))
-            except:
-                log.warn(sys.exc_info()[1])
-                log.warn('%s=%r' % (key, elem.get(key)))
-        elif key == 'FillColor':
-                style['color'] = '%s' % elem.get(key).split('/')[-1]
-        elif key in ['AppliedCharacterStyle', 'AppliedConditions', 'BaselineShift', 
-                'FillColor', 'FillTint', 
-                'HorizontalScale', 'Kashidas', 'KerningMethod', 'KerningValue', 
-                'ParagraphBreakType', 'StrokeColor', 'Tracking', 'VerticalScale']:
-            pass
-        else:
-            log.warn('%s=%r' % (key, elem.get(key)))
+    style = ICML.style_attribute(elem)
     if style.keys() != []:
         attrib.style = '; '.join(["%s:%s" % (k, style[k]) for k in style.keys()])
+    lang = ICML.lang_attribute(elem)
+    if lang is not None:
+        attrib.lang = lang
     return attrib
 
 @transformer.match("elem.tag=='HiddenText'")
@@ -424,12 +362,19 @@ def PDF_or_Image(elem, **params):
 # == XML Element == 
 @transformer.match("elem.tag=='XMLElement'")
 def XMLElement(elem, **params):
-    e = Builder()._(
-            elem.get('MarkupTag').split('/')[-1],
-            transformer(elem.getchildren(), **params))
+    tag = urllib.parse.unquote(elem.get('MarkupTag').split('/')[-1])
+    if ':' in tag:
+        ns, tag = tag.split(':')
+    else:
+        ns = '_'
+    e = B[ns](tag, transformer(elem.getchildren(), **params))
     for attr in elem.xpath("XMLAttribute"):
         if 'xmlns:' not in attr.get('Name'):
-            e.set(attr.get('Name'), attr.get('Value'))
+            attr_name = urllib.parse.unquote(attr.get('Name'))
+            if ':' in attr_name:
+                ns, attr_name = attr_name.split(':')
+                attr_name = "{%s}%s" % (NS[ns], attr_name)
+            e.set(attr_name, attr.get('Value'))
     return [e]
 
 # == TextFrame == 
