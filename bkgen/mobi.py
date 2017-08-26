@@ -99,7 +99,7 @@ class MOBI(Dict):
         logfn = mobifn+'.kindlegen.txt'
         logf = open(logfn, 'wb')
         log.info("mobi: %s" % mobifn)
-        cmd = [config.Resources.kindlegen, opffn, '-o', os.path.basename(mobifn)]
+        cmd = [config.Resources.kindlegen, opffn, '-o', os.path.basename(mobifn), '-verbose']
         subprocess.call(cmd, stdout=logf, stderr=logf)
         logf.close()
         log.info("kindlegen log: %s" % logfn)
