@@ -71,14 +71,6 @@ li p {
     margin-bottom: 0;
 }
 
-ol, ul {
-    margin-left: 1em;
-}
-
-ol ol, ol ul, ul ol, ul ul {
-    margin-left: 0;
-}
-
 ol.decimal { list-style-type: decimal; }
 ol.lowerLetter { list-style-type: lower-latin; }
 ol.upperLetter { list-style-type: upper-latin; }
