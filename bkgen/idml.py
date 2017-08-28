@@ -5,6 +5,7 @@ log = logging.getLogger(__name__)
 import os
 from lxml import etree
 from bl.dict import Dict
+from bl.file import File
 from bl.id import random_id
 from bl.zip import ZIP
 from bl.string import String
@@ -51,15 +52,12 @@ class IDML(ZIP, Source):
             documents = []
             for story in designmap.root.xpath("idPkg:Story", namespaces=self.NS):
                 # use a temporary file for the story source, just in case it's huge
-                tfn = os.path.join(os.path.dirname(self.fn), random_id())
-                with open(tfn, 'wb') as tf:
-                    tf.write(self.read(story.get('src')))
-                root = etree.parse(tfn).getroot()
-                os.remove(tfn)
-                icml = ICML(root=root)
-                document_fn = os.path.join(path, story.get('src'))
-                log.debug(document_fn)
-                document = icml.document(fn=document_fn)
+                fn = os.path.join(path, File(self.basename).clean_filename(), story.get('src')+'.xml')
+                f = File(fn=fn, data=self.read(story.get('src')))
+                f.write()
+                icml = ICML(fn=fn)
+                document = icml.document(fn=fn)
+                document.write()
                 documents.append(document)
             # fix links between documents
             ids = {}

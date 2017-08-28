@@ -14,8 +14,9 @@ from bkgen.source import Source
 log = logging.getLogger(__name__)
 
 class ICML(XML, Source):
-    "model for working with ICML files (also idPkg:Story xml)"
+    """model for working with ICML files (also idPkg:Story xml)"""
     ROOT_TAG = "Document"
+    PTS_PER_EM = 12
     NS = Dict(**{
             'idPkg': "http://ns.adobe.com/AdobeInDesign/idml/1.0/packaging"
         })
@@ -44,12 +45,13 @@ class ICML(XML, Source):
         # nothing for now
         return etree.Element("{%(pub)s}metadata" % bkgen.NS)
 
-    def stylesheet(self, fn=None):
+    def stylesheet(self, fn=None, pts_per_em=None):
         """create a CSS stylesheet, using the style definitions in the ICML file."""
 
         from bl.file import File
         from bf.styles import Styles
 
+        pts_per_em = pts_per_em or self.PTS_PER_EM
         styles = Styles()
         for style in self.root.xpath("//CharacterStyle | //ParagraphStyle"):
             clsname = self.classname(style.get('Name'))
@@ -68,7 +70,7 @@ class ICML(XML, Source):
                             % style.get('Self'))) > 0:
                         selector += ', div.' + clsname
 
-            styles[selector] = self.style_block(style)
+            styles[selector] = self.style_block(style, pts_per_em=pts_per_em)
 
         ss = Text(fn=fn or os.path.splitext(self.fn)[0]+'.css', text=Styles.render(styles))
         return ss
@@ -87,9 +89,10 @@ class ICML(XML, Source):
     # its value based on what is there. Work by CSS attributes rather
     # than by ICML properties -- treat the style element as data to query
 
-    def style_block(self, elem):
+    def style_block(self, elem, pts_per_em=None):
         """query style elem and return a style definition block
         """
+        pts_per_em = pts_per_em or self.PTS_PER_EM
         style = Dict()
 
         # inheritance via recursion
@@ -97,10 +100,10 @@ class ICML(XML, Source):
         if based_on is not None:
             based_on_elem = XML.find(elem, "//*[@Self='%s']" % based_on.text)
             if based_on_elem is not None:
-                style = self.style_block(based_on_elem)
+                style = self.style_block(based_on_elem, pts_per_em=pts_per_em)
 
         # local definitions will override base definitions
-        style.update(**self.style_attribute(elem))
+        style.update(**self.style_attribute(elem, pts_per_em=pts_per_em))
 
         return style
 
@@ -120,10 +123,11 @@ class ICML(XML, Source):
                 log.warn('AppliedLanguage=%r' % elem.get('AppliedLanguage'))
 
     @classmethod
-    def style_attribute(Class, elem):
+    def style_attribute(Class, elem, pts_per_em=None):
         """query style elem for attributes and return a CSS style definition block.
         """
         log.debug(elem.attrib)
+        pts_per_em = pts_per_em or Class.PTS_PER_EM
         style = Dict()
 
         # capitalization
@@ -173,7 +177,7 @@ class ICML(XML, Source):
 
         # font-size
         if elem.get('PointSize') is not None:
-            style['font-size:'] = "%.02fpt" % float(elem.get('PointSize'))
+            style['font-size:'] = "%.02frem" % float(elem.get('PointSize'))/pts_per_em/pts_per_em
 
         # font-style and font-weight
         fs = elem.get('FontStyle')
@@ -216,23 +220,23 @@ class ICML(XML, Source):
 
         # margin-left
         if elem.get('LeftIndent') is not None:
-            style['margin-left:'] = "%.02fpt" % float(elem.get('LeftIndent'))
+            style['margin-left:'] = "%.02frem" % float(elem.get('LeftIndent'))/pts_per_em
 
         # margin-right
         if elem.get('RightIndent') is not None:
-            style['margin-right:'] = "%.02fpt" % float(elem.get('RightIndent'))
+            style['margin-right:'] = "%.02frem" % float(elem.get('RightIndent'))/pts_per_em
 
         # margin-top
         if elem.get('SpaceBefore') is not None:
-            style['margin-top:'] = "%.02fpt" % float(elem.get('SpaceBefore'))
+            style['margin-top:'] = "%.02frem" % float(elem.get('SpaceBefore'))/pts_per_em
 
         # margin-bottom
         if elem.get('SpaceAfter') is not None:
-            style['margin-bottom:'] = "%.02fpt" % float(elem.get('SpaceAfter'))
+            style['margin-bottom:'] = "%.02frem" % float(elem.get('SpaceAfter'))/pts_per_em
 
         # text-indent
         if elem.get('FirstLineIndent') is not None:
-            style['text-indent:'] = "%.02fpt" % float(elem.get('FirstLineIndent'))
+            style['text-indent:'] = "%.02frem" % float(elem.get('FirstLineIndent'))/pts_per_em
 
         # page-break-before
         if elem.get('StartParagraph') in ['NextColumn', 'NextFrame', 'NextPage']:

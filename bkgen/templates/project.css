@@ -5,9 +5,9 @@ body {
 }
 
 p {
-    margin-top: 0.5em;
+    margin-top: 0.5rem;
     margin-right: 0; 
-    margin-bottom: 0.5em;
+    margin-bottom: 0.5rem;
     margin-left: 0;
     text-align: left;
     text-indent: 0;
@@ -16,14 +16,14 @@ p {
 }
 
 h1 {
-    font-size: 2.0em;
+    font-size: 2.0rem;
     font-weight: normal;
     font-style: normal;
     hyphens: none;
     -webkit-hyphens: none;
     line-height: 1.0;
-    margin-top: 1.5em;
-    margin-bottom: 0.5em;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
     page-break-before: always;
     page-break-after: avoid;
     text-align: left;
@@ -32,14 +32,14 @@ h1 {
 }
 
 h2 {
-    font-size: 1.25em;
+    font-size: 1.25rem;
     font-weight: bold;
     font-style: normal;
     hyphens: none;
     -webkit-hyphens: none;
     line-height: 1.0;
-    margin-top: 1.0em;
-    margin-bottom: 0.5em;
+    margin-top: 1.0rem;
+    margin-bottom: 0.5rem;
     page-break-after: avoid;
     text-align: left;
     text-indent: 0;
@@ -47,14 +47,14 @@ h2 {
 }
 
 h3 {
-    font-size: 1.0em;
+    font-size: 1.0rem;
     font-weight: normal;
     font-style: italic;
     hyphens: none;
     -webkit-hyphens: none;
     line-height: 1.0;
-    margin-top: 1.0em;
-    margin-bottom: 0.5em;
+    margin-top: 1.0rem;
+    margin-bottom: 0.5rem;
     page-break-after: avoid;
     text-align: left;
     text-indent: 0;
@@ -82,28 +82,28 @@ ol.circle, ul.circle { list-style-type: circle; }
 ol.square, ul.square { list-style-type: square; }
 
 p.footnote-text, p.endnote-text {
-    font-size: 0.90em;
+    font-size: 0.90rem;
     line-height: 1.0;
-    margin-bottom: 0.25em;
-    margin-left: 0.5em;
-    text-indent: -0.5em;
+    margin-bottom: 0.25rem;
+    margin-left: 0.5rem;
+    text-indent: -0.5rem;
 }
 
 section.footnotes {
     border-top: 1px solid #aaaaaa;
-    margin-top: 2em;
-    margin-bottom: 2em;
-    padding-top: 1em;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    padding-top: 1rem;
 }
 
 span.endnote-reference {
-    font-size: 0.7em;
-    vertical-align: top;
+    font-size: 0.7rem;
+    vertical-align: super;
 }
 
 span.footnote-reference {
-    font-size: 0.7em;
-    vertical-align: top;
+    font-size: 0.7rem;
+    vertical-align: super;
 }
 
 table {
@@ -113,7 +113,7 @@ table {
 td {
     border: 1px solid #AAAAAA;
     padding: 4pt 4pt 2pt 4pt;
-    vertical-align: top;
+    vertical-align: super;
 }
  
 /* == GLOBAL FONT STYLES == */
@@ -134,11 +134,11 @@ td {
     text-transform: uppercase; 
 }
 .sup, .super { 
-    font-size: 0.7em; 
-    vertical-align: top; 
+    font-size: 0.7rem; 
+    vertical-align: super; 
 }
 .sub { 
-    font-size: 0.7em; 
+    font-size: 0.7rem; 
     vertical-align: bottom; 
 }
 .under, .usingle, .udouble, .uwords { 
@@ -152,9 +152,9 @@ td {
 }
 .float-left {
     float: left;
-    margin-right: 0.5em;
+    margin-right: 0.5rem;
 }
 .float-right {
     float: right;
-    margin-left: 0.5em;
+    margin-left: 0.5rem;
 }
