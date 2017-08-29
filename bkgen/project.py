@@ -787,7 +787,7 @@ def remove_project(project_path):
 
 if __name__=='__main__':
     from bkgen import config
-    logging.basicConfig(**config.Logging)
+    logging.basicConfig(level=20, format=config.Logging.format)
     if len(sys.argv) < 2:
         log.warn("Usage: python -m bkgen.project command project_path [project_path] ...")
     else:

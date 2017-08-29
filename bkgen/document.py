@@ -45,7 +45,7 @@ class Document(XML, Source):
             section = x.find(x.root, "//*[@id='%s']/ancestor-or-self::html:section[last()]" % id, namespaces=C.NS)
         else:
             section = None
-        log.info("Load %s#%s: %r" % (os.path.basename(fn), id, section.attrib if section is not None else None))
+        log.debug("Load %s#%s: %r" % (os.path.basename(fn), id, section.attrib if section is not None else None))
         if section is not None:
             body_elem = B._.body('\n', section)
             x.root = B.pub.document('\n\t', body_elem, '\n')
