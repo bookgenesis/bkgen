@@ -176,7 +176,7 @@ class ICML(XML, Source):
 
         # font-size
         if elem.get('PointSize') is not None:
-            style['font-size:'] = "%.02frem" % float(elem.get('PointSize'))/pts_per_em/pts_per_em
+            style['font-size:'] = "%.02frem" % (float(elem.get('PointSize'))/pts_per_em, )
 
         # font-style and font-weight
         fs = elem.get('FontStyle')
@@ -219,23 +219,23 @@ class ICML(XML, Source):
 
         # margin-left
         if elem.get('LeftIndent') is not None:
-            style['margin-left:'] = "%.02frem" % float(elem.get('LeftIndent'))/pts_per_em
+            style['margin-left:'] = "%.02frem" % (float(elem.get('LeftIndent'))/pts_per_em, )
 
         # margin-right
         if elem.get('RightIndent') is not None:
-            style['margin-right:'] = "%.02frem" % float(elem.get('RightIndent'))/pts_per_em
+            style['margin-right:'] = "%.02frem" % (float(elem.get('RightIndent'))/pts_per_em, )
 
         # margin-top
         if elem.get('SpaceBefore') is not None:
-            style['margin-top:'] = "%.02frem" % float(elem.get('SpaceBefore'))/pts_per_em
+            style['margin-top:'] = "%.02frem" % (float(elem.get('SpaceBefore'))/pts_per_em, )
 
         # margin-bottom
         if elem.get('SpaceAfter') is not None:
-            style['margin-bottom:'] = "%.02frem" % float(elem.get('SpaceAfter'))/pts_per_em
+            style['margin-bottom:'] = "%.02frem" % (float(elem.get('SpaceAfter'))/pts_per_em, )
 
         # text-indent
         if elem.get('FirstLineIndent') is not None:
-            style['text-indent:'] = "%.02frem" % float(elem.get('FirstLineIndent'))/pts_per_em
+            style['text-indent:'] = "%.02frem" % (float(elem.get('FirstLineIndent'))/pts_per_em, )
 
         # page-break-before
         if elem.get('StartParagraph') in ['NextColumn', 'NextFrame', 'NextPage']:
