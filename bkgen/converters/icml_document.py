@@ -105,7 +105,7 @@ def character_attribs(elem):
     attrib = Dict()
     style = ICML.style_attribute(elem)
     if style.keys() != []:
-        attrib.style = ';'.join(["%s%s" % (k, style[k]) for k in style.keys()])
+        attrib.style = '; '.join(["%s%s" % (k, style[k]) for k in style.keys()])
     lang = ICML.lang_attribute(elem)
     if lang is not None:
         attrib.lang = lang
@@ -232,13 +232,16 @@ def ParagraphDestination(elem, **params):
     anchor_start = B.pub.anchor_start(name=anchor_name)
     # try to find the source of the paragraph cross-reference; if so, use the number and link back.
     hyperlink = ''
-    hyperlinks = elem.xpath("//Hyperlink[@DestinationUniqueKey='%s']" % elem.get('DestinationUniqueKey'))
-    if len(hyperlinks) > 0: 
-        sources = elem.xpath("//*[@Self='%s']" % hyperlinks[0].get('Source'))
-        if len(sources) > 0:
-            content = sources[0].find('Content')
+    hyperlink_xpath = "//Hyperlink[@DestinationUniqueKey='%s']" % elem.get('DestinationUniqueKey')
+    hyperlink = XML.find(elem, hyperlink_xpath)
+    if hyperlink is None and params.get('designmap') is not None:
+        hyperlink = XML.find(params.get('designmap').root, hyperlink_xpath)
+    if hyperlink is not None: 
+        source = XML.find(elem, "//*[@Self='%s']" % hyperlink.get('Source'))
+        if source is not None:
+            content = source.find('Content')
             if content is not None:
-                hyperlink_anchor = make_anchor_name(sources[0].get('Name'))
+                hyperlink_anchor = make_anchor_name(source.get('Name'))
                 hyperlink = B.pub.hyperlink(content.text, anchor=hyperlink_anchor)
                 return [anchor_start, hyperlink, ' ']
     return [anchor_start]
@@ -246,8 +249,14 @@ def ParagraphDestination(elem, **params):
 
 # == Hyperlink ==
 def hyperlink_attribs(elem, source=None, **params):
+    log.debug("HyperlinkTextSource: %r" % elem.attrib)
     attribs = Dict()
-    h = XML.find(elem, "//Hyperlink[@Source='%s']" % source or elem.get('Self') or '')
+    h_xpath = "//Hyperlink[@Source='%s']" % (source or elem.get('Self') or '', )
+    designmap = params.get('designmap')
+    h = XML.find(elem, h_xpath)
+    if h is None and designmap is not None:
+        h = XML.find(designmap.root, h_xpath)
+    log.debug("Hyperlink: %r" % h.attrib)
     if h is not None:
         destkey = h.get('DestinationUniqueKey')
         if destkey is not None:
@@ -258,21 +267,27 @@ def hyperlink_attribs(elem, source=None, **params):
             if d is not None:
                 # if DEBUG==True: print("property dest:", d.attrib)
                 if 'HyperlinkTextDestination/' in d.text:
-                    tds = elem.xpath("//HyperlinkTextDestination[@Self='%s']" % d.text)
-                    if len(tds) == 1:
-                        attribs.anchor = make_anchor_name(tds[0].get('Name'))
-                    elif len(tds) == 0 and params.get('documents') is not None:
+                    d_xpath = "//HyperlinkTextDestination[@Self='%s']" % d.text
+                    td = XML.find(elem, d_xpath)
+                    if td is None and designmap is not None:
+                        td = XML.find(designmap.root, d_xpath)
+                    if td is not None:
+                        attribs.anchor = make_anchor_name(td.get('Name'))
+                    elif params.get('documents') is not None:
                         # look in params['documents']
                         for doc in params['documents']:
-                            tds = doc.root.xpath("//HyperlinkTextDestination[@Self='%s']" % d.text)
-                            if len(tds) == 1:
+                            td = XML.find(doc.root, "//HyperlinkTextDestination[@Self='%s']" % d.text)
+                            if td is not None:
                                 relpath = os.path.relpath(doc.fn, os.path.dirname(params['fn']))
                                 attribs.filename = os.path.splitext(relpath)[0] + '.xml'
-                                attribs.anchor = make_anchor_name(tds[0].get('Name'))
+                                attribs.anchor = make_anchor_name(td.get('Name'))
                 elif 'HyperlinkURLDestination/' in d.text:
-                    uu = elem.xpath("//HyperlinkURLDestination[@Self='%s']" % d.text)
-                    if len(uu) == 1:
-                        attribs.filename = uu[0].get('DestinationURL')
+                    uu_xpath = "//HyperlinkURLDestination[@Self='%s']" % d.text
+                    uu = XML.find(elem, uu_xpath)
+                    if uu is None and designmap is not None:
+                        uu = XML.find(designmap.root, uu_xpath)
+                    if uu is not None:
+                        attribs.filename = uu.get('DestinationURL')
     # if DEBUG==True: print(elem.attrib, '=>', attribs)
     return attribs
 
@@ -283,9 +298,11 @@ def attribs_from_destkey(elem, destkey, **params):
         and @DestinationUniqueKey='%s']""" % destkey
     # first look in the current document
     dest = XML.find(elem, dest_xpath)
+    if dest is None and params.get('designmap') is not None:
+        dest = XML.find(params.get('designmap').root, dest_xpath)
     # then look in params documents
     if dest is None:
-        for doc in (params['documents'] or []):
+        for doc in (params.get('documents') or []):
             dest = XML.find(doc.root, dest_xpath)
             if dest is not None: 
                 break
