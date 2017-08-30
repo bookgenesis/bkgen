@@ -637,7 +637,10 @@ class Project(XML, Source):
             split_href = spineitem.get('href').split('#')
             log.debug(split_href)
             docfn = os.path.join(self.path, split_href[0])
-            doc_css_fns = [cfn for cfn in glob(os.path.splitext(docfn)[0]+'.css') if os.path.exists(cfn)]
+            if os.path.dirname(docfn) == self.content_path:
+                doc_css_fns = glob(os.path.splitext(docfn)[0]+'.css')
+            else:
+                doc_css_fns = glob(os.path.dirname(docfn)+'.css')
             if len(split_href) > 1: 
                 d = Document.load(fn=docfn, id=split_href[1])
             else:
@@ -837,10 +840,14 @@ if __name__=='__main__':
                 project.import_source_file(fn)
         
         if 'build' in sys.argv[1]:
-            if '-epub' in sys.argv[1]: args=dict(format='epub', check='check' in sys.argv[1])
-            elif '-mobi' in sys.argv[1]: args=dict(format='mobi')
-            elif '-archive' in sys.argv[1]: args=dict(format='archive')
-            else: args=dict()
+            if '-epub' in sys.argv[1]: 
+                args=dict(format='epub', check='check' in sys.argv[1])
+            elif '-mobi' in sys.argv[1]: 
+                args=dict(format='mobi')
+            elif '-archive' in sys.argv[1]: 
+                args=dict(format='archive')
+            else: 
+                args=dict(check=True)
             build_project(project_path, **args)
         if 'clean' in sys.argv[1]:
             cleanup_project(project_path)

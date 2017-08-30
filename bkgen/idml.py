@@ -110,6 +110,5 @@ class IDML(ZIP, Source):
         """return a stylesheet from the .idml file's style definitions"""
         if fn is None:
             fn = os.path.join(self.output_path, os.path.basename(self.output_path)+'.css')
-        return ICML(root=self.read('Resources/Styles.xml')).stylesheet(
-            fn=fn)
+        return ICML(root=self.read('Resources/Styles.xml')).stylesheet(fn=fn)
 
