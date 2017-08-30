@@ -251,6 +251,7 @@ class Project(XML, Source):
         ext = os.path.splitext(fn)[-1].lower()
         result = Dict()
 
+        log.info("import %s" % fn)
         log.debug("%r.import_source_file(%r, **%r)" % (self, fn, args))
         
         # .DOCX files
@@ -466,7 +467,7 @@ class Project(XML, Source):
         """build the project outputs
             kind=None:      which kind of output to build; if None, build all
         """
-        log.info("build project outputs: %s" % self.fn)
+        log.info("build outputs: %s" % self.fn)
         output_kinds = [k for k in self.OUTPUT_KINDS.keys() if kind is None or k==kind]
         results = []
         for output_kind in output_kinds:
@@ -827,7 +828,6 @@ if __name__=='__main__':
         log.warn("Usage: python -m bkgen.project command project_path [project_path] ...")
     else:
         project_path = os.path.abspath(sys.argv[2])
-        log.info("project path = %s" % project_path)
         if 'create' in sys.argv[1]:
             Project.create(os.path.dirname(project_path), os.path.basename(project_path))
         
@@ -836,7 +836,6 @@ if __name__=='__main__':
         elif 'import' in sys.argv[1]:
             project = Project(fn=os.path.join(sys.argv[2], 'project.xml'))
             for fn in sys.argv[3:]:
-                log.info("import %s" % fn)
                 project.import_source_file(fn)
         
         if 'build' in sys.argv[1]:
