@@ -49,6 +49,7 @@ class ICML(XML, Source):
 
         from bl.file import File
         from bf.styles import Styles
+        from bf.css import CSS
 
         pts_per_em = pts_per_em or self.PTS_PER_EM
         styles = Styles()
@@ -71,8 +72,8 @@ class ICML(XML, Source):
 
             styles[selector] = self.style_block(style, pts_per_em=pts_per_em)
 
-        ss = Text(fn=fn or os.path.splitext(self.fn)[0]+'.css', text=Styles.render(styles))
-        return ss
+        css = CSS(fn=fn or os.path.splitext(self.fn)[0]+'.css', styles=styles)
+        return css
 
     @classmethod
     def classname(C, stylename):
@@ -125,6 +126,7 @@ class ICML(XML, Source):
     def style_attribute(Class, elem, pts_per_em=None):
         """query style elem for attributes and return a CSS style definition block.
         """
+        from bf.css import CSS
         log.debug(elem.attrib)
         pts_per_em = pts_per_em or Class.PTS_PER_EM
         style = Dict()
@@ -147,15 +149,15 @@ class ICML(XML, Source):
             cmyk = re.match(r'^C=(\d+) M=(\d+) Y=(\d+) K=(\d+)$', color)
             rgb = re.match(r'^R=(\d+) G=(\d+) B=(\d+)$', color)
             if cmyk is not None:
-                style['color:'] = ('cmyk(%s%%, %s%%, %s%%, %s%%)' 
-                    % (cmyk.group(1), cmyk.group(2), cmyk.group(3), cmyk.group(4)))
+                rgb = CSS.cmyk_to_rgb(cmyk.group(1), cmyk.group(2), cmyk.group(3), cmyk.group(4))
+                style['color:'] = 'rgb(%(r)d, %(g)d, %(b)d)' % rgb
             elif rgb is not None:
-                style['color:'] = ('rgb(%s%%, %s%%, %s%%, %s%%)' 
+                style['color:'] = ('rgb(%s, %s, %s)' 
                     % (rgb.group(1), rgb.group(2), rgb.group(3)))
             elif color=='Black':
-                style['color:'] = 'rgb(0,0,0)'
+                style['color:'] = 'rgb(0, 0, 0)'
             elif color=='Paper':
-                style['color:'] = 'rgb(255,255,255)'
+                style['color:'] = 'rgb(255, 255, 255)'
             else:
                 style['color:'] = '"%s"' % color
                 log.warn("color=%r" % color)
@@ -220,22 +222,33 @@ class ICML(XML, Source):
         # margin-left
         if elem.get('LeftIndent') is not None:
             style['margin-left:'] = "%.02frem" % (float(elem.get('LeftIndent'))/pts_per_em, )
+        else:
+            style['margin-left:'] = "0"
 
         # margin-right
         if elem.get('RightIndent') is not None:
             style['margin-right:'] = "%.02frem" % (float(elem.get('RightIndent'))/pts_per_em, )
+        else:
+            style['margin-right:'] = "0"
 
         # margin-top
         if elem.get('SpaceBefore') is not None:
             style['margin-top:'] = "%.02frem" % (float(elem.get('SpaceBefore'))/pts_per_em, )
+        else:
+            style['margin-top:'] = "0"
 
         # margin-bottom
         if elem.get('SpaceAfter') is not None:
             style['margin-bottom:'] = "%.02frem" % (float(elem.get('SpaceAfter'))/pts_per_em, )
+        else:
+            style['margin-bottom:'] = "0"
 
         # text-indent
         if elem.get('FirstLineIndent') is not None:
             style['text-indent:'] = "%.02frem" % (float(elem.get('FirstLineIndent'))/pts_per_em, )
+        else:
+            style['text-indent:'] = "0"
+
 
         # page-break-before
         if elem.get('StartParagraph') in ['NextColumn', 'NextFrame', 'NextPage']:
