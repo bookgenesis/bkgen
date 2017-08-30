@@ -49,16 +49,15 @@ class IDML(ZIP, Source):
         path = path or self.output_path
         designmap = self.design_map(path=path)
         documents = []
-        # output all stories
-        for story in designmap.root.xpath("idPkg:Story", namespaces=self.NS):
-            outfn = os.path.join(path, self.clean_filename(self.basename), story.get('src'))
-            icml = ICML(fn=outfn, root=self.read(story.get('src')))
-            document = icml.document(fn=outfn)
-            document.write()
-            documents.append(document)
-        # if there are articles, they are also output (composed of stories)
-        if articles==True and len(designmap.root.xpath("//Article")) > 0:
+        if articles==True and len(designmap.root.xpath("//Article")) > 0:       # Articles?
             documents += self.articles_documents(path=path, designmap=designmap)
+        else:                                                                   # or Stories?
+            for story in designmap.root.xpath("idPkg:Story", namespaces=self.NS):
+                outfn = os.path.join(path, self.clean_filename(self.basename), os.path.basename(story.get('src')))
+                icml = ICML(fn=outfn, root=self.read(story.get('src')))
+                document = icml.document(fn=outfn, designmap=designmap)
+                document.write()
+                documents.append(document)
         # fix links between documents
         ids = {}
         for d in documents:
@@ -83,12 +82,12 @@ class IDML(ZIP, Source):
         designmap = designmap or self.design_map()
         itemsdict = self.items_dict()
         documents = []
+        output_path = self.clean_filename(os.path.join(path, self.basename))
+        log.debug('output_path = %r' % output_path)
         for article in designmap.root.xpath("//Article"):
-            body = B._.body('\n')
-            document = Document(
-                root=B.pub.document('\n', body, '\n'),
-                fn=os.path.join(path, self.clean_filename(self.basename), self.clean_filename((article.get('Name') or article.get('Self'))+'.xml')))
-            log.debug(document.fn)
+            article_icml = ICML()
+            article_icml.fn = os.path.join(output_path, self.make_basename(article.get('Name'), ext='.icml'))
+            log.debug("article name=%r icml.fn = %r" % (article.get('Name'), article_icml.fn))
             for member in article.xpath("ArticleMember"):
                 item = itemsdict[member.get('ItemRef')]
                 log.info("ItemRef=%r => %r ParentStory=%r" % (member.get('ItemRef'), item.tag, item.get('ParentStory')))
@@ -97,20 +96,14 @@ class IDML(ZIP, Source):
                     pkg_story = designmap.find(designmap.root, 
                         "//idPkg:Story[contains(@src, '%s')]" % story_id, namespaces=ICML.NS)
 
-                    # add a <pub:include...> element for the story
-                    incl = etree.Element("{%(pub)s}include" % NS, src=pkg_story.get('src')); incl.tail='\n'
-                    body.append(incl)
-
-                    # make sure the story exists in the content
-                    story_outfn = os.path.join(path, self.clean_filename(self.basename), pkg_story.get('src'))
-                    if not os.path.exists(story_outfn):
-                        story_icml = ICML(fn=outfn, root=self.read(pkg_story.get('src')))
-                        story_doc = icml.document(fn=outfn)
-                        story_doc.write()
-                        documents.append(story_doc)
+                    # Add the story to the Article document as a section
+                    story_icml = ICML(root=self.read(pkg_story.get('src')))
+                    for story in story_icml.root.xpath("//Story"): 
+                        article_icml.root.append(story)
+            document = article_icml.document(designmap=designmap)
+            log.debug("article document.fn = %r" % document.fn)
             document.write()
             documents.append(document)
-            log.debug(document.fn)
         return documents
 
     def stylesheet(self, fn=None):

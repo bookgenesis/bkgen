@@ -105,7 +105,7 @@ def character_attribs(elem):
     attrib = Dict()
     style = ICML.style_attribute(elem)
     if style.keys() != []:
-        attrib.style = '; '.join(["%s:%s" % (k, style[k]) for k in style.keys()])
+        attrib.style = ';'.join(["%s%s" % (k, style[k]) for k in style.keys()])
     lang = ICML.lang_attribute(elem)
     if lang is not None:
         attrib.lang = lang
@@ -208,7 +208,10 @@ def HyperlinkTextDestination(elem, **params):
         anchor = B.pub.anchor_start(name=make_anchor_name(elem.get('Name')))
         # If the anchor_start defines a bookmark, create a section_start as well
         # print(elem.get('Name'), elem.attrib)
-        bookmark = XML.find(elem, "//Bookmark[@Destination='HyperlinkTextDestination/%s']" % elem.get('Name'))
+        bookmark_xpath = "//Bookmark[@Destination='HyperlinkTextDestination/%s']" % elem.get('Name')
+        bookmark = XML.find(elem, bookmark_xpath)
+        if bookmark is None and params.get('designmap') is not None:
+            bookmark = XML.find(params.get('designmap').root, bookmark_xpath)
         if bookmark is not None:
             section_start = B.pub.section_start(
                 id="section_"+anchor.get('name'), 
@@ -450,6 +453,7 @@ def post_process(doc, **params):
     doc = remove_empty_paras(doc)
     doc = fix_endnote_refs(doc)
     doc = p_tails(doc)
+    doc = remove_container_sections(doc)
     # doc = includes_before_paras(doc)
     return doc
 
@@ -673,3 +677,11 @@ def is_prev_node_br(elem):
                         return True
     return False
 
+def remove_container_sections(doc):
+    """Remove sections that are just containers for other sections
+    """
+    # sections = reversed(doc.xpath("html:body/html:section", namespaces=NS))
+    # for section in sections:
+    #     if section.xpath("*") == section.xpath("html:section", namespaces=NS) and (section.text or '').strip()=='':
+    #         XML.replace_with_contents(section)
+    return doc
