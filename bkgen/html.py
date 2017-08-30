@@ -12,11 +12,14 @@ class HTML(XML, Source):
         from .converters.html_document import HtmlDocument
         from .document import Document
         converter = HtmlDocument()
-        doc = converter.convert(self, fn=fn or os.path.splitext(self.fn)[0]+'.xml', **params)
+        fn = fn or os.path.splitext(self.clean_filename(self.fn))[0]+'.xml'
+        doc = converter.convert(self, fn=fn, **params)
         return doc
 
-    def documents(self, **params):
-        return [self.document(**params)]
+    def documents(self, path=None, **params):
+        path = path or self.path
+        fn = os.path.splitext(os.path.join(path, self.clean_filename(self.basename)))[0] + '.xml'
+        return [self.document(fn=fn, **params)]
 
     def images(self):
         return []

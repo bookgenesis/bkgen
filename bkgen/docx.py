@@ -15,15 +15,18 @@ class DOCX(bxml.docx.DOCX, Source):
         """returns an XML document containing the content of the Word document"""
         from .converters.docx_document import DocxDocument
         converter = DocxDocument()
-        doc = converter.convert(self, fn=fn or os.path.splitext(self.fn)[0]+'.xml', **params)
+        fn = fn or os.path.splitext(self.clean_filename(self.fn))[0]+'.xml'
+        doc = converter.convert(self, fn=fn, **params)
         return doc
 
     # == Source Properties == 
 
-    def documents(self, **params):
+    def documents(self, path=None, **params):
         """return a list of documents containing the content of the document"""
+        path = path or self.path
+        fn = os.path.splitext(os.path.join(path, self.clean_filename(self.basename)))[0] + '.xml'
         # just the one document
-        return [self.document(**params)]
+        return [self.document(fn=fn, **params)]
 
     def images(self):
         """all the images referred to in the DOCX. 

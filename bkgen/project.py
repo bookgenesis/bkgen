@@ -319,15 +319,13 @@ class Project(XML, Source):
             **params = passed to the Source.documents(**params) method
         """
         # move / copy the source into the "canonical" source file location for this project.
-        source_new_fn = os.path.join(self.path, self.source_folder, self.make_basename(source.fn))
-        if source_new_fn != source.fn:
-            # copy it if it's not inside the project folder
-            if self.path not in os.path.commonprefix([self.fn, source.fn]):
-                shutil.copy(source.fn, source_new_fn)
-                source.fn = source_new_fn
+        if self.path not in os.path.commonprefix([self.fn, source.fn]):
+            fn = os.path.join(self.source_path, os.path.basename(source.fn))
+            shutil.copy(source.fn, fn)
+            source.fn = fn
 
         # import the documents, metadata, images, and stylesheet from this source
-        if documents==True: self.import_documents(source.documents(output_path=self.content_path, **params))
+        if documents==True: self.import_documents(source.documents(path=self.content_path, **params))
         if metadata==True: self.import_metadata(source.metadata())
         if images==True: self.import_images(source.images())
         if stylesheet==True:
@@ -351,7 +349,8 @@ class Project(XML, Source):
         ]
         for doc in documents:
             # save the document, overwriting any existing document in that location
-            doc.fn = os.path.join(self.path, self.content_folder, self.make_basename(doc.fn))
+            if doc.fn is None or self.content_path not in os.path.commonprefix([self.content_path, doc.fn]):
+                doc.fn = os.path.join(self.path, self.content_folder, self.make_basename(doc.fn))
             doc.write()
 
             # update the project spine element: append anything that is new.
@@ -787,7 +786,7 @@ def remove_project(project_path):
 
 if __name__=='__main__':
     from bkgen import config
-    logging.basicConfig(level=20, format=config.Logging.format)
+    logging.basicConfig(**config.Logging)
     if len(sys.argv) < 2:
         log.warn("Usage: python -m bkgen.project command project_path [project_path] ...")
     else:

@@ -75,7 +75,8 @@ class EPUB(ZIP, Source):
             zf_path = os.path.relpath(os.path.join(os.path.dirname(opf.fn), href), self.fn).replace('\\','/')
             html = HTML(root=self.zipfile.read(zf_path), fn=os.path.join(path, href))
             docpath = os.path.join(path, os.path.dirname(href)).rstrip('/')
-            doc = html.document(fn=os.path.join(docpath, os.path.splitext(os.path.basename(html.fn))[0]+'.xml'))
+            fn = self.clean_filename(os.path.join(docpath, os.path.splitext(html.basename)[0]+'.xml'))
+            doc = html.document(fn=fn)
             docs.append(doc)
         return docs
 

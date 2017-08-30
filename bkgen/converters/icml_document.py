@@ -299,8 +299,8 @@ def attribs_from_destkey(elem, destkey, **params):
                 # replace ' ' with '_' in xml filename
                 path, base = os.path.split(os.path.splitext(doc.fn)[0])
                 base = re.sub('[^0-9A-Za-z\.\-\_]', '_', base)+'.xml'
-                newfn = '/'.join([path, base])
-                attribs.filename = os.path.basename(newfn)
+                fn = '/'.join([path, base])
+                attribs.filename = os.path.basename(fn)
         elif dest.tag=='ParagraphDestination':
             attribs.anchor = make_anchor_name(dest.get('Name'))
     return attribs
