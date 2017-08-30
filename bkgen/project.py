@@ -549,37 +549,50 @@ class Project(XML, Source):
         return outfn
 
     def output_image(self, fn, output_path=None, outfn=None, svg=True,
-            format='jpeg', ext='.jpg', res=300, quality=80, maxwh=2048, maxpixels=4e6, geometry=None):
+            format='jpeg', ext='.jpg', res=300, quality=80, maxwh=2048, maxpixels=4e6):
+        from bf.image import Image
         f = File(fn=fn)
-        mimetype = f.mimetype() or ''
+        mimetype = mimetypes.guess_type(fn)
         output_path = output_path or os.path.join(self.path, self.output_folder)
         outfn = outfn or os.path.splitext(os.path.join(output_path, f.relpath(self.path)))[0] + ext
+        log.debug("%s %r" % (outfn, mimetype))
         if not os.path.exists(os.path.dirname(outfn)):
             os.makedirs(os.path.dirname(outfn))
-        if mimetype=='application/pdf' or f.ext().lower() == '.pdf':
-            from bf.pdf import PDF
-            res = PDF(fn=fn).gswrite(fn=outfn, device=format, res=res)
-        elif os.path.splitext(fn)[-1] in ['.svg'] and svg==True:
+        if (mimetype=='image/svg+xml' or f.ext=='.svg') and svg==True:
             outfn = os.path.splitext(outfn)[0] + '.svg'
-            File(fn=fn).write(fn=outfn)
-        elif 'image/' in mimetype:
-            from bf.image import Image
-            img_args=Dict(
-                format=format.upper(), 
-                density="%dx%d" % (res,res))
-            if geometry is not None:
-                img_args.update(geometry=geometry)
+            f.write(fn=outfn)
+        else:
+            # write the output image
+            if mimetype=='application/pdf' or f.ext.lower() == '.pdf':
+                from bf.pdf import PDF
+                PDF(fn=fn).gswrite(fn=outfn, device=format, res=res)
+            elif format in mimetype or f.ext == ext:
+                f.write(fn=outfn)
             else:
-                img_args.update(geometry="%dx%d>" % (maxwh, maxwh))
+                Image(fn=fn).convert(outfn, format=format)
+
+            # make sure the output image fits the parameters
+            log.debug("%s %r" % (outfn, os.path.exists(outfn)))
+            image = Image(fn=outfn)
+            width, height = [int(i) for i in image.identify(format="%w,%h").split(',')]
+            if width * height > maxpixels:                          # reduce dimension to fit maxpixels
+                fraction = (maxpixels / (width * height)) ** 0.5
+                width *= fraction
+                height = height * fraction
+            if width > maxwh:                                       # reduce dimensions to fit maxwh
+                height *= maxwh / width
+                width = maxwh
+            if height > maxwh:
+                width *= maxwh / height
+                height = maxwh
+            width, height = int(width), int(height)
+
+            log.debug("res=%r, width=%r, height=%r" % (res, width, height))
+            img_args=Dict(density="%dx%d" % (res,res), geometry="%dx%d>" % (width, height))
             if format.lower() in ['jpeg', 'jpg']:
                 img_args.update(quality=quality)
-            w,h = [int(i) for i in Image(fn=fn).identify(format="%w,%h").split(',')]
-            if w*h > maxpixels:
-                img_args.geometry = "%dx%d>" % (maxpixels**.5, maxpixels**.5)
-            res = Image(fn=fn).convert(outfn, **img_args)
+            image.mogrify(**img_args)
             log.debug("img: %r %r" % (outfn, img_args))
-        else:
-            res = None
         return outfn
 
     def output_spineitems(self, output_path=None, ext='.xhtml', resources=None, 
@@ -635,12 +648,6 @@ class Project(XML, Source):
                     srcfn = os.path.join(d.path, img.get('src'))
                     if os.path.exists(srcfn):
                         args = dict(**image_args)
-                        # if img.get('width') is not None and img.get('height') is not None:
-                        #     args.update(geometry="%dx%d" % (int(img.get('width')), int(img.get('height'))))
-                        # elif img.get('width') is not None:
-                        #     args.update(geometry="%d" % img.get('width'))
-                        # elif img.get('height') is not None:
-                        #     args.update(geometry="x%d" % img.get('height'))
                         outfn = self.output_image(srcfn, output_path=output_path, **args)
                         img.set('src', os.path.relpath(outfn, h.path))
                     else:
@@ -762,10 +769,11 @@ def import_all(project_path):
 def build_project(project_path, format=None, check=None):
     log.debug("== BUILD PROJECT == %s" % os.path.basename(project_path))
     project = Project(fn=os.path.join(project_path, 'project.xml'), **(config.Project or {}))
-    image_args = config.EPUB.images or {}
     if format is None or 'epub' in format:
+        image_args = config.EPUB.images or {}
         project.build_epub(check=check, **image_args)
     if format is None or 'mobi' in format:
+        image_args = config.Kindle.images or {}
         project.build_mobi(**image_args)
     if format=='archive':
         project.build_archive()
