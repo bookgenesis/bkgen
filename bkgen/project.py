@@ -330,9 +330,12 @@ class Project(XML, Source):
             source.fn = fn
 
         # import the documents, metadata, images, and stylesheet from this source
-        if documents==True: self.import_documents(source.documents(path=self.content_path, **params))
-        if metadata==True: self.import_metadata(source.metadata())
-        if images==True: self.import_images(source.images())
+        if documents==True: 
+            self.import_documents(source.documents(path=self.content_path, **params), source_path=source.path)
+        if metadata==True: 
+            self.import_metadata(source.metadata())
+        if images==True: 
+            self.import_images(source.images())
         if stylesheet==True:
             ss = source.stylesheet()
             if ss is not None:
@@ -341,10 +344,11 @@ class Project(XML, Source):
 
         self.write()
 
-    def import_documents(self, documents):
+    def import_documents(self, documents, source_path=None):
         """import the given document collection. This includes 
         (1) storing the document in the project.content_folder 
         (2) adding sections of the document to the spine, if not present
+        (3) importing referenced images, if available
         """
         if documents is None: return
         spine_elem = self.find(self.root, "pub:spine", namespaces=NS)
@@ -356,6 +360,22 @@ class Project(XML, Source):
             # save the document, overwriting any existing document in that location
             if doc.fn is None or self.content_path not in os.path.commonprefix([self.content_path, doc.fn]):
                 doc.fn = os.path.join(self.path, self.content_folder, self.make_basename(doc.fn))
+
+            # import referenced images, and update the image locations.
+            if source_path is not None:
+                for img in doc.root.xpath("//html:img[@src]", namespaces=NS):
+                    srcfn = os.path.join(source_path, img.get('src'))
+                    log.debug("img srcfn=%r exists? %r" % (srcfn, os.path.exists(srcfn)))
+                    if os.path.exists(srcfn):
+                        imgfn = os.path.join(self.image_path, self.make_basename(srcfn))
+                        if imgfn != srcfn:
+                            if not os.path.exists(os.path.dirname(imgfn)):
+                                os.makedirs(os.path.dirname(imgfn))
+                            if os.path.exists(imgfn):
+                                os.remove(imgfn)
+                            shutil.copy(srcfn, imgfn)
+                        img.set('src', os.path.relpath(imgfn, doc.path))
+
             doc.write()
 
             # update the project spine element: append anything that is new.

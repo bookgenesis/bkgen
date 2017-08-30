@@ -121,10 +121,6 @@ def Note(elem, **params):
     content = ''.join(XML.xpath(elem, ".//Content/text()") )
     if content[0:1]=='<' and content[-1:]=='>':
         e = etree.fromstring(content)
-        if e.tag=="img" and e.get('src') is not None: # make sure \w => - in img src
-            l = e.get('src').split('/')
-            l[-1] = re.sub("(&[\w^;]+;|[\s\&+;'])", "-", l[-1])
-            e.set('src', '/'.join(l))
         return [e]
     else:
         return []
@@ -680,8 +676,8 @@ def is_prev_node_br(elem):
 def remove_container_sections(doc):
     """Remove sections that are just containers for other sections
     """
-    # sections = reversed(doc.xpath("html:body/html:section", namespaces=NS))
-    # for section in sections:
-    #     if section.xpath("*") == section.xpath("html:section", namespaces=NS) and (section.text or '').strip()=='':
-    #         XML.replace_with_contents(section)
+    sections = reversed(doc.xpath("html:body/html:section", namespaces=NS))
+    for section in sections:
+        if section.xpath("*") == section.xpath("html:section", namespaces=NS) and (section.text or '').strip()=='':
+            XML.replace_with_contents(section)
     return doc
