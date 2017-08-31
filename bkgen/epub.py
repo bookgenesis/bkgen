@@ -27,7 +27,7 @@ ALLOWED_META_PROPERTIES = [                                     # allowed on opf
 
 class EPUB(ZIP, Source):
     NS = NS
-    OPF = Builder(**NS).opf
+    OPF = Builder(default=NS.opf, **NS)._
     MEDIATYPES = Dict(**{
         '.ncx': 'application/x-dtbncx+xml',
         '.opf': 'application/oebps-package+xml',
