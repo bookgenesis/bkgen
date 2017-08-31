@@ -90,7 +90,7 @@ class IDML(ZIP, Source):
             log.debug("article name=%r icml.fn = %r" % (article.get('Name'), article_icml.fn))
             for member in article.xpath("ArticleMember"):
                 item = itemsdict[member.get('ItemRef')]
-                log.info("ItemRef=%r => %r ParentStory=%r" % (member.get('ItemRef'), item.tag, item.get('ParentStory')))
+                log.debug("ItemRef=%r => %r ParentStory=%r" % (member.get('ItemRef'), item.tag, item.get('ParentStory')))
                 for elem in item.xpath("descendant-or-self::*[@ParentStory]"):
                     story_id = elem.get('ParentStory')
                     pkg_story = designmap.find(designmap.root, 
