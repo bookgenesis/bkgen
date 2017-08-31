@@ -222,32 +222,22 @@ class ICML(XML, Source):
         # margin-left
         if elem.get('LeftIndent') is not None:
             style['margin-left:'] = "%.02frem" % (float(elem.get('LeftIndent'))/pts_per_em, )
-        else:
-            style['margin-left:'] = "0"
 
         # margin-right
         if elem.get('RightIndent') is not None:
             style['margin-right:'] = "%.02frem" % (float(elem.get('RightIndent'))/pts_per_em, )
-        else:
-            style['margin-right:'] = "0"
 
         # margin-top
         if elem.get('SpaceBefore') is not None:
             style['margin-top:'] = "%.02frem" % (float(elem.get('SpaceBefore'))/pts_per_em, )
-        else:
-            style['margin-top:'] = "0"
 
         # margin-bottom
         if elem.get('SpaceAfter') is not None:
             style['margin-bottom:'] = "%.02frem" % (float(elem.get('SpaceAfter'))/pts_per_em, )
-        else:
-            style['margin-bottom:'] = "0"
 
         # text-indent
         if elem.get('FirstLineIndent') is not None:
             style['text-indent:'] = "%.02frem" % (float(elem.get('FirstLineIndent'))/pts_per_em, )
-        else:
-            style['text-indent:'] = "0"
 
 
         # page-break-before
