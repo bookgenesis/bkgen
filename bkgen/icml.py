@@ -291,6 +291,10 @@ class ICML(XML, Source):
         elif position is not None or alignment is not None:
             log.warn("Position=%r, CharacterAlignment=%r" % (position, alignment))
 
+        # tracking
+        if elem.get('Tracking') is not None:
+            style['letter-spacing:'] = "%.03fem" % (float(elem.get('Tracking'))/1000)   # tracking in 1/1000 ems
+
         # word-spacing
         if elem.get('DesiredWordSpacing') is not None:
             n = int(float(elem.get('DesiredWordSpacing'))) - 100
