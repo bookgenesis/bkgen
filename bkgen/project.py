@@ -536,7 +536,7 @@ class Project(XML, Source):
         metadata = self.root.find("{%(opf)s}metadata" % NS)
         cover_src = self.get_cover_href(kind='digital')
         spine_items = self.output_spineitems(output_path=mobi_path, resources=resources, 
-            ext='.html', http_equiv_content_type=True, canonicalized=False, **image_args)
+            ext='.html', http_equiv_content_type=True, **image_args)
         result = MOBI().build(mobi_path, metadata, 
                 mobi_name=mobi_name, spine_items=spine_items, cover_src=cover_src, before_compile=before_compile)
         if cleanup==True: shutil.rmtree(mobi_path)
@@ -622,7 +622,7 @@ class Project(XML, Source):
         return outfn
 
     def output_spineitems(self, output_path=None, ext='.xhtml', resources=None, 
-                http_equiv_content_type=False, canonicalized=False, **image_args):
+                http_equiv_content_type=False, **image_args):
         from bf.image import Image
         from .document import Document
         log.debug("project.output_spineitems()")
@@ -682,7 +682,7 @@ class Project(XML, Source):
                     else:
                         log.warn("IMAGE NOT FOUND: %s" % srcfn)
 
-                h.write(doctype="<!DOCTYPE html>", canonicalized=canonicalized)
+                h.write(doctype="<!DOCTYPE html>", canonicalized=False)
                 outfns.append(h.fn)
                 spineitem.set('href', os.path.relpath(h.fn, output_path))
 
@@ -698,7 +698,7 @@ class Project(XML, Source):
                 endnote = endnotes.pop(0)
                 endnote.tail = '\n'
                 section.append(endnote)
-            endnotes_html.write()
+            endnotes_html.write(canonicalized=False)
             spineitem = PUB.spineitem(
                 href= os.path.relpath(endnotes_html.fn, output_path),
                 title="Endnotes")
@@ -738,7 +738,7 @@ class Project(XML, Source):
                 # images will be jpegs
                 # for e in x.root.xpath("//html:img[@src]", namespaces=NS):
                 #     e.set('src', os.path.splitext(e.get('src'))[0]+'.jpg')
-                x.write()
+                x.write(canonicalized=False)
 
         return spineitems
 

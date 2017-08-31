@@ -247,7 +247,7 @@ class EPUB(ZIP, Source):
         cover_html.fn = os.path.join(output_path, cover_html_relpath)
         img = XML.find(cover_html.root, "//html:img", namespaces=EPUB.NS)
         img.set('src', os.path.splitext(os.path.basename(cover_src))[0]+'.jpg')
-        cover_html.write(doctype="<!DOCTYPE html>")
+        cover_html.write(doctype="<!DOCTYPE html>", canonicalized=False)
         return cover_html.fn
 
     @classmethod
@@ -343,7 +343,7 @@ class EPUB(ZIP, Source):
                         '\n\t', 
                         H.body('\n', *nav_elems)))
         nav.fn=os.path.join(output_path,nav_href)
-        nav.write(doctype="<!DOCTYPE html>")
+        nav.write(doctype="<!DOCTYPE html>", canonicalized=False)
         return nav.fn
 
     @classmethod
@@ -504,7 +504,7 @@ class EPUB(ZIP, Source):
                         ))
             ncx.root.append(pageList)
 
-        ncx.write()
+        ncx.write(canonicalized=False)
         return ncx.fn
 
     @classmethod
@@ -560,7 +560,7 @@ class EPUB(ZIP, Source):
         if guide is not None:
             opfdoc.root.append(guide)
 
-        opfdoc.write()
+        opfdoc.write(canonicalized=False)
         return opfdoc.fn
     
     @classmethod    
@@ -680,7 +680,7 @@ class EPUB(ZIP, Source):
                             for opf_fn in opf_fns
                             ]))
             )
-        x.write()
+        x.write(canonicalized=False)
         return x.fn
 
     @classmethod
@@ -690,7 +690,7 @@ class EPUB(ZIP, Source):
         nav = XML.find(toc.root, "html:body/html:nav[@epub:type='toc']", namespaces=C.NS)
         if nav is not None and 'hidden' in nav.attrib:
             _ = nav.attrib.pop('hidden')
-        toc.write()
+        toc.write(canonicalized=False)
 
     @classmethod
     def append_toc_to_spine(C, opffn, nav_href):
@@ -703,7 +703,7 @@ class EPUB(ZIP, Source):
         if spine_item is None:
             itemref = etree.Element("{%(opf)s}itemref" % C.NS, idref=nav_id); itemref.tail='\n\t\t'
             spine.append(itemref)
-            x.write()
+            x.write(canonicalized=False)
 
     @classmethod
     def zip_epub(C, output_path, epubfn=None, mimetype_fn=None, opf_fn=None, container_fn=None, other_fns=[],
