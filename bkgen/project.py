@@ -547,7 +547,7 @@ class Project(XML, Source):
         output_path = output_path or os.path.join(self.path, self.output_folder)
         resources = [deepcopy(resource) 
                     for resource 
-                    in self.root.xpath("pub:resources/pub:resource[not(@include='False')]", namespaces=NS)]
+                    in self.root.xpath("pub:resources/pub:resource[not(@include='False' or @class='stylesheet')]", namespaces=NS)]
         for resource in resources:
             f = File(fn=os.path.abspath(os.path.join(self.path, resource.get('href'))))
             if resource.get('class')=='stylesheet':
@@ -575,7 +575,7 @@ class Project(XML, Source):
         return outfn
 
     def output_image(self, fn, output_path=None, outfn=None, svg=True,
-            format='jpeg', ext='.jpg', res=300, quality=80, maxwh=2048, maxpixels=4e6):
+            format='jpeg', ext='.jpg', res=300, quality=80, maxwh=2048, maxpixels=4e6, **img_args):
         from bf.image import Image
         f = File(fn=fn)
         mimetype = mimetypes.guess_type(fn)
@@ -614,7 +614,7 @@ class Project(XML, Source):
             width, height = int(width), int(height)
 
             log.debug("res=%r, width=%r, height=%r" % (res, width, height))
-            img_args=Dict(density="%dx%d" % (res,res), geometry="%dx%d>" % (width, height))
+            img_args.update(density="%dx%d" % (res,res), geometry="%dx%d>" % (width, height))
             if format.lower() in ['jpeg', 'jpg']:
                 img_args.update(quality=quality)
             image.mogrify(**img_args)
