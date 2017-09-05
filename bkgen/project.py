@@ -774,7 +774,7 @@ def import_all(project_path):
     fns = rglob(interior_path, '*.docx') + rglob(source_path, '*.docx')
     log.info('-- %d .docx files' % len(fns))
     for fn in fns:
-        project.import_source_file(fn, with_metadata=False)
+        project.import_source_file(fn, fns=fns, with_metadata=False)
 
     # import metadata.xml
     fns = [fn for fn in rglob(project.path, '*metadata.xml')
@@ -836,7 +836,7 @@ if __name__=='__main__':
         elif 'import' in sys.argv[1]:
             project = Project(fn=os.path.join(sys.argv[2], 'project.xml'))
             for fn in sys.argv[3:]:
-                project.import_source_file(fn)
+                project.import_source_file(fn, fns=sys.argv[3:])
         
         if 'build' in sys.argv[1]:
             if '-epub' in sys.argv[1]: 
