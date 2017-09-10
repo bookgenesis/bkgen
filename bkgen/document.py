@@ -2,7 +2,7 @@
 import logging
 log = logging.getLogger(__name__)
 
-import os
+import os, re
 from lxml import etree
 from bl.dict import Dict
 from bxml import XML
@@ -13,10 +13,29 @@ from .source import Source
 class Document(XML, Source):
     ROOT_TAG = "{%(pub)s}document" % NS
     NS = Dict(**{k:NS[k] for k in NS if k in ['html', 'pub', 'epub']})
+    DEFAULT_NS = NS.html
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.find(self.root, "html:body", namespaces=self.NS) is None:
+            H = Builder.single(self.NS.html)
+            body = H.body('\n'); body.tail = '\n'
+            self.root.append(body)
+
+    @property
+    def body(self):
+        return self.element("html:body")
+
+    @property
+    def body_content(self):
+        """a string of the contents of the body"""
+        return re.sub(r'</?body\b[^>]*>', '', 
+            re.sub("<(/?pub:[^>]+)>", r"{\1}", etree.tounicode(self.body))
+            ).strip().replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
     def metadata(self):
         from .metadata import Metadata
-        return Metadata()
+        return Metadata(root=self.find(self.root, "opf:metadata", namespaces=Metadata.NS))
 
     def documents(self):
         return [self]
