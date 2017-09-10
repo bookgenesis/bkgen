@@ -39,7 +39,9 @@ class Project(XML, Source):
     The root element is pub:project, where ``pub:`` is the Publishing XML namespace 
     (see `publishingxml.org <http://publishingxml.org>`_).
     """
+    NS = NS
     ROOT_TAG = "{%(pub)s}project" % NS                                          #: The tag for the root element of a project.
+    DEFAULT_NS = NS.pub
     OUTPUT_KINDS = Dict(**{'EPUB':'.epub', 'Kindle':'.mobi'})                   #: The kinds of outputs that are currently supported.
 
     def __init__(self, **args):
