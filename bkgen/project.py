@@ -449,7 +449,7 @@ class Project(XML, Source):
 
         if 'cover' in (resource.get('class') or ''):
             if ((params.get('kind') is None or 'digital' in params.get('kind')) 
-            and os.path.splitext(resource.fn)[-1]=='.jpg'):
+            and os.path.splitext(resource.get('href'))[-1]=='.jpg'):
                 existing_cover_digital = self.find(self.root, 
                     "//pub:resource[contains(@class,'cover') and (@kind='%s' or not(@kind))]" 
                     % params.get('kind') or 'digital', namespaces=NS)
