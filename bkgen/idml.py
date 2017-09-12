@@ -26,36 +26,60 @@ class IDML(ZIP, Source):
         return os.path.splitext(self.fn)[0]
 
     @property
-    def design_map(self, path=None):
-        path = path or self.output_path
-        return ICML(root=self.read('designmap.xml'))
+    def designmap(self):
+        """The designmap.xml contains the definitions for Hyperlinks, Destinations, Bookmarks, and the like,
+        so it's needed to resolve links within an IDML file as well as between IDML files in a collection.
+        """
+        if self.__designmap is None:
+            self.__designmap = ICML(root=self.read('designmap.xml'))
+        return self.__designmap
 
-    def items_dict(self):
+    @property
+    def stories(self):
+        """it's useful to have access to all the stories (as ICML documents) in the package. Cached, as with others."""
+        if self.__stories is None:
+            self.__stories = []
+            for story in self.designmap.root.xpath("idPkg:Story", namespaces=self.NS):
+                fn = os.path.join(self.splitext()[0], os.path.basename(story.get('src')))
+                icml = ICML(fn=fn, root=self.read(story.get('src')))
+                self.__stories.append(icml)
+        return self.__stories
+
+    @property
+    def items(self):
         """returns a dict of items (anything with a Self) in the IDML file. Needed to resolve Article components."""
-        d = Dict()
-        for rp in [rp for rp in self.zipfile.namelist() if os.path.splitext(rp)[-1].lower()=='.xml']:
-            x = XML(root=self.read(rp))
-            for item in x.root.xpath("//*[@Self] | //idPkg:*[@Self]", namespaces=self.NS):
-                if item.get('Self') in d and d[item.get('Self')].attrib != item.attrib:
-                    log.error("%s already in items_dict. %r vs. %r" % (item.get('Self'), d[item.get('Self')].attrib, item.attrib))
-                else:
-                    d[item.get('Self')] = item
-        return d
+        if self.__items is None:
+            d = Dict()
+            for rp in [rp for rp in self.zipfile.namelist() if os.path.splitext(rp)[-1].lower()=='.xml']:
+                x = XML(root=self.read(rp))
+                for item in x.root.xpath("//*[@Self] | //idPkg:*[@Self]", namespaces=self.NS):
+                    if item.get('Self') in d and d[item.get('Self')].attrib != item.attrib:
+                        log.error("%s already in items_dict. %r vs. %r" % (item.get('Self'), d[item.get('Self')].attrib, item.attrib))
+                    else:
+                        d[item.get('Self')] = item
+            self.__items = d
+        return self.__items
 
-    def documents(self, path=None, articles=True, **params):
+    def documents(self, path=None, articles=True, sources=None, **params):
         """return a collection of pub:documents from the stories in the .idml file.
-        If the .idml file has Articles, use those as guidance; otherwise, use the stories directly.
+        path=None: The path in which the document files are created.
+        articles=True: If the .idml file has Articles, use those as guidance; otherwise, use the stories directly.
+        sources=None: The collection of other source documents to be treated as a collection with this one.
+            (This is needed, for example, to resolve hyperlinks in a multi-publication InDesign book.)
         """
         path = path or self.output_path
-        designmap = self.design_map(path=path)
+        if sources is None:
+            sources = [self]
+            for fn in [fn for fn in (params.get('fns') or []) if fn != self.fn]:
+                sources.append(IDML(fn=fn))
         documents = []
-        if articles==True and len(designmap.root.xpath("//Article")) > 0:       # Articles?
-            documents += self.articles_documents(path=path, designmap=designmap)
+        if articles==True and len(self.designmap.root.xpath("//Article")) > 0:  # Articles?
+            documents += self.articles_documents(path=path)
         else:                                                                   # or Stories?
-            for story in designmap.root.xpath("idPkg:Story", namespaces=self.NS):
+            for story in self.designmap.root.xpath("idPkg:Story", namespaces=self.NS):
                 outfn = os.path.join(path, self.clean_filename(self.basename), os.path.basename(story.get('src')))
                 icml = ICML(fn=outfn, root=self.read(story.get('src')))
-                document = icml.document(fn=outfn, designmap=designmap)
+                document = icml.document(fn=outfn, sources=sources)
                 document.write()
                 documents.append(document)
         # fix links between documents
@@ -71,7 +95,7 @@ class IDML(ZIP, Source):
                     e.set('src', os.path.relpath(targetfn, os.path.dirname(doc.fn)) + '#' + id)
         return documents
 
-    def articles_documents(self, path=None, designmap=None):
+    def articles_documents(self, path=None):
         """return a collection of pub:documents built from the InDesign Articles in the .idml file.
         (Articles are composed of stories, so use pub:include to link to the stories)
         """
@@ -79,28 +103,26 @@ class IDML(ZIP, Source):
         from bkgen.document import Document
         B = Builder(default=NS.html, **{'html':NS.html, 'pub':NS.pub})
         path = path or self.output_path
-        designmap = designmap or self.design_map()
-        itemsdict = self.items_dict()
         documents = []
         output_path = self.clean_filename(os.path.join(path, self.basename))
         log.debug('output_path = %r' % output_path)
-        for article in designmap.root.xpath("//Article"):
+        for article in self.designmap.root.xpath("//Article"):
             article_icml = ICML()
             article_icml.fn = os.path.join(output_path, self.make_basename(article.get('Name'), ext='.icml'))
             log.debug("article name=%r icml.fn = %r" % (article.get('Name'), article_icml.fn))
             for member in article.xpath("ArticleMember"):
-                item = itemsdict[member.get('ItemRef')]
+                item = self.items[member.get('ItemRef')]
                 log.debug("ItemRef=%r => %r ParentStory=%r" % (member.get('ItemRef'), item.tag, item.get('ParentStory')))
                 for elem in item.xpath("descendant-or-self::*[@ParentStory]"):
                     story_id = elem.get('ParentStory')
-                    pkg_story = designmap.find(designmap.root, 
+                    pkg_story = self.designmap.find(self.designmap.root, 
                         "//idPkg:Story[contains(@src, '%s')]" % story_id, namespaces=ICML.NS)
 
                     # Add the story to the Article document as a section
                     story_icml = ICML(root=self.read(pkg_story.get('src')))
                     for story in story_icml.root.xpath("//Story"): 
                         article_icml.root.append(story)
-            document = article_icml.document(designmap=designmap)
+            document = article_icml.document(sources=[self])
             log.debug("article document.fn = %r" % document.fn)
             document.write()
             documents.append(document)
