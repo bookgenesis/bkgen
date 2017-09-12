@@ -58,14 +58,14 @@ class Metadata(XML):
         entries = []
         for elem in self.xpath(self.root, "dc:creator"):
             entries.append(
-                (elem.text or '', self.element_text("opf:meta[@refines='#%s']" % elem.get('id'))))
+                (elem.text or '', self.element("opf:meta", refines='#%s' % elem.get('id')).text))
         return entries
 
     @property
     def contributors(self):
-        return self.xpath(self.root, "dc:contributor/text()")
+        return self.xpath(self.root, "dc:contributor")
 
     @property
     def subjects(self):
-        return self.xpath(self.root, "dc:subject/text()")
+        return self.xpath(self.root, "dc:subject")
 
