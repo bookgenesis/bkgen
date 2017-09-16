@@ -107,5 +107,15 @@ class MOBI(Dict):
         if os.path.exists(mobi_build_fn):
             if os.path.exists(mobifn) and mobifn != mobi_build_fn:
                 os.remove(mobifn)
-            os.rename(mobi_build_fn, mobifn)        
+            os.rename(mobi_build_fn, mobifn)
 
+if __name__=='__main__':
+    import sys
+    from bkgen.epub import EPUB
+    logging.basicConfig(**config.Logging)
+    for build_path in sys.argv[2:]:
+        if sys.argv[1]=='build':
+            opffn = EPUB.get_opf_fn(build_path)
+            MOBI().compile_mobi(build_path, opffn)
+        else:
+            print("unknown command: %s" % sys.argv[1])
