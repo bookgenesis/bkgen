@@ -26,12 +26,16 @@ class Document(XML, Source):
     def body(self):
         return self.element("html:body")
 
-    @property
-    def body_content(self):
-        """a string of the contents of the body"""
-        return re.sub(r'</?body\b[^>]*>', '', 
-            re.sub("<(/?pub:[^>]+)>", r"{\1}", etree.tounicode(self.body))
-            ).strip().replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+    def content_for_editing(self, elem=None):
+        """return a string containing the content of the body or given element for editing
+        """
+        elem = elem or self.find(self.root, 'html:body')
+        content = (elem.text or '') + ''.join([
+                re.sub("<(/?pub:[^>]+)>", r"{\1}", etree.tounicode(e, with_tail=True))
+                for e in elem.getchildren()
+            ]).strip().replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+        return 
+            
 
     def metadata(self):
         from .metadata import Metadata
