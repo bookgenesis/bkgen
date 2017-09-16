@@ -120,11 +120,15 @@ class Project(XML, Source):
     def stylesheet(self):
         """the master .css for this project is the resource class="stylesheet"."""
         csshref = self.find(self.root, "pub:resources/pub:resource[@class='stylesheet']/@href", namespaces=NS)
-        if csshref is not None:
+        if csshref is None:
+            cssfn = os.path.join(PATH, 'templates', 'project.css')            
+        else:
             cssfn = os.path.join(self.path, csshref)
             if not os.path.exists(cssfn):
                 cssfn = os.path.join(PATH, 'templates', 'project.css')
-            return CSS(fn=cssfn)
+        css = CSS(fn=cssfn)
+        css.fn = os.path.join(self.path, 'project.css')
+        return css
 
     def content_stylesheet(self, href=None, fn=None):
         """If href is not None and the target document has an associated stylesheet, 
