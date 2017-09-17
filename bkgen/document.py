@@ -31,10 +31,10 @@ class Document(XML, Source):
         """
         elem = elem or self.find(self.root, 'html:body')
         content = (elem.text or '') + ''.join([
-                re.sub("<(/?pub:[^>]+)>", r"{\1}", etree.tounicode(e, with_tail=True))
+                re.sub("<(/?pub:[^>]+)>", r"&lt;\1&gt;", etree.tounicode(e, with_tail=True))
                 for e in elem.getchildren()
             ]).strip().replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-        return 
+        return content
             
 
     def metadata(self):
@@ -61,7 +61,7 @@ class Document(XML, Source):
     @classmethod
     def load(C, fn, id=None, **args):
         log.debug("fn=%r, id=%r, **%r" % (fn, id, args))
-        B = Builder(default=C.NS.html, **C.NS)
+        B = C.Builder()
         x = C(fn=fn, **args)
         x.fn = fn
         if id not in [None, '']:
@@ -88,7 +88,7 @@ class Document(XML, Source):
     def html(self, fn=None, ext='.xhtml', output_path=None, resources=[], **args):
         from .converters.document_html import DocumentHtml
         converter = DocumentHtml()
-        B = Builder(default=self.NS.html, **self.NS)
+        B = self.Builder()
         fn = fn or os.path.splitext(self.fn)[0] + ext
         output_path = output_path or self.path
         h = converter.convert(self, fn=fn, output_path=output_path, resources=resources, **args)
