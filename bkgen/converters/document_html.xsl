@@ -9,6 +9,7 @@
 	    doctype-system="http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" 
 	    doctype-public="-//W3C//DTD XHTML 1.1//EN" />
 
+	<!-- If the element is not otherwise dealt with, copy it as-is. -->
     <xsl:template match="@*|node()">
     	<xsl:copy><xsl:apply-templates select="@*|node()"/></xsl:copy>
 	</xsl:template>
@@ -48,23 +49,27 @@
 	    <xsl:text> &#x00a0;&#x00a0; </xsl:text>
 	</xsl:template>
 
-	<xsl:template match="pub:anchor_start">
-	    <a>
+	<xsl:template match="pub:anchor[@id]">
+	    <span class="anchor">
+	    	<xsl:attribute name="id">
+	    	    <xsl:value-of select="@id"/>
+	    	</xsl:attribute>
+	    </span>
+	</xsl:template>
+
+	<!-- DEPRECATED: Switching to pub:anchor id="..." in pub:document -->
+	<xsl:template match="pub:anchor_start[@name]">
+	    <span class="anchor">
 	    	<xsl:attribute name="id">
 	    	    <xsl:value-of select="@name"/>
 	    	</xsl:attribute>
-	    </a>
+	    </span>
 	</xsl:template>
 
-	<xsl:template match="pub:anchor_end">
-	    <a>
-	    	<xsl:attribute name="id">
-	    	    <xsl:value-of select="@name"/>
-	    	    <xsl:text>_end</xsl:text>
-	    	</xsl:attribute>
-	    </a>
-	</xsl:template>
+	<!-- DEPRECATED: To be removed -->
+	<xsl:template match="pub:anchor_end"/>
 
+	<!-- DEPRECATED: Not going to be retained; instead, we're switching to html:a href in pub:document -->
 	<xsl:template match="pub:hyperlink">
 	    <a>
 	    	<xsl:attribute name="href">
@@ -78,14 +83,12 @@
 	    </a>
 	</xsl:template>
 
-	<xsl:template match="pub:modified">
-	    <xsl:apply-templates/>
-	</xsl:template>
-
+	<!-- Assume that all pub:include elements have been pre-processed. -->
 	<xsl:template match="pub:include">
 	    <xsl:apply-templates/>
 	</xsl:template>
 
+	<!-- DEPRECATED: We're using html:img src in pub:document. -->
 	<xsl:template match="pub:image[@filename]">
 		<img>
 			<xsl:attribute name="src">
@@ -94,6 +97,14 @@
 		</img>	    
 		<br></br>
 	</xsl:template>
+
+	<!-- NOT YET IMPLEMENTED and therefore ignored (stripped, leaving content) -->
+	<xsl:template match="pub:field"><xsl:apply-templates/></xsl:template>
+	<xsl:template match="pub:cref"><xsl:apply-templates/></xsl:template>
+	<xsl:template match="pub:xe"><xsl:apply-templates/></xsl:template>
+	<xsl:template match="pub:index"><xsl:apply-templates/></xsl:template>
+	<xsl:template match="pub:toc"><xsl:apply-templates/></xsl:template>
+	<xsl:template match="pub:modified"><xsl:apply-templates/></xsl:template>
 
 	<!-- MathML: If an altimg is available, use it; otherwise, leave the MathML alone -->
 	<xsl:template match="m:math[@altimg] | math[@altimg]">

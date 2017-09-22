@@ -424,16 +424,16 @@ def get_images(root, **params):
 def resolve_hyperlinks(root, **params):
     docx = params['docx']
     rels = docx.xml(src='word/_rels/document.xml.rels').root
-    aa = root.xpath("//html:a[@r:id or @w:anchor]", namespaces=DOCX.NS)
+    aa = root.xpath("//html:a[@data-rel-id or @data-anchor]", namespaces=DOCX.NS)
     for a in aa:
         href = ''
-        if a.get("{%(r)s}id" % DOCX.NS) is not None:
-            rId = a.attrib.pop("{%(r)s}id" % DOCX.NS)
+        if a.get("data-rel-id") is not None:
+            rId = a.attrib.pop("data-rel-id")
             rel = rels.find("{%s}Relationship[@Id='%s']" % (DOCX.NS.rels, rId))
             if rel is not None:
                 href += urllib.parse.unquote(rel.get('Target').replace('.docx', '.xml'))
-        if '#' not in href and a.get("{%(w)s}anchor" % DOCX.NS) is not None:
-            href += "#" + a.get("{%(w)s}anchor" % DOCX.NS)
+        if '#' not in href and a.get("data-anchor") is not None:
+            href += "#" + String(a.attrib.pop("data-anchor")).nameify()
         a.set('href', href)
     return root
 

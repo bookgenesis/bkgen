@@ -51,9 +51,9 @@ class DOCX(bxml.docx.DOCX, Source):
     def metadata(self):
         """return a Metadata object with the metadata in the document"""
         from .metadata import Metadata
-        xml = self.xml(src="docProps/core.xml", XMLClass=Metadata)
-        xml.root.tag = "{%(pub)s}metadata" % NS
-        return xml
+        md = self.xml(src="docProps/core.xml", XMLClass=Metadata)
+        md.root.tag = "{%(pub)s}metadata" % NS
+        return md
 
     def stylesheet(self):
         return super().stylesheet()

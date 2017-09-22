@@ -11,6 +11,7 @@ from bl.id import random_id
 from bl.dict import Dict
 from bl.string import String
 from bl.url import URL
+from bl.file import File
 from bl.text import Text
 from bxml.xml import XML
 from bxml.xt import XT
@@ -42,7 +43,7 @@ def Document(elem, **params):
     params['footnotes'] = []
 
     elem = pre_process(elem, **params)
-    doc = B.pub.document('\n\t', transformer(elem.getchildren(), **params))
+    doc = B.pub.document('\n\t', B.html.body(transformer(elem.getchildren(), **params)))
     doc = post_process(doc, **params)
     return [doc]
 
@@ -54,11 +55,10 @@ def Story(elem, **params):
                 '\n',
                 id=elem.get('Self'))
     body = B.html.body('\n', section)
-    body.tail = '\n'
     body = process_para_breaks(body)
     body = nest_span_hyperlinks(body)
     body = split_sections(body)
-    return [body]
+    return body.getchildren()
 
 # == ParagraphStyleRange ==
 @transformer.match("elem.tag=='ParagraphStyleRange'")
@@ -189,66 +189,66 @@ def Cell(elem, **params):
         td.set('colspan', col_span)
     return [td, '\n\t\t']
 
-def make_anchor_name(name):
-    """make sure the anchor name will be valid. Use this for all anchor names."""
-    return String(name).identifier()
+def make_anchor_id(name):
+    """make sure the anchor id will be valid. Use this for all anchor names."""
+    return String(name).identifier(ascii=True)
 
 # == HyperlinkTextDestination ==
 @transformer.match("elem.tag=='HyperlinkTextDestination'")
 def HyperlinkTextDestination(elem, **params):
     hyperlink = ''
     result = []
-    if elem.get('Name')[-4:] == '_end':
-        anchor = B.pub.anchor_end(name=make_anchor_name(elem.get('Name')[:-4]))
-    else:
-        anchor = B.pub.anchor_start(name=make_anchor_name(elem.get('Name')))
-        # If the anchor_start defines a bookmark, create a section_start as well
-        # print(elem.get('Name'), elem.attrib)
-        bookmark_xpath = "//Bookmark[@Destination='HyperlinkTextDestination/%s']" % elem.get('Name')
-        bookmark = XML.find(elem, bookmark_xpath)
-        if bookmark is None and params.get('sources') is not None:
-            for source in params.get('sources'):
-                bookmark = XML.find(source.designmap.root, bookmark_xpath)
-                if bookmark is not None: break
-        if bookmark is not None:
-            section_start = B.pub.section_start(
-                id="section_"+anchor.get('name'), 
-                title=bookmark.get('Name').replace('_', ' ').strip())
-            result += [section_start]
-        # try to find a cross-reference source; if so, use the number and link back.
-        hyperlink = XML.find(elem, "//Hyperlink[@DestinationUniqueKey='%s']" % elem.get('DestinationUniqueKey'))
-        if hyperlink is not None:
-            source = XML.find(elem, "//CrossReferenceSource[@Self='%s']" % hyperlink.get('Source'))
-            if source is not None:
-                content = source.find('Content')
-                if content is not None:
-                    hyperlink_anchor = make_anchor_name(source.get('Name'))
-                    hyperlink_elem = B.pub.hyperlink(content.text, anchor=hyperlink_anchor)
-                    return [anchor, hyperlink_elem, ' ']
+    anchor = B.pub.anchor(id=make_anchor_id(elem.get('Name')))
+    # If the anchor defines a bookmark, create a section_start as well
+    # print(elem.get('Name'), elem.attrib)
+    bookmark_xpath = "//Bookmark[@Destination='HyperlinkTextDestination/%s']" % elem.get('Name')
+    bookmark = XML.find(elem, bookmark_xpath)
+    if bookmark is None and params.get('sources') is not None:
+        for source in params.get('sources'):
+            bookmark = XML.find(source.designmap.root, bookmark_xpath)
+            if bookmark is not None: break
+    if bookmark is not None:
+        section_start = B.pub.section_start(
+            id=String(bookmark.get('Name').replace('_', ' ').strip()).nameify(), 
+            title=bookmark.get('Name').replace('_', ' ').strip())
+        result += [section_start]
+    # # try to find a cross-reference source; if so, use the number and link back.
+    # hyperlink = XML.find(elem, "//Hyperlink[@DestinationUniqueKey='%s']" % elem.get('DestinationUniqueKey'))
+    # if hyperlink is not None:
+    #     source = XML.find(elem, "//CrossReferenceSource[@Self='%s']" % hyperlink.get('Source'))
+    #     if source is not None:
+    #         content = source.find('Content')
+    #         if content is not None:
+    #             hyperlink_anchor = make_anchor_id(source.get('Name'))
+    #             hyperlink_elem = B.pub.hyperlink(content.text, anchor=hyperlink_anchor)
+    #             return [anchor, hyperlink_elem, ' ']
     result += [anchor]
     return result
 
 @transformer.match("elem.tag=='ParagraphDestination'")
 def ParagraphDestination(elem, **params):
-    anchor_name = make_anchor_name(elem.get('Name'))
-    anchor_start = B.pub.anchor_start(name=anchor_name)
-    # try to find the source of the paragraph cross-reference; if so, use the number and link back.
-    hyperlink = ''
-    destination_xpath = "//Hyperlink[@DestinationUniqueKey='%s']" % elem.get('DestinationUniqueKey')
-    hyperlink = XML.find(elem, destination_xpath)
-    if hyperlink is None and params.get('sources') is not None:
-        for source in params.get('sources'):
-            hyperlink = XML.find(source.designmap.root, destination_xpath)
-            if hyperlink is not None: break
-    if hyperlink is not None: 
-        source = XML.find(elem, "//*[@Self='%s']" % hyperlink.get('Source'))
-        if source is not None:
-            content = source.find('Content')
-            if content is not None:
-                hyperlink_anchor = make_anchor_name(source.get('Name'))
-                hyperlink = B.pub.hyperlink(content.text, anchor=hyperlink_anchor)
-                return [anchor_start, hyperlink, ' ']
-    return [anchor_start]
+    log.debug("%r %r" % (elem.tag, elem.attrib))
+    anchor_id = make_anchor_id(elem.get('Name'))
+    anchor = B.pub.anchor(id=anchor_id)
+    result = [anchor]
+    # # try to find the source of the paragraph cross-reference; if so, use the number and link back.
+    # hyperlink = ''
+    # destination_xpath = "//Hyperlink[@DestinationUniqueKey='%s']" % elem.get('DestinationUniqueKey')
+    # hyperlink = XML.find(elem, destination_xpath)
+    # if hyperlink is None and params.get('sources') is not None:
+    #     for source in params.get('sources'):
+    #         hyperlink = XML.find(source.designmap.root, destination_xpath)
+    #         if hyperlink is not None: break
+    # if hyperlink is not None: 
+    #     source = XML.find(elem, "//*[@Self='%s']" % hyperlink.get('Source'))
+    #     if source is not None:
+    #         content = source.find('Content')
+    #         if content is not None:
+    #             hyperlink_anchor = make_anchor_id(source.get('Name'))
+    #             hyperlink = B.pub.hyperlink(content.text, anchor=hyperlink_anchor)
+    #             result += [hyperlink, ' ']
+    # log.debug(hyperlink and hyperlink.attrib)
+    return result
 
 
 # == Hyperlink ==
@@ -289,7 +289,7 @@ def hyperlink_attribs(elem, source=None, **params):
                                     break
                             if td is not None: break
                     if td is not None:
-                        attribs.anchor = make_anchor_name(td.get('Name'))
+                        attribs.anchor = make_anchor_id(td.get('Name'))
                 elif 'HyperlinkURLDestination/' in d.text:
                     uu_xpath = "//HyperlinkURLDestination[@Self='%s']" % d.text
                     uu = XML.find(elem, uu_xpath)
@@ -315,43 +315,44 @@ def attribs_from_destkey(elem, destkey, **params):
             if dest is not None: break
     if dest is None and params.get('sources') is not None:
         for source in params.get('sources'):
-            for story in source.stories:
-                dest = XML.find(story.root, dest_xpath)
-                if dest is not None: 
-                    doc = source
-                    break
-            if dest is not None: break
+            dest = XML.find(source.designmap.root, dest_xpath)
+            if dest is not None:
+                doc = source; break
     log.debug("destkey: %r %r" % (destkey, dest.attrib if dest is not None else None))
     if dest is not None:
         if dest.tag=='HyperlinkURLDestination':
             attribs.filename = dest.get('DestinationURL')
         elif dest.tag=='HyperlinkTextDestination':
-            attribs.anchor = make_anchor_name(dest.get('Name'))
+            attribs.anchor = make_anchor_id(dest.get('Name'))
             if doc is not None and doc.fn != params['fn']:
                 attribs.filename = os.path.basename(doc.make_basename(ext='.xml'))
         elif dest.tag=='ParagraphDestination':
-            attribs.anchor = make_anchor_name(dest.get('Name'))
+            attribs.anchor = make_anchor_id(dest.get('Name'))
     return attribs
 
 # == HyperlinkTextSource  or CrossReferenceSource ==
 @transformer.match("elem.tag in ['HyperlinkTextSource', 'CrossReferenceSource']")
 def HyperlinkTextOrCrossReferenceSource(elem, **params):
-    anchor_name = String(elem.get('Name')).identifier()
-    anchor_start = B.pub.anchor_start(name=anchor_name)
-    anchor_end = B.pub.anchor_end(name=anchor_name)
+    log.debug("%r %r" % (elem.tag, elem.attrib))
+    anchor_id = String(elem.get('Name')).identifier()
+    anchor = B.pub.anchor(id=anchor_id)
+    anchor_end = B.pub.anchor(id=anchor_id+'_end')
     attribs = hyperlink_attribs(elem, source=elem.get('Self'), **params)
     log.debug("%s: %r %r" % (elem.tag, elem.attrib, attribs))
+    result = []
     if attribs is not None:
         hyperlink = B.pub.hyperlink(attribs, transformer(elem.getchildren(), **params))
         cc = hyperlink.getchildren()
         if len(cc)==1 and cc[0].tag=="{%(pub)s}cref" % NS:
             for k in hyperlink.attrib.keys():
                 cc[0].set(k, hyperlink.get(k))
-            return cc
+            result += cc
         else:
-            return [anchor_start, hyperlink, anchor_end]
-    else:
-        return []
+            result += [anchor, hyperlink, anchor_end]
+        log.debug('anchor: %r' % anchor.attrib)
+        log.debug('hyperlink: %r' % hyperlink.attrib)
+        log.debug('cc: %r' % cc)
+    return result
 
 # == TextVariableInstance == 
 @transformer.match("elem.tag=='TextVariableInstance'")
@@ -381,12 +382,18 @@ def PDF_or_Image(elem, **params):
     link = elem.find("Link")
     if link is not None and link.get("LinkResourceURI") is not None:
         url = URL(link.get("LinkResourceURI"))
-        filename = os.path.join(
-            'Links',
-            re.sub("(&[\w^;]+;|[\s\&+;'])", "-", os.path.basename(str(url))) + '.jpg')
+        log.debug("PDF/Image Link URL = %r %r" % (str(url), url.items()))
+        relpath = File(url.path).relpath(os.path.dirname(params.get('srcfn') or params.get('fn') or ''))
+        if relpath != url.path:
+            src = relpath
+        elif url.scheme=='file':
+            src = url.path
+        else:
+            src = str(url)
+        log.debug("src = %r" % src)
     else:
-        filename=None
-    return [B.pub.image(filename=filename)]
+        src=None
+    return [B.html.img(src=src)]
 
 # == XML Element == 
 @transformer.match("elem.tag=='XMLElement'")
@@ -476,10 +483,11 @@ def post_process(doc, **params):
     doc = anchors_shift_paras(doc)
     doc = anchors_outside_hyperlinks(doc)
     doc = anchors_inside_paras(doc)
-    doc = remove_empty_paras(doc)
     doc = fix_endnote_refs(doc)
     doc = p_tails(doc)
+    doc = remove_empty_paras(doc)
     doc = remove_container_sections(doc)
+    for section in doc.xpath("//html:section", namespaces=NS): section.tail='\n\n'
     # doc = includes_before_paras(doc)
     return doc
 
@@ -546,7 +554,7 @@ def process_endnotes(doc):
 
 def hyperlinks_inside_paras(doc):
     "hyperlinks that cross paragraph boundaries need to be nested inside the paragraphs"
-    for hyperlink in doc.xpath("//html:hyperlink[html:p]", namespaces=NS):
+    for hyperlink in doc.xpath("//pub:hyperlink[html:p]", namespaces=NS):
         XML.interior_nesting(hyperlink, "html:p", namespaces=NS)
     return doc
 
@@ -559,7 +567,7 @@ def unpack_nested_paras(doc):
 def remove_empty_paras(doc):
     """empty paras are meaningless and removed."""
     for p in doc.xpath(".//html:p", namespaces=NS):
-        XML.remove_if_empty(p, leave_tail=False, ignore_whitespace=False)
+        XML.remove_if_empty(p, leave_tail=False, ignore_whitespace=True)
     return doc  
 
 def p_tails(doc):
@@ -581,9 +589,9 @@ def anchors_shift_paras(doc):
     for p in doc.xpath("//html:p", namespaces=NS):
         while len(p.getchildren()) > 0 \
         and p.text in [None, ''] \
-        and p.getchildren()[0].tag in ["{%(pub)s}anchor_start" % NS, "{%(pub)s}anchor_end" % NS]:
+        and p.getchildren()[0].tag in ["{%(pub)s}anchor" % NS, "{%(pub)s}anchor_end" % NS]:
             a = p.getchildren()[0]
-            while a is not None and a.tag == "{%(pub)s}anchor_start" % NS and a.tail in [None, '']:
+            while a is not None and a.tag == "{%(pub)s}anchor" % NS and a.tail in [None, '']:
                 a = a.getnext()
             if a is None or a.tag != "{%(pub)s}anchor_end" % NS: 
                 break
@@ -601,7 +609,7 @@ def anchors_shift_paras(doc):
             else:
                 break
         while len(p.getchildren()) > 0 \
-        and p.getchildren()[-1].tag == "{%(pub)s}anchor_start" % NS\
+        and p.getchildren()[-1].tag == "{%(pub)s}anchor" % NS\
         and p.getchildren()[-1].tail in [None, '']:
             a = p.getchildren()[-1]
             nexts = p.xpath("following::html:p", namespaces=NS)
@@ -616,28 +624,28 @@ def anchors_shift_paras(doc):
 
 def anchors_outside_hyperlinks(doc):
     "make sure anchors are outside of hyperlinks"
-    for a in doc.xpath("//html:anchor_start[ancestor::html:hyperlink]", namespaces=NS):
-        h = a.xpath("ancestor::html:hyperlink", namespaces=NS)[0]
+    for a in doc.xpath("//pub:anchor[ancestor::pub:hyperlink]", namespaces=NS):
+        h = a.xpath("ancestor::pub:hyperlink", namespaces=NS)[0]
         XML.remove(a); a.tail = ''
         parent = h.getparent()
         parent.insert(parent.index(h), a)
-    for a in doc.xpath("//html:anchor_end[ancestor::html:hyperlink]", namespaces=NS):
-        h = a.xpath("ancestor::html:hyperlink", namespaces=NS)[0]
+    for a in doc.xpath("//pub:anchor_end[ancestor::pub:hyperlink]", namespaces=NS):
+        h = a.xpath("ancestor::pub:hyperlink", namespaces=NS)[0]
         XML.remove(a); a.tail = ''
         parent = h.getparent()
         parent.insert(parent.index(h)+1, a)
     return doc
 
 def anchors_inside_paras(doc):
-    """anchor_start at the start of the next para, anchor_end at the end of the previous para"""
-    for anchor_start in doc.xpath("//html:anchor_start[not(ancestor::html:p)]", namespaces=NS):
-        paras = anchor_start.xpath("following::html:p", namespaces=NS)
+    """anchor at the start of the next para, anchor_end at the end of the previous para"""
+    for anchor in doc.xpath("//pub:anchor[not(ancestor::html:p)]", namespaces=NS):
+        paras = anchor.xpath("following::html:p", namespaces=NS)
         if len(paras) > 0:
             para = paras[0]
-            XML.remove(anchor_start, leave_tail=True)
-            para.insert(0, anchor_start)
-            anchor_start.tail, para.text = para.text, ''
-    for anchor_end in doc.xpath("//html:anchor_end[not(ancestor::html:p)]", namespaces=NS):
+            XML.remove(anchor, leave_tail=True)
+            para.insert(0, anchor)
+            anchor.tail, para.text = para.text, ''
+    for anchor_end in doc.xpath("//pub:anchor_end[not(ancestor::html:p)]", namespaces=NS):
         paras = anchor_end.xpath("preceding::html:p", namespaces=NS)
         if len(paras) > 0:
             para = paras[-1]
@@ -647,7 +655,7 @@ def anchors_inside_paras(doc):
 
 def fix_endnote_refs(doc):
     "make sure endnote references are superscript"
-    for hyperlink in doc.xpath("//html:hyperlink[not(ancestor::html:span) and not(html:span) and contains(@anchor, 'endnote_ref_')]", namespaces=NS):
+    for hyperlink in doc.xpath("//pub:hyperlink[not(ancestor::html:span) and not(html:span) and contains(@anchor, 'endnote_ref_')]", namespaces=NS):
         span = B.html.span({'class':"_Endnote Reference"})
         span.text, hyperlink.text = hyperlink.text or '', ''
         for ch in hyperlink.getchildren():
@@ -670,8 +678,8 @@ def process_para_breaks(body):
 
 def nest_span_hyperlinks(body):
     # span must nest within hyperlink
-    for span in body.xpath("//html:span[html:hyperlink]", namespaces=NS):
-        XML.fragment_nesting(span, "html:hyperlink", namespaces=NS)
+    for span in body.xpath("//html:span[pub:hyperlink]", namespaces=NS):
+        XML.fragment_nesting(span, "pub:hyperlink", namespaces=NS)
     return body   
 
 def split_sections(body):

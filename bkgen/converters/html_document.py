@@ -93,7 +93,7 @@ def sections_ids(root):
                 section.set('title', title_text)
         id = "s%d" % (sections.index(section)+1,)
         if section.get('title') is not None:
-            id += '_' + String(section.get('title') or '').hyphenify(ascii=True)
+            id += '_' + String(section.get('title') or '').nameify(ascii=True)
         section.set('id', id)
     return root
 

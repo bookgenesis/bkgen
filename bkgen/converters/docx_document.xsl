@@ -373,10 +373,14 @@
     <xsl:template match="w:hyperlink">
         <a>
         	<xsl:if test="@r:id">
-        	    <xsl:copy-of select="@r:id"/>
+                <xsl:attribute name="data-rel-id">
+        	       <xsl:value-of select="@r:id"/>
+                </xsl:attribute>
         	</xsl:if>
         	<xsl:if test="@w:anchor">
-        	    <xsl:copy-of select="@w:anchor"/>
+                <xsl:attribute name="data-anchor">
+                    <xsl:value-of select="@w:anchor"/>
+                </xsl:attribute>
         	</xsl:if>
         	<xsl:apply-templates/>
         </a>
