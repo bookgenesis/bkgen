@@ -133,7 +133,10 @@ class Project(XML, Source):
     def content_stylesheet(self, href=None, fn=None):
         """If href is not None and the target document has an associated stylesheet, 
             combine the document stylesheet with the project stylesheet(s) to provide a single stylesheet,
-            giving precedence to the project stylesheet(s).
+            giving precedence to the project stylesheet(s). 
+            (Precedence to the project stylesheet(s) allows the content stylesheet to be auto-generated, 
+            and then for its styles to be pulled into the project stylesheet and edited there. Then when
+            the content stylesheet is re-generated, the edits to those styles are not lost.)
         """
         css = self.stylesheet()
         log.debug("href = %r" % href)
@@ -143,7 +146,7 @@ class Project(XML, Source):
             log.debug("doc_cssfn = %r" % doc_cssfn)
             if os.path.exists(doc_cssfn):
                 css = CSS.merge_stylesheets(css.fn, doc_cssfn)
-        css.fn = fn
+        if fn is not None: css.fn = fn
         return css
 
     def files(self, depth=None, hidden=False):
@@ -382,7 +385,6 @@ class Project(XML, Source):
                                 os.remove(imgfn)
                             shutil.copy(srcfn, imgfn)
                         img.set('src', os.path.relpath(imgfn, doc.path))
-
             doc.write()
 
             # update the project spine element: append anything that is new.
@@ -553,7 +555,7 @@ class Project(XML, Source):
         output_path = output_path or os.path.join(self.path, self.output_folder)
         resources = [deepcopy(resource) 
                     for resource 
-                    in self.root.xpath("pub:resources/pub:resource[not(@include='False' or @class='stylesheet')]", namespaces=NS)]
+                    in self.root.xpath("pub:resources/pub:resource[not(@include='False')]", namespaces=NS)]
         for resource in resources:
             f = File(fn=os.path.abspath(os.path.join(self.path, resource.get('href'))))
             if resource.get('class')=='stylesheet':
