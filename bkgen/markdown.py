@@ -3,6 +3,7 @@ import os, tempfile
 from lxml import etree
 import markdown.extensions.wikilinks
 from bl.text import Text
+from bl.string import String
 from bxml.builder import Builder
 from bkgen import NS
 from bkgen.html import HTML
@@ -42,6 +43,8 @@ class Markdown(Text, Source):
                 l = e.get('href').split('#')
                 l[0] = os.path.splitext(l[0])[0] + '.html'
                 e.set('href', '#'.join(l))
+            for e in root.xpath("//*[@id]"):
+                e.set('id', String(e.get('id')).nameify())
             self.__HTML = HTML(root=root, fn=os.path.splitext(self.fn)[0]+'.html')
         return self.__HTML
 
