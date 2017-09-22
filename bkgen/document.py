@@ -128,18 +128,22 @@ class Document(XML, Source):
                 etree.tounicode(e, with_tail=True)
                 for e in section.getchildren()])
 
-    BANNED_ELEMENTS = ['html:script', 'html:form', 'html:input', 'html:textarea']
-    BANNED_ATTRIBUTES = ['on*']
+    BANNED_ELEMENT_TAGS = ['html:script', 'html:form', 'html:input', 'html:textarea']
+    BANNED_ATTRIBUTE_PATTERN = r'^on.*'
     def cleanup(self, root=None):
         """Clean root of disallowed elements and attributes; return a list of them"""
         root = root or self.root
         cleaned = {'elements': [], 'attributes': []}
-        for elem in self.xpath(root, ' | '.join(['//'+e for e in BANNED_ELEMENTS])):
-            data = {'tag': self.tagname(elem.tag), 'attrib': elem.attrib}
+        elem_xpath = ' | '.join(['//'+e for e in self.BANNED_ELEMENT_TAGS])
+        print(elem_xpath)
+        for elem in self.xpath(root, elem_xpath):
+            data = {'tag': self.tag_name(elem.tag), 'attrib': elem.attrib}
             self.remove(elem, leave_tail=True)
             cleaned['elements'].append(data)
-        for val in self.xpath(root, ' | '.join(['//@'+a for a in BANNED_ATTRIBUTES])):
-            data = {'name': val.attrname, 'value': str(val), 'tag': self.tagname(a.getparent().tag)}
-            _=a.getparent().attrib.pop(val.attrname)
+        attr_xpath = '//@*[re:test(name(), "%s", "i")]' % self.BANNED_ATTRIBUTE_PATTERN
+        print(attr_xpath)
+        for val in self.xpath(root, attr_xpath, namespaces={'re':"http://exslt.org/regular-expressions"}):
+            data = {'name': val.attrname, 'value': str(val), 'tag': self.tag_name(val.getparent().tag)}
+            _=val.getparent().attrib.pop(val.attrname)
             cleaned['attributes'].append(data)
         return cleaned
