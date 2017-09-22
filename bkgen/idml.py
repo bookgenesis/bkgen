@@ -74,12 +74,12 @@ class IDML(ZIP, Source):
                 sources.append(IDML(fn=fn))
         documents = []
         if articles==True and len(self.designmap.root.xpath("//Article")) > 0:  # Articles?
-            documents += self.articles_documents(path=path)
+            documents += self.articles_documents(path=path, sources=sources)
         else:                                                                   # or Stories?
             for story in self.designmap.root.xpath("idPkg:Story", namespaces=self.NS):
                 outfn = os.path.join(path, self.clean_filename(self.basename), os.path.basename(story.get('src')))
                 icml = ICML(fn=outfn, root=self.read(story.get('src')))
-                document = icml.document(fn=outfn, sources=sources)
+                document = icml.document(srcfn=self.fn, sources=sources)
                 document.write()
                 documents.append(document)
         # fix links between documents
@@ -95,12 +95,12 @@ class IDML(ZIP, Source):
                     e.set('src', os.path.relpath(targetfn, os.path.dirname(doc.fn)) + '#' + id)
         return documents
 
-    def articles_documents(self, path=None):
+    def articles_documents(self, path=None, sources=None):
         """return a collection of pub:documents built from the InDesign Articles in the .idml file.
-        (Articles are composed of stories, so use pub:include to link to the stories)
         """
         from bxml.builder import Builder
         from bkgen.document import Document
+        if sources is None: sources=[self]
         B = Builder(default=NS.html, **{'html':NS.html, 'pub':NS.pub})
         path = path or self.output_path
         documents = []
@@ -108,7 +108,7 @@ class IDML(ZIP, Source):
         log.debug('output_path = %r' % output_path)
         for article in self.designmap.root.xpath("//Article"):
             article_icml = ICML()
-            article_icml.fn = os.path.join(output_path, self.make_basename(article.get('Name'), ext='.icml'))
+            article_icml.fn = os.path.join(output_path+'-'+self.make_basename(article.get('Name'), ext='.icml'))
             log.debug("article name=%r icml.fn = %r" % (article.get('Name'), article_icml.fn))
             for member in article.xpath("ArticleMember"):
                 item = self.items[member.get('ItemRef')]
@@ -122,7 +122,8 @@ class IDML(ZIP, Source):
                     story_icml = ICML(root=self.read(pkg_story.get('src')))
                     for story in story_icml.root.xpath("//Story"): 
                         article_icml.root.append(story)
-            document = article_icml.document(sources=[self])
+            document = article_icml.document(srcfn=self.fn, sources=sources)
+            # document.fn = 
             log.debug("article document.fn = %r" % document.fn)
             document.write()
             documents.append(document)
