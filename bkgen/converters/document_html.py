@@ -65,8 +65,10 @@ def fill_head(root, **params):
 
 def omit_print_conditions(root, **params):
     for conditional_elem in XML.xpath(root, "//html:*[@pub:cond]", namespaces=NS):
-        if 'print' in conditional_elem.get("{%(pub)s}cond" % NS).lower():
-            XML.remove(conditional_elem, leave_tail=True)
+        condition = conditional_elem.attrib.pop("{%(pub)s}cond" % NS).lower()
+        if 'print' in condition:
+            # display: none keeps the content in the file -- perhaps usable by assistive technologies?
+            conditional_elem.set('style', 'display:none;'+(conditional_elem.get('style') or ''))
     return root
 
 def omit_unsupported_font_formatting(root, **params):
