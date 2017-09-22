@@ -45,3 +45,4 @@ class HTML(XML, Source):
                 styles[tagname+'.'+c] = {}
         css = CSS(fn=os.path.splitext(self.fn)[0]+'.css', styles=styles)
         return css
+

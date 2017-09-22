@@ -36,7 +36,7 @@ class ICML(XML, Source):
         from .document import Document
         x = self.transform(bkgen.converters.icml_document.transformer, 
                 fn=fn or self.clean_filename(os.path.splitext(self.fn)[0]+'.xml'), 
-                DocClass=Document,**params)
+                DocClass=Document, **params)
         return x
 
     def metadata(self):

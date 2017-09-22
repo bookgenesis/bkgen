@@ -59,7 +59,7 @@ class EPUB(ZIP, Source):
                 fn=os.path.join(self.fn, zf_path))
         return opf
 
-    def documents(self, path=None, opf=None):
+    def documents(self, path=None, opf=None, **params):
         """return a list of pub:document containing the content in the EPUB
         path = the output path for the documents.
         """
