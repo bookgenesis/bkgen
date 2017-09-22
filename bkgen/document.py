@@ -35,7 +35,6 @@ class Document(XML, Source):
                 for e in elem.getchildren()
             ]).strip().replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
         return content
-            
 
     def metadata(self):
         from .metadata import Metadata
@@ -128,3 +127,19 @@ class Document(XML, Source):
             return (section.text or '') + ''.join([
                 etree.tounicode(e, with_tail=True)
                 for e in section.getchildren()])
+
+    BANNED_ELEMENTS = ['html:script', 'html:form', 'html:input', 'html:textarea']
+    BANNED_ATTRIBUTES = ['on*']
+    def cleanup(self, root=None):
+        """Clean root of disallowed elements and attributes; return a list of them"""
+        root = root or self.root
+        cleaned = {'elements': [], 'attributes': []}
+        for elem in self.xpath(root, ' | '.join(['//'+e for e in BANNED_ELEMENTS])):
+            data = {'tag': self.tagname(elem.tag), 'attrib': elem.attrib}
+            self.remove(elem, leave_tail=True)
+            cleaned['elements'].append(data)
+        for val in self.xpath(root, ' | '.join(['//@'+a for a in BANNED_ATTRIBUTES])):
+            data = {'name': val.attrname, 'value': str(val), 'tag': self.tagname(a.getparent().tag)}
+            _=a.getparent().attrib.pop(val.attrname)
+            cleaned['attributes'].append(data)
+        return cleaned
