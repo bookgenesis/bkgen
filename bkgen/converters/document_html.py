@@ -35,6 +35,7 @@ def default(elem, **params):
     root = omit_unsupported_font_formatting(root, **params)
     root = render_footnotes(root, **params)
     root = process_endnotes(root, **params)
+    root = process_pub_attributes(root, **params)
     return [ root ]
 
 def fill_head(root, **params):
@@ -110,16 +111,6 @@ def render_footnotes(root, **params):
             XML.remove(footnotes_section)
     return root
 
-def render_endnotes(endnotes_elem, endnotes):
-    """insert the collected endnotes into the given endnotes_elem"""
-    endnotes_elem.tag = "{%(html)s}section" % NS
-    endnotes_elem.set('class', 'endnotes')
-    endnotes_elem.text = endnotes_elem.tail = '\n'
-    for endnote in endnotes:
-        endnotes_elem.append(endnote)
-        endnote.tail='\n'
-    return endnotes_elem
-
 def process_endnotes(root, endnotes=[], insert_endnotes=False, **params):
     """collect endnotes from the content in params['endnotes'], and output them at <pub:endnotes/>.
     If insert_endnotes=True, then insert any remaining endnotes at the end of the document.
@@ -144,7 +135,28 @@ def process_endnotes(root, endnotes=[], insert_endnotes=False, **params):
             endnotes.append(endnote)
         elem = XML.find(root, "//pub:endnote | //pub:endnotes", namespaces=NS)
     if insert_endnotes==True and len(endnotes) > 0:
-        body = XML.find(root, "html:body", namespaces=NS)
+        body = XML.find(root, "html:body", namespaces=NS) or root
         body.append(render_endnotes(B.pub.endnotes(), endnotes))
     return root
 
+def render_endnotes(endnotes_elem, endnotes):
+    """insert the collected endnotes into the given endnotes_elem"""
+    endnotes_elem.tag = "{%(html)s}section" % NS
+    endnotes_elem.set('class', 'endnotes')
+    endnotes_elem.text = endnotes_elem.tail = '\n'
+    for endnote in endnotes:
+        endnotes_elem.append(endnote)
+        endnote.tail='\n'
+    return endnotes_elem
+
+def process_pub_attributes(root, **params):
+    """put all remaining pub attributes into the style attribute with the -pub- prefix."""
+    for e in Document.xpath(root, "//*[@pub:*]"):
+        styles = [s.strip() for s in (e.get('style') or '').split(';') if s.strip() != '']
+        for aval in Document.xpath(e, "@pub:*"):
+            aname = aval.attrname.replace("{%(pub)s}" % Document.NS, '-pub-')
+            _=e.attrib.pop(aval.attrname)
+            style = '%s:%s' % (aname, aval)
+            styles.append(style)
+        e.set('style', '; '.join(styles))
+    return root
