@@ -29,7 +29,11 @@ class Document(XML, Source):
     def content_for_editing(self, elem=None):
         """return a string containing the content of the body or given element for editing
         """
+        from .converters import document_html
         elem = elem or self.find(self.root, 'html:body')
+        elem = document_html.render_footnotes(elem)
+        elem = document_html.process_endnotes(elem, endnotes=[], insert_endnotes=True)
+        elem = document_html.process_pub_attributes(elem)
         content = (elem.text or '') + ''.join([
                 re.sub("<(/?pub:[^>]+)>", r"&lt;\1&gt;", etree.tounicode(e, with_tail=True))
                 for e in elem.getchildren()
