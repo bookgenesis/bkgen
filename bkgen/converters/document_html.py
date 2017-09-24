@@ -85,7 +85,9 @@ def render_footnotes(root, **params):
     for section in sections:
         footnotes_section = XML.find(section, ".//html:section[@class='footnotes']", namespaces=NS)
         if footnotes_section is None:
-            footnotes_section = H.section('\n', {'class':'footnotes'}); footnotes_section.tail='\n'
+            footnotes_section = H.section('\n', 
+                {'class':'footnotes', 'id':section.get('id')+'_footnotes'})
+            footnotes_section.tail='\n'
             section.append(footnotes_section)
 
         section_footnotes = XML.xpath(section, ".//pub:footnote", namespaces=NS)
@@ -98,7 +100,7 @@ def render_footnotes(root, **params):
             parent.insert(parent.index(footnote), fnlink)
             XML.remove(footnote, leave_tail=True)
             fnref = XML.find(footnote, ".//pub:footnote-ref", namespaces=NS) 
-            fnreflink = H.a(fnum, href="#%s" % fnrefid, id=fnid)
+            fnreflink = H.a(fnum, href="#%s" % fnrefid)
             if fnref is not None:
                 fnref.getparent().replace(fnref,  fnreflink)
             else:
@@ -106,7 +108,8 @@ def render_footnotes(root, **params):
                 firstp.insert(0, fnreflink)
                 firstp.text, fnreflink.tail = '', firstp.text or ''
             footnotes_section.append(footnote)
-            XML.replace_with_contents(footnote)
+            footnote.tag = "{%(html)s}section" % NS
+            footnote.set('class', 'footnote')
         if len(footnotes_section.getchildren())==0:
             XML.remove(footnotes_section)
     return root
@@ -135,7 +138,8 @@ def process_endnotes(root, endnotes=[], insert_endnotes=False, **params):
             endnotes.append(endnote)
         elem = XML.find(root, "//pub:endnote | //pub:endnotes", namespaces=NS)
     if insert_endnotes==True and len(endnotes) > 0:
-        body = XML.find(root, "html:body", namespaces=NS) or root
+        body = XML.find(root, "html:body", namespaces=NS)
+        if body is None: body = root
         body.append(render_endnotes(B.pub.endnotes(), endnotes))
     return root
 
