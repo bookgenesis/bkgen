@@ -139,13 +139,11 @@ class Document(XML, Source):
         root = root or self.root
         cleaned = {'elements': [], 'attributes': []}
         elem_xpath = ' | '.join(['//'+e for e in self.BANNED_ELEMENT_TAGS])
-        print(elem_xpath)
         for elem in self.xpath(root, elem_xpath):
             data = {'tag': self.tag_name(elem.tag), 'attrib': elem.attrib}
             self.remove(elem, leave_tail=True)
             cleaned['elements'].append(data)
         attr_xpath = '//@*[re:test(name(), "%s", "i")]' % self.BANNED_ATTRIBUTE_PATTERN
-        print(attr_xpath)
         for val in self.xpath(root, attr_xpath, namespaces={'re':"http://exslt.org/regular-expressions"}):
             data = {'name': val.attrname, 'value': str(val), 'tag': self.tag_name(val.getparent().tag)}
             _=val.getparent().attrib.pop(val.attrname)
