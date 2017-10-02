@@ -385,7 +385,7 @@ class Project(XML, Source):
                                 os.remove(imgfn)
                             shutil.copy(srcfn, imgfn)
                         img.set('src', os.path.relpath(imgfn, doc.path))
-            doc.write()
+            doc.write(canonicalized=True)
 
             # update the project spine element: append anything that is new.
             sections = doc.root.xpath("html:body/html:section[@id]", namespaces=NS)
