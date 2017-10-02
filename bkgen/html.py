@@ -1,11 +1,14 @@
 
 import os
+from bl.dict import Dict
 from bxml import XML
 from bkgen import NS
 from bkgen.source import Source
 
 class HTML(XML, Source):
     ROOT_TAG = "{%(html)s}html" % NS
+    NS = Dict(**{k:NS[k] for k in NS if k in ['html', 'epub']})
+    DEFAULT_NS = NS.html
 
     def document(self, fn=None, **params):
         """convert an xhtml file into a pub:document"""
