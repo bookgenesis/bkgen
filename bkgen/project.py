@@ -20,6 +20,7 @@ from bl.string import String
 from bl.rglob import rglob
 from bl.text import Text
 from bl.dict import Dict
+from bl.url import URL
 from bl.zip import ZIP
 from bxml.xml import XML, etree
 from bxml.builder import Builder
@@ -42,7 +43,7 @@ class Project(XML, Source):
     NS = NS
     ROOT_TAG = "{%(pub)s}project" % NS                                          #: The tag for the root element of a project.
     DEFAULT_NS = NS.pub
-    OUTPUT_KINDS = Dict(**{'EPUB':'.epub', 'Kindle':'.mobi'})                   #: The kinds of outputs that are currently supported.
+    OUTPUT_KINDS = Dict(**{'EPUB':'.epub', 'Kindle':'.mobi', 'HTML':'.zip'})    #: The kinds of outputs that are currently supported.
 
     def __init__(self, **args):
         XML.__init__(self, **args)
@@ -451,7 +452,7 @@ class Project(XML, Source):
             resource.tail = '\n\t'
         log.debug("resource.attrib = %r" % resource.attrib)
 
-        resources = self.find(self.root, "pub:resources", namespaces=NS)
+        resources = self.find(self.root, "pub:resources")
 
         if 'cover' in (resource.get('class') or ''):
             if ((params.get('kind') is None or 'digital' in params.get('kind')) 
@@ -471,21 +472,23 @@ class Project(XML, Source):
             pub:resources/pub:resource[contains(@class, 'cover') and 
                 (not(@kind) or contains(@kind, '%s'))]/@href""" % kind, namespaces=NS)        
 
-    def build_outputs(self, kind=None, cleanup=True, before_compile=None):
+    def build_outputs(self, kind=None, cleanup=True, before_compile=None, doc_stylesheets=True):
         """build the project outputs
             kind=None:      which kind of output to build; if None, build all
         """
-        log.info("build outputs: %s" % self.fn)
         output_kinds = [k for k in self.OUTPUT_KINDS.keys() if kind is None or k==kind]
+        log.info("build outputs: %s %r" % (self.fn, output_kinds))
         results = []
         for output_kind in output_kinds:
             try:
                 log.info("output kind=%r" % output_kind)
                 assert output_kind in self.OUTPUT_KINDS.keys()
                 if output_kind=='EPUB':
-                    result = self.build_epub(cleanup=cleanup, before_compile=before_compile)
+                    result = self.build_epub(cleanup=cleanup, before_compile=before_compile, doc_stylesheets=doc_stylesheets)
                 elif output_kind=='Kindle':
-                    result = self.build_mobi(cleanup=cleanup, before_compile=before_compile)
+                    result = self.build_mobi(cleanup=cleanup, before_compile=before_compile, doc_stylesheets=doc_stylesheets)
+                elif output_kind=='HTML':
+                    result = self.build_html(cleanup=cleanup, doc_stylesheets=doc_stylesheets)
                 elif output_kind=='Archive':
                     result = self.build_archive()
             except:
@@ -509,7 +512,8 @@ class Project(XML, Source):
         result = Dict(fn=zipfn)
         return result
 
-    def build_epub(self, clean=True, show_nav=False, zip=True, check=True, cleanup=False, before_compile=None, **image_args):
+    def build_epub(self, clean=True, show_nav=False, doc_stylesheets=True, 
+            zip=True, check=True, cleanup=False, before_compile=None, **image_args):
         from .epub import EPUB
         epub_isbn = self.metadata().identifier(id_patterns=['epub', 'ebook', 'isbn'])
         if epub_isbn is not None and epub_isbn.text is not None:
@@ -523,14 +527,39 @@ class Project(XML, Source):
         metadata = self.find(self.root, "opf:metadata", namespaces=NS)
         cover_src = self.get_cover_href(kind='digital')
         spine_items = self.output_spineitems(output_path=epub_path, resources=resources, 
-            ext='.xhtml', **image_args)
+            ext='.xhtml', doc_stylesheets=doc_stylesheets, **image_args)
         result = EPUB().build(epub_path, metadata, 
             epub_name=epub_name, spine_items=spine_items, cover_src=cover_src, 
             show_nav=show_nav, before_compile=before_compile, zip=zip, check=check)
         if cleanup==True: shutil.rmtree(epub_path)
         return result
 
-    def build_mobi(self, clean=True, cleanup=False, before_compile=None, **image_args):
+    def build_html(self, clean=True, singlepage=False, ext='.xhtml', doc_stylesheets=True, 
+            zip=True, cleanup=False, **image_args):
+        """build html output of the project. 
+        * singlepage=False  : whether to build the HTML in a single page
+        * zip=True          : whether to zip the output
+        * cleanup=False     : whether to cleanup the output folder (only if zip=True)
+        """
+        html_path = os.path.join(self.output_path, self.name+'_HTML')
+        if clean==True and os.path.isdir(html_path): shutil.rmtree(html_path)
+        if not os.path.isdir(html_path): os.makedirs(html_path)
+        result = {}
+        resources = self.output_resources(output_path=html_path, **image_args)
+        if singlepage==True:
+            pass
+        else:
+            self.output_spineitems(output_path=html_path, resources=resources, 
+                ext=ext, doc_stylesheets=doc_stylesheets, **image_args)
+        if zip==True:
+            from bl.zip import ZIP
+            result['fn'] = ZIP.zip_path(html_path)
+            if cleanup==True: 
+                shutil.rmtree(html_path)
+        return result
+
+    def build_mobi(self, clean=True, cleanup=False, before_compile=None, 
+            doc_stylesheets=True, **image_args):
         from .mobi import MOBI
         mobi_isbn = self.metadata().identifier(id_patterns=['mobi', 'ebook', 'isbn'])
         if mobi_isbn is not None:
@@ -544,7 +573,7 @@ class Project(XML, Source):
         metadata = self.root.find("{%(opf)s}metadata" % NS)
         cover_src = self.get_cover_href(kind='digital')
         spine_items = self.output_spineitems(output_path=mobi_path, resources=resources, 
-            ext='.html', http_equiv_content_type=True, **image_args)
+            ext='.html', http_equiv_content_type=True, doc_stylesheets=doc_stylesheets, **image_args)
         result = MOBI().build(mobi_path, metadata, 
                 mobi_name=mobi_name, spine_items=spine_items, cover_src=cover_src, before_compile=before_compile)
         if cleanup==True: shutil.rmtree(mobi_path)
@@ -630,7 +659,7 @@ class Project(XML, Source):
         return outfn
 
     def output_spineitems(self, output_path=None, ext='.xhtml', resources=None, 
-                http_equiv_content_type=False, **image_args):
+                http_equiv_content_type=False, doc_stylesheets=True, **image_args):
         from bf.image import Image
         from .document import Document
         log.debug("project.output_spineitems()")
@@ -660,7 +689,7 @@ class Project(XML, Source):
                 h = d.html(fn=outfn, ext=ext, output_path=output_path, http_equiv_content_type=http_equiv_content_type,
                         resources=resources, endnotes=endnotes)
                 # add the document-specific CSS, if it exists
-                if len(doc_css_fns) > 0:
+                if len(doc_css_fns) > 0 and doc_stylesheets==True:
                     css_fns = []
                     head = h.find(h.root, "html:head", namespaces=NS)
                     for css_link in h.xpath(head, "html:link[@rel='stylesheet' and @href]", namespaces=NS):
@@ -713,6 +742,8 @@ class Project(XML, Source):
             spineitems.append(spineitem)
             outfns.append(endnotes_html.fn)
 
+        # FIXME: This assumes that id attributes are unique across the product.
+        # We cannot assume this.
         if 'html' in ext:
             # collect the @ids from the content and fix the hyperlinks
             basenames = [self.make_basename(f) for f in outfns]
@@ -743,6 +774,7 @@ class Project(XML, Source):
                             if outfb in hfn:
                                 e.set('href', os.path.relpath(hfn, os.path.dirname(outfn)))
                                 break
+                    e.set('href', URL(e.get('href')).quoted())      # urls need to be quoted.
                 # images will be jpegs
                 # for e in x.root.xpath("//html:img[@src]", namespaces=NS):
                 #     e.set('src', os.path.splitext(e.get('src'))[0]+'.jpg')
@@ -803,7 +835,7 @@ def import_all(project_path):
     for fn in fns:
         project.import_image(fn, **{'class':'cover', 'kind':'digital'})
 
-def build_project(project_path, format=None, check=None):
+def build_project(project_path, format=None, check=None, doc_stylesheets=True):
     log.debug("== BUILD PROJECT == %s" % os.path.basename(project_path))
     project = Project(fn=os.path.join(project_path, 'project.xml'), **(config.Project or {}))
     if format is None or 'epub' in format:
@@ -812,6 +844,9 @@ def build_project(project_path, format=None, check=None):
     if format is None or 'mobi' in format:
         image_args = config.Kindle.images or {}
         project.build_mobi(**image_args)
+    if format is None or 'html' in format:
+        image_args = config.EPUB.images or {}
+        project.build_html(**image_args)
     if format=='archive':
         project.build_archive()
 
@@ -851,6 +886,8 @@ if __name__=='__main__':
                 args=dict(format='epub', check='check' in sys.argv[1])
             elif '-mobi' in sys.argv[1]: 
                 args=dict(format='mobi')
+            elif '-html' in sys.argv[1]:
+                args=dict(format='html')
             elif '-archive' in sys.argv[1]: 
                 args=dict(format='archive')
             else: 
