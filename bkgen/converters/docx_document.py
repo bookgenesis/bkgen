@@ -12,7 +12,7 @@ from bl.int import Int
 from bxml.docx import DOCX
 from bxml.xml import XML
 from bxml.xt import XT
-from bxml.builder import Builder
+from bkgen.document import Document
 from bxml.xslt import XSLT
 
 from bkgen import NS
@@ -20,7 +20,7 @@ from bkgen.converters import Converter
 from bkgen.document import Document
 
 log = logging.getLogger(__name__)
-B = Builder(default=NS.html, **{'html': NS.html, 'pub': NS.pub})
+B = Document.Builder()
 transformer = XT()
 transformer_XSLT = etree.XSLT(etree.parse(os.path.splitext(__file__)[0] + '.xsl'))
 
