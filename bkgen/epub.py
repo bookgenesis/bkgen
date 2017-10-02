@@ -35,11 +35,14 @@ class EPUB(ZIP, Source):
         '.xhtml': 'application/xhtml+xml'
     })
 
-    def check(self):
+    def check(self, xml=False):
         """use epubcheck to validate the epub"""
         checkfn = self.fn + '.epubcheck.txt'
         checkf = open(checkfn, 'wb')
-        cmd = ['java', '-jar', config.Resources.epubcheck, '-out', os.path.splitext(checkfn)[0]+'.xml', self.fn]
+        cmd = ['java', '-jar', config.Resources.epubcheck]
+        if xml==True:
+            cmd += ['-out', os.path.splitext(checkfn)[0]+'.xml']
+        cmd += [self.fn]
         subprocess.call(cmd, stdout=checkf, stderr=checkf)
         checkf.close()
         log.info("epubcheck log: %s" % checkfn)
