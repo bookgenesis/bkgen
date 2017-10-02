@@ -106,10 +106,11 @@ def remove_empty_spans(root, **params):
     return root
 
 def remove_empty_paras(root, **params):
-    for p in root.xpath(".//html:p", namespaces=NS):
+    for p in root.xpath(""".//html:p | .//html:h1 | .//html:h2 | .//html:h3 | .//html:h4 
+            | .//html:h5 | .//html:h6 | .//html:h7 | .//html:h8 | .//html:h9""", namespaces=NS):
         if p.text in [None, ''] and len(p.getchildren())==0:
             XML.remove(p, leave_tail=True)
-    return root        
+    return root
 
 def wrap_sections(root, **params):
     """wrap sections divided by section breaks"""
