@@ -350,8 +350,9 @@ def map_para_styles_levels(root, **params):
 def map_span_styles(root, **params):
     stylemap = params['docx'].stylemap(cache=True)
     for sp in root.xpath(".//html:span[@class]", namespaces=NS):
-        cls = DOCX.classname(stylemap.get(sp.get('class')).name)
-        sp.set('class', cls)
+        cls = stylemap.get(sp.get('class'))
+        if cls is not None:
+            sp.set('class', DOCX.classname(cls.name))
     return root
 
 def font_attributes(root, **params):
