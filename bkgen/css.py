@@ -1,6 +1,10 @@
 
+import logging
 import bf.css
 from bxml import XML
+from bkgen import NS
+
+log = logging.getLogger(__name__)
 
 class CSS(bf.css.CSS):
 
