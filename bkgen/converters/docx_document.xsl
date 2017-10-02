@@ -670,5 +670,6 @@
  -->    
     <xsl:template match="w:jc"/>
 
+    <xsl:template match="mc:AlternateContent"/>
 
 </xsl:stylesheet>
