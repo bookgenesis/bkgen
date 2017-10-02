@@ -101,9 +101,7 @@ def embed_notes(root, **params):
 
 def remove_empty_spans(root, **params):
     for span in root.xpath(".//html:span", namespaces=NS):
-        if span.text in [None, ''] and len(span.getchildren())==0:
-            XML.remove(span, leave_tail=True)
-        elif span.attrib=={}:
+        if span.attrib=={}:
             XML.replace_with_contents(span)
     return root
 
