@@ -36,6 +36,7 @@ def default(elem, **params):
     root = render_footnotes(root, **params)
     root = process_endnotes(root, **params)
     root = process_pub_attributes(root, **params)
+    root = replace_ligature_characters(root)
     return [ root ]
 
 def fill_head(root, **params):
@@ -163,4 +164,20 @@ def process_pub_attributes(root, **params):
             style = '%s:%s' % (aname, aval)
             styles.append(style)
         e.set('style', '; '.join(styles))
+    return root
+
+def replace_ligature_characters(root):
+    """Sometimes ligature characters (fl, fi) are used in books directly, 
+    but these don't work well in HTML contexts, so replace them with their equivalents.
+    """
+    ligatures = {
+        '\uA732':'AA', '\uA733':'aa', '\u00C6': 'AE', '\u00E6': 'ae', '\uA734': 'AO', '\uA735': 'ao', 
+        '\uA736': 'AU', '\uA737': 'au', '\uA738': 'AV', '\uA739': 'av', '\uA73C': 'AY', '\uA73D': 'ay', 
+        '\uFB00': 'ff', '\uFB03': 'ffi', '\uFB04': 'ffl', '\uFB01': 'fi', '\uFB02': 'fl', '\u0152': 'OE', 
+        '\u0153': 'oe', '\uA74E': 'OO', '\uA74F': 'oo', '\u00DF': 'fs', '\uFB06': 'st', '\uA728': 'TZ', 
+        '\uA729': 'tz', '\u1D6B': 'ue', '\uA760': 'VY', '\uA761': 'vy'}
+    text = etree.tounicode(root)
+    for lig, chars in ligatures.items():
+        text = text.replace(lig, chars)
+    root = etree.fromstring(text)
     return root
