@@ -408,7 +408,7 @@
     </xsl:template>
 
     <xsl:template match="w:bookmarkStart">
-        <xsl:if test="not(starts-with(@w:name,'_'))">
+        <xsl:if test="not(@w:name='_GoBack')">
             <a class="anchor">
                 <xsl:attribute name="id">
                     <xsl:value-of select="@w:name"/>
