@@ -475,24 +475,25 @@ def anchors_in_paragraphs(root):
 # == FIELDS == 
 
 def nest_fields(root, **params):
-    """fields need to be converted from a series of milestones to properly nested form"""
-    
+    """fields need to be converted from a series of milestones to properly nested form
+    """
     # move TOC, ..., field_end out of parent paragraph when it's the first thing
-    for field in root.xpath(".//pub:field_start[starts-with(@instr,'TOC')] | .//pub:field_end", 
-                            namespaces=NS):
+    for field in root.xpath(".//pub:field_start[starts-with(@instr,'TOC')] | .//pub:field_end", namespaces=NS):
         parent = field.getparent()
-        if parent.tag=='{%(html)s}p' % NS and parent[0]==field:
+        if XML.tag_name(parent.tag) in ['p','h1','h2','h3','h4','h5','h6','h7','h8','h9'] \
+        and parent[0]==field and parent.text in [None, '']:
             gparent = parent.getparent()
             gparent.insert(gparent.index(parent), field)
             parent.text = (parent.text or '') + (field.tail or '')
             field.tail='\n'
 
     # nest fields -- this assumes fields will nest
-    field_starts = root.xpath("//pub:field_start[1]", namespaces=NS)
+    field_starts = root.xpath("//pub:field_start", namespaces=NS)
     while len(field_starts) > 0:
         field = field_starts[0]
+        log.debug("FIELD: %r, %r, %r" % (field.attrib, field.text, field.tail))
         field.tag = "{%(pub)s}field" % NS
-        field.text, field.tail = field.tail, ''
+        field.text, field.tail = (field.tail or ''), ''
         nxt = field.getnext()
         while nxt is not None and nxt.tag != "{%(pub)s}field_end" % NS:
             e = nxt
@@ -505,9 +506,8 @@ def nest_fields(root, **params):
         elif nxt.tag == "{%(pub)s}field_end" % NS:
             XML.remove(nxt, leave_tail=True)
         else:
-            pass
-            # log("UNDEFINED: field ending", field.attrib)
-        field_starts = root.xpath("//pub:field_start[1]", namespaces=NS)
+            log.warn("UNDEFINED FIELD END: %r %r" % (XML.tag_name(nxt), nxt.attrib))
+        field_starts = root.xpath("//pub:field_start", namespaces=NS)
     return root
 
 def field_attributes(root, **params):
@@ -558,6 +558,8 @@ def toc_fields(root, **params):
                         ch.tag != '{%(pub)s}field' % NS 
                         or ch.get('class') != 'PAGEREF'):
                     a.append(ch)
+                else:
+                    break
             p.insert(0, a)
     return root
 
