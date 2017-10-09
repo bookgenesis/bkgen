@@ -566,7 +566,7 @@ def toc_fields(root, **params):
             # put content into a hyperlink, up to a pub:tab or pub:field[@class='PAGEREF']
             a.text, p.text = p.text, ''
             for ch in p.getchildren():
-                while ch.tag != '{%(pub)s}tab' % NS and (
+                if ch.tag != '{%(pub)s}tab' % NS and (
                         ch.tag != '{%(pub)s}field' % NS 
                         or ch.get('class') != 'PAGEREF'):
                     a.append(ch)
