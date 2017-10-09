@@ -172,6 +172,8 @@ class EPUB(ZIP, Source):
             zip_epub    = if True, zip the EPUB after building
 
         """
+        from .html import HTML
+        H = Builder(default=C.NS.html, **{'html':C.NS.html})._
         if not os.path.isdir(output_path): 
             os.makedirs(output_path)
         if epub_name is None: 
@@ -186,14 +188,31 @@ class EPUB(ZIP, Source):
             cover_html_relpath = None
 
         # nav file
-        if nav_toc is None:
-            nav_toc = C.nav_toc_from_spine_items(output_path, spine_items)
         if nav_landmarks is None:
             nav_landmarks = C.nav_landmarks_from_spine_items(output_path, spine_items)
+        if nav_toc is None:
+            nav_toc = C.nav_toc_from_spine_items(output_path, spine_items)
+
         if nav_page_list is None:
             nav_page_list = C.nav_page_list_from_spine_items(output_path, spine_items)
         navfn = C.make_nav_file(output_path, nav_toc, nav_landmarks, nav_page_list,
                                     nav_href=nav_href, title=nav_title)
+
+        # make sure there's a 'toc' landmark in the nav file
+        # nav = XML(fn=navfn)
+        # landmarks = HTML.find(nav.root, ".//html:nav[@epub:type='landmarks']")
+        # log.info("landmarks: %r" % landmarks)
+        # if landmarks is not None:
+        #     toc_landmark = HTML.find(landmarks, ".//*[@epub:type='toc']")
+        #     log.info("toc_landmark: %r" % toc_landmark)
+        #     if toc_landmark is None:
+        #         ol = HTML.find(landmarks, ".//html:ol")
+        #         href = os.path.relpath(navfn, output_path).replace('\\', '/')
+        #         li = H.li(
+        #             H.a({'href': href, '{%(epub)s}type'%NS: 'toc'}, 'Contents'))
+        #         li.tail = '\n\t\t'
+        #         ol.append(li)
+        #         nav.write()
 
         # ncx file
         ncx_fn = C.make_ncx_file(output_path, navfn, opf_metadata)
