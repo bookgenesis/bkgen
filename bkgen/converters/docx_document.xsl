@@ -519,9 +519,11 @@
 
     <xsl:template match="pic:pic">
         <img>
-            <xsl:attribute name="title">
-                <xsl:value-of select="pic:nvPicPr/pic:cNvPr/@name"/>
-            </xsl:attribute>
+            <xsl:if test="./pic:nvPicPr/pic:cNvPr/@name">
+                <xsl:attribute name="title">
+                    <xsl:value-of select="pic:nvPicPr/pic:cNvPr/@name"/>
+                </xsl:attribute>
+            </xsl:if>
             <xsl:if test=".//a:blip/@r:embed">
                 <xsl:attribute name="data-embed-id">
                     <xsl:value-of select=".//a:blip/@r:embed"/>
