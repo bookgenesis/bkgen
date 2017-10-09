@@ -33,7 +33,7 @@ from .css import CSS
 FILENAME = os.path.abspath(__file__)
 PATH = os.path.dirname(FILENAME)
 PUB = Builder.single(NS.pub)
-HTML = Builder.single(NS.html)
+H = Builder.single(NS.html)
 
 class Project(XML, Source):
     """Every project has a project.xml file that holds information about the project.
@@ -472,12 +472,13 @@ class Project(XML, Source):
             pub:resources/pub:resource[contains(@class, 'cover') and 
                 (not(@kind) or contains(@kind, '%s'))]/@href""" % kind, namespaces=NS)        
 
-    def build_outputs(self, kind=None, cleanup=True, before_compile=None, doc_stylesheets=True):
+    def build_outputs(self, kind=None, cleanup=True, before_compile=None, doc_stylesheets=True, singlepage=False):
         """build the project outputs
             kind=None:      which kind of output to build; if None, build all
         """
+        log.info("build_outputs: %s %r" % (self.fn, dict(kind=kind, cleanup=cleanup, before_compile=before_compile, doc_stylesheets=doc_stylesheets, singlepage=singlepage)))
         output_kinds = [k for k in self.OUTPUT_KINDS.keys() if kind is None or k==kind]
-        log.info("build outputs: %s %r" % (self.fn, output_kinds))
+        log.info("output_kinds: %r" % output_kinds)
         results = []
         for output_kind in output_kinds:
             try:
@@ -488,7 +489,7 @@ class Project(XML, Source):
                 elif output_kind=='Kindle':
                     result = self.build_mobi(cleanup=cleanup, before_compile=before_compile, doc_stylesheets=doc_stylesheets)
                 elif output_kind=='HTML':
-                    result = self.build_html(cleanup=cleanup, doc_stylesheets=doc_stylesheets)
+                    result = self.build_html(cleanup=cleanup, doc_stylesheets=doc_stylesheets, singlepage=singlepage)
                 elif output_kind=='Archive':
                     result = self.build_archive()
             except:
@@ -541,16 +542,14 @@ class Project(XML, Source):
         * zip=True          : whether to zip the output
         * cleanup=False     : whether to cleanup the output folder (only if zip=True)
         """
+        log.debug("build_html: %r" % dict(clean=clean, singlepage=singlepage, ext=ext, doc_stylesheets=doc_stylesheets, zip=zip, cleanup=cleanup, **image_args))
         html_path = os.path.join(self.output_path, self.name+'_HTML')
         if clean==True and os.path.isdir(html_path): shutil.rmtree(html_path)
         if not os.path.isdir(html_path): os.makedirs(html_path)
         result = {}
         resources = self.output_resources(output_path=html_path, **image_args)
-        if singlepage==True:
-            pass
-        else:
-            self.output_spineitems(output_path=html_path, resources=resources, 
-                ext=ext, doc_stylesheets=doc_stylesheets, **image_args)
+        self.output_spineitems(output_path=html_path, resources=resources, 
+            ext=ext, singlepage=singlepage, doc_stylesheets=doc_stylesheets, **image_args)
         if zip==True:
             from bl.zip import ZIP
             result['fn'] = ZIP.zip_path(html_path)
@@ -658,7 +657,7 @@ class Project(XML, Source):
             log.debug("img: %r %r" % (outfn, img_args))
         return outfn
 
-    def output_spineitems(self, output_path=None, ext='.xhtml', resources=None, 
+    def output_spineitems(self, output_path=None, ext='.xhtml', resources=None, singlepage=False,
                 http_equiv_content_type=False, doc_stylesheets=True, **image_args):
         from bf.image import Image
         from .document import Document
@@ -723,14 +722,15 @@ class Project(XML, Source):
                 outfns.append(h.fn)
                 spineitem.set('href', os.path.relpath(h.fn, output_path))
 
+        project_css_fn = os.path.join(output_path, self.find(self.root, "pub:resources/pub:resource[@class='stylesheet']/@href", namespaces=NS) or 'project.css')
+
         if len(endnotes) > 0:           # create a new spineitem for the endnotes, and put them there
             endnotes_html = Document().html(fn=os.path.join(output_path, self.content_folder, 'Collected-Endnotes'+ext))
-            project_css_fn = os.path.join(output_path, self.find(self.root, "pub:resources/pub:resource[@class='stylesheet']/@href", namespaces=NS) or 'project.css')
             if os.path.exists(project_css_fn):
                 head = endnotes_html.find(endnotes_html.root, "html:head", namespaces=NS)
-                head.append(HTML.link(rel="stylesheet", type="text/css", href=os.path.relpath(project_css_fn, endnotes_html.path)))
-            section = HTML.section('\n', {'class': 'endnotes', 'id':'Collected-Endnotes'})
-            endnotes_html.root.append(HTML.body('\n', section, '\n'))
+                head.append(H.link(rel="stylesheet", type="text/css", href=os.path.relpath(project_css_fn, endnotes_html.path)))
+            section = H.section('\n', {'class': 'endnotes', 'id':'Collected-Endnotes'})
+            endnotes_html.root.append(H.body('\n', section, '\n'))
             while len(endnotes) > 0:
                 endnote = endnotes.pop(0)
                 endnote.tail = '\n'
@@ -741,6 +741,28 @@ class Project(XML, Source):
                 title="Endnotes")
             spineitems.append(spineitem)
             outfns.append(endnotes_html.fn)
+
+        if singlepage==True and len(spineitems) > 0:
+            # concatenate all the outfns into a single document
+            from .html import HTML
+            html = HTML()
+            html.fn = os.path.join(output_path, self.content_folder, self.name + ext)
+            spineitems = [PUB.spineitem(href=os.path.relpath(html.fn, output_path), title=self.metadata().title or '')]
+            html.root.append(
+                H.head(
+                    H.title(self.metadata().title or ''),
+                    H.meta({'charset': 'UTF-8'}),
+                    H.link(rel="stylesheet", type="text/css", href=os.path.relpath(project_css_fn, html.path))))
+            body = H.body('\n')
+            html.root.append(body)
+            html.write()
+            for outfn in outfns:
+                h = HTML(fn=outfn)
+                for elem in h.xpath(h.root, "html:body/*"):
+                    body.append(elem)
+                os.remove(h.fn)
+            outfns = [html.fn]
+            html.write()
 
         # FIXME: This assumes that id attributes are unique across the product.
         # We cannot assume this.
@@ -835,20 +857,25 @@ def import_all(project_path):
     for fn in fns:
         project.import_image(fn, **{'class':'cover', 'kind':'digital'})
 
-def build_project(project_path, format=None, check=None, doc_stylesheets=True):
+def build_project(project_path, format=None, check=None, doc_stylesheets=True, singlepage=False):
     log.debug("== BUILD PROJECT == %s" % os.path.basename(project_path))
     project = Project(fn=os.path.join(project_path, 'project.xml'), **(config.Project or {}))
+
+    # default formats
     if format is None or 'epub' in format:
         image_args = config.EPUB.images or {}
         project.build_epub(check=check, **image_args)
     if format is None or 'mobi' in format:
         image_args = config.Kindle.images or {}
         project.build_mobi(**image_args)
-    if format is None or 'html' in format:
-        image_args = config.EPUB.images or {}
-        project.build_html(**image_args)
-    if format=='archive':
-        project.build_archive()
+
+    # non-default formats
+    if format is not None:
+        if 'html' in format:
+            image_args = config.EPUB.images or {}
+            project.build_html(singlepage=singlepage, **image_args)
+        if 'archive' in format:
+            project.build_archive()
 
 def cleanup_project(project_path):
     project = Project(fn=os.path.join(project_path, 'project.xml'), **(config.Project or {}))
@@ -888,6 +915,8 @@ if __name__=='__main__':
                 args=dict(format='mobi')
             elif '-html' in sys.argv[1]:
                 args=dict(format='html')
+                if '-single' in sys.argv[1]:
+                    args['singlepage'] = True
             elif '-archive' in sys.argv[1]: 
                 args=dict(format='archive')
             else: 
