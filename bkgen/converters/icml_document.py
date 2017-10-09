@@ -199,7 +199,7 @@ def HyperlinkTextDestination(elem, **params):
     hyperlink = ''
     result = []
     anchor = B.pub.anchor(id=make_anchor_id(elem.get('Name')))
-    # If the anchor defines a bookmark, create a section_start as well
+    # If the anchor defines a bookmark, create a section_start
     # print(elem.get('Name'), elem.attrib)
     bookmark_xpath = "//Bookmark[@Destination='HyperlinkTextDestination/%s']" % elem.get('Name')
     bookmark = XML.find(elem, bookmark_xpath)
@@ -209,8 +209,9 @@ def HyperlinkTextDestination(elem, **params):
             if bookmark is not None: break
     if bookmark is not None:
         section_start = B.pub.section_start(
-            id=String(bookmark.get('Name').replace('_', ' ').strip()).nameify(), 
+            id=String((bookmark.get('Name') + ' ' + bookmark.get('Self')).replace('_', ' ').strip()).nameify(), 
             title=bookmark.get('Name').replace('_', ' ').strip())
+        # log.info('\n\tsection=%r' % section_start.attrib)
         result += [section_start]
     # # try to find a cross-reference source; if so, use the number and link back.
     # hyperlink = XML.find(elem, "//Hyperlink[@DestinationUniqueKey='%s']" % elem.get('DestinationUniqueKey'))
@@ -222,7 +223,9 @@ def HyperlinkTextDestination(elem, **params):
     #             hyperlink_anchor = make_anchor_id(source.get('Name'))
     #             hyperlink_elem = B.pub.hyperlink(content.text, anchor=hyperlink_anchor)
     #             return [anchor, hyperlink_elem, ' ']
-    result += [anchor]
+    # log.info("\n\tbookmark=%r\n\tanchor=%r" % (bookmark.attrib, anchor.attrib))
+    if bookmark is None or anchor.get('id') != bookmark.get('id'):
+        result += [anchor]    
     return result
 
 @transformer.match("elem.tag=='ParagraphDestination'")
