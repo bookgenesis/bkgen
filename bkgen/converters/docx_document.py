@@ -138,32 +138,20 @@ def wrap_sections(root, **params):
 
     return root
 
-def split_level_sections(root, **params):
-    """h1...h9 paragraphs indicate the beginning of a section;
-        each level creates a new section.
+def split_level_sections(root, levels=1, **params):
+    """hN paragraphs (for levels in 1..9) indicate the beginning of a section;
+        each creates a new section.
     """
-    body = XML.find(root, "html:body", namespaces=NS)
-    level_section_xpath = """.//html:*[not(ancestor::html:table) and 
-        (name()='h1' or name()='h2' or name()='h3' or name()='h4' or name()='h5' 
-        or name()='h6' or name()='h7' or name()='h8' or name()='h9')]"""
-    for elem in body.xpath(level_section_xpath, namespaces=NS):
+    level_section_xpath = ' | '.join([".//html:h%d[not(ancestor::html:table)]" % i for i in range(1, levels+1)])
+    for elem in XML.xpath(root, level_section_xpath, namespaces=NS):
         parent = elem.getparent()
-        # start a section, go until another element like this one or no more available
-        level_tag = elem.tag
-        level = int(level_tag[-1])
-        title = etree.tounicode(elem, method='text', with_tail=False).strip()
-        num_sections = len(elem.xpath("//html:section", namespaces=NS))
-        section = etree.Element("{%(html)s}section" % NS)
-        section.text = section.tail = '\n'
-        parent.insert(parent.index(elem), section)
-        nxt = elem.getnext()
-        section.append(elem)
-        while (nxt is not None 
-                and not (nxt.tag == level_tag or nxt.tag[-1] == str(level)) 
-                and nxt.tag != "{%(html)s}section" % NS):
-            elem = nxt
-            nxt = elem.getnext()
-            section.append(elem)
+        section_end = B.pub.section_end(); section_end.tail = '\n'
+        parent.insert(parent.index(elem), section_end)
+        # give the section the attributes of the section it is in.
+        next_section_end = XML.find(section_end, "following::pub:section_end", namespaces=NS)
+        if next_section_end is not None:
+            for key in next_section_end.attrib.keys():
+                section_end.set(key, next_section_end.get(key))
     return root
 
 def nest_level_sections(root, **params):
