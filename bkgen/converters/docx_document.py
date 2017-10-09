@@ -41,27 +41,34 @@ def document(elem, **params):
     xsl_params = {k:etree.XSLT.strparam(xsl_params[k]) for k in xsl_params.keys()}
     root = transformer_XSLT(root, **xsl_params).getroot()
 
-    # Post-Process
+    # == POST-PROCESS == 
+    # -- document metadata -- 
     root = get_document_metadata(root, **params)
+    # -- styles -- 
     root = map_para_styles_levels(root, **params)
     root = map_span_styles(root, **params)
     root = font_attributes(root, **params)
+    # -- sections -- 
+    root = split_level_sections(root, **params)
+    root = wrap_sections(root, **params)
+    root = sections_title_id(root, **params)
+    root = section_note_numbering(root, **params)
+    # -- images and links -- 
     root = get_images(root, **params)
     root = resolve_hyperlinks(root, **params)
+    # -- span cleanup -- 
+    root = remove_empty_spans(root, **params)
+    root = merge_contiguous_spans(root, **params)
+    # -- fields -- 
     root = nest_fields(root, **params)
     root = field_attributes(root, **params)
     root = toc_fields(root, **params)
-    root = remove_empty_spans(root, **params)
-    root = merge_contiguous_spans(root, **params)
-    root = remove_empty_paras(root, **params)
+    # -- lists -- 
     root = number_lists(root, **params)
-    root = wrap_sections(root, **params)
-    # root = split_level_sections(root, **params)
-    # root = nest_level_sections(root, **params)
-    root = sections_title_id(root, **params)
-    root = section_note_numbering(root, **params)
-    root = paragraphs_with_newlines(root)
+    # -- paragraph cleanup -- 
     root = anchors_in_paragraphs(root)
+    root = remove_empty_paras(root, **params)
+    root = paragraphs_with_newlines(root)
 
     return [ root ]
 
