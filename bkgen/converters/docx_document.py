@@ -436,7 +436,7 @@ def resolve_hyperlinks(root, **params):
             if rel is not None:
                 href += urllib.parse.unquote(rel.get('Target').replace('.docx', '.xml'))
         if '#' not in href and a.get("data-anchor") is not None:
-            href += "#" + String(a.attrib.pop("data-anchor")).nameify()
+            href += "#" + a.attrib.pop("data-anchor")
         a.set('href', href)
     return root
 
