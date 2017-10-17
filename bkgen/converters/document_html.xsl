@@ -36,6 +36,13 @@
 		</a>
 	</xsl:template> -->
 
+	<!-- omit PAGEREF in TOC -->
+	<xsl:template match="pub:field[@class='PAGEREF' and ancestor::pub:field[@class='TOC']]">
+		<span pub:cond="print">
+			<xsl:apply-templates/>
+		</span>
+	</xsl:template>
+
 	<xsl:template match="pub:field">
 	    <xsl:apply-templates/>
 	</xsl:template>
