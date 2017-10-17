@@ -490,15 +490,18 @@
     <!-- DRAWINGS AND IMAGES -->
 
     <xsl:template match="w:drawing">
-        <div>
-            <xsl:if test=".//wp:positionH/wp:align">
+        <xsl:if test=".//wp:positionH/wp:align">
+            <div>
                 <xsl:attribute name="class">
                     <xsl:text>float-</xsl:text>
                     <xsl:value-of select=".//wp:positionH/wp:align/text()"></xsl:value-of>
                 </xsl:attribute>
-            </xsl:if>
-           <xsl:apply-templates/>
-        </div>
+                <xsl:apply-templates/>
+            </div>
+        </xsl:if>
+        <xsl:if test="not(.//wp:positionH/wp:align)">
+            <xsl:apply-templates/>
+        </xsl:if>
     </xsl:template>
 
     <xsl:template match="wp:inline">
