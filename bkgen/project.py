@@ -747,10 +747,11 @@ class Project(XML, Source):
             from .html import HTML
             html = HTML()
             html.fn = os.path.join(output_path, self.content_folder, self.name + ext)
-            spineitems = [PUB.spineitem(href=os.path.relpath(html.fn, output_path), title=self.metadata().title or '')]
+            title = self.metadata().title.text if self.metadata().title is not None else ''
+            spineitems = [PUB.spineitem(href=os.path.relpath(html.fn, output_path), title=title)]
             html.root.append(
                 H.head(
-                    H.title(self.metadata().title or ''),
+                    H.title(title),
                     H.meta({'charset': 'UTF-8'}),
                     H.link(rel="stylesheet", type="text/css", href=os.path.relpath(project_css_fn, html.path))))
             body = H.body('\n')
