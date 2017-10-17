@@ -40,11 +40,11 @@ class HTML(XML, Source):
         from .css import CSS
         from bf.styles import Styles
         styles = Styles()
-        tags = self.tag_dict(include_attribs=['class'])
+        tags = self.element_map(include_attribs=['class'], attrib_vals=True, hierarchy=False)
         for tag in [tag for tag in tags if NS.html in tag]:
             tagname = XML.tag_name(tag)
             styles[tagname] = {}
-            for c in (tags[tag].get('class') or []):
+            for c in (tags[tag].attributes.get('class') or []):
                 styles[tagname+'.'+c] = {}
         css = CSS(fn=os.path.splitext(self.fn)[0]+'.css', styles=styles)
         return css
