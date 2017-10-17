@@ -58,7 +58,7 @@ def fill_head(root, **params):
                 head.append(H.script(type=mimetype, src=href))
         title = XML.find(head, "//html:title", namespaces=NS)     # matches an existing <title>
         if title is None:
-            title_elem = XML.find(root, "//*[@title]")
+            title_elem = XML.find(root, "//*[@title]", namespaces=NS)
             if title_elem is not None:
                 title = H.title(title_elem.get('title'))
         if title is not None:                                           # new or existing title in <head>
@@ -116,14 +116,19 @@ def render_footnotes(root, **params):
     return root
 
 def process_endnotes(root, endnotes=[], insert_endnotes=False, **params):
-    """collect endnotes from the content in params['endnotes'], and output them at <pub:endnotes/>.
+    """collect endnotes from the content in params['endnotes'], 
+    and output them at <pub:endnotes/> or existing <section class="endnotes"/>.
     If insert_endnotes=True, then insert any remaining endnotes at the end of the document.
     """
-    elem = XML.find(root, "//pub:endnote | //pub:endnotes", namespaces=NS)
+    endnote_xpaths = ["pub:endnote", "pub:endnotes", "html:section[@class='endnotes']"]
+    elem = XML.find(root, '|'.join(['//'+x for x in endnote_xpaths]), namespaces=NS)
     while elem is not None:
-        if elem.tag=="{%(pub)s}endnotes" % NS:      # render the collected endnotes here
-            elem = render_endnotes(elem, endnotes)
-        else:                                       # render the endnote reference link here and collect the endnote
+        if elem.tag=="{%(pub)s}endnotes" % NS\
+        or (elem.tag=="{%(html)s}section" % NS and elem.get('class')=='endnotes'):
+            # render the collected endnotes here
+            this_elem = render_endnotes(elem, endnotes)
+        else:
+            # render the endnote reference link here and collect the endnote
             enum = elem.get('title') or str(len(endnotes)+1)
             enid = elem.get('id') or "en-%s" % enum
             enrefid = XML.find(elem, ".//pub:endnote-ref/@id", namespaces=NS) or enid.replace('en-', 'enref-')
@@ -137,7 +142,8 @@ def process_endnotes(root, endnotes=[], insert_endnotes=False, **params):
             enref.getparent().replace(enref, enreflink)
             endnote = etree.fromstring(etree.tounicode(endnote).replace(' xmlns:pub="http://publishingxml.org/ns"',''))
             endnotes.append(endnote)
-        elem = XML.find(root, "//pub:endnote | //pub:endnotes", namespaces=NS)
+            this_elem = enlink
+        elem = XML.find(this_elem, '|'.join(['following::'+x for x in endnote_xpaths]), namespaces=NS)
     if insert_endnotes==True and len(endnotes) > 0:
         body = XML.find(root, "html:body", namespaces=NS)
         if body is None: body = root
@@ -146,12 +152,14 @@ def process_endnotes(root, endnotes=[], insert_endnotes=False, **params):
 
 def render_endnotes(endnotes_elem, endnotes):
     """insert the collected endnotes into the given endnotes_elem"""
-    endnotes_elem.tag = "{%(html)s}section" % NS
-    endnotes_elem.set('class', 'endnotes')
-    endnotes_elem.text = endnotes_elem.tail = '\n'
-    for endnote in endnotes:
-        endnotes_elem.append(endnote)
+    if endnotes_elem.tag != "{%(html)s}section" % NS:
+        endnotes_elem.tag = "{%(html)s}section" % NS
+        endnotes_elem.set('class', 'endnotes')
+        endnotes_elem.text = endnotes_elem.tail = '\n'
+    while len(endnotes) > 0:
+        endnote = endnotes.pop(0)
         endnote.tail='\n'
+        endnotes_elem.append(endnote)
     return endnotes_elem
 
 def process_pub_attributes(root, **params):
