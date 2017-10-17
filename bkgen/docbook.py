@@ -4,7 +4,6 @@ from bxml import XML
 from bkgen.source import Source
 
 class DocBook(XML, Source):
-    """A Word document can be a source that is brought in, and an output format"""
 
     def document(self, fn=None, **params): 
         """returns an XML document containing the content of the DocBook document"""
