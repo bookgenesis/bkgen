@@ -761,7 +761,10 @@ class Project(XML, Source):
                 h = HTML(fn=outfn)
                 for elem in h.xpath(h.root, "html:body/*"):
                     body.append(elem)
-                os.remove(h.fn)
+                try:
+                    os.remove(h.fn)
+                except:
+                    log.error("FILE NOT FOUND: %r" % h.fn)
             outfns = [html.fn]
             html.write()
 
