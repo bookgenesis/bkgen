@@ -103,7 +103,7 @@ class Document(XML, Source):
             etree.tounicode(e, with_tail=True)
             for e in h.find(h.root, "html:body", namespaces=NS).getchildren()])  
 
-    def render_includes(self):
+    def render_includes(self, strip=False):
         """put included content into the <pub:include> elements in the document."""
         for incl in self.root.xpath("//pub:include", namespaces=NS):
             # remove existing content from the include
@@ -122,6 +122,8 @@ class Document(XML, Source):
                     incl_elems = XML.xpath(src.root, "html:body/*", namespaces=NS)
                 for ie in incl_elems:
                     incl.append(ie)
+            if strip==True: 
+                self.replace_with_contents(incl)
 
     def section_content(self, section_id):
         """return an xml string containing the content of the section"""
