@@ -18,7 +18,6 @@ B = Builder(**NS)
 H = Builder.single(NS.html)
 transformer = XT()
 transformer_XSLT = etree.XSLT(etree.parse(os.path.splitext(__file__)[0] + '.xsl'))
-transformer_XSLT2 = etree.XSLT(etree.parse(os.path.splitext(__file__)[0] + '-2.xsl'))
 
 log = logging.getLogger(__name__)
 logging.basicConfig(**config.Logging)
@@ -34,9 +33,9 @@ class DocumentAid(Converter):
 def default(elem, **params):
     root = get_includes(elem, **params)
     root = transformer_XSLT(root).getroot()
-    root = transformer_XSLT2(root).getroot()
     root = image_hrefs(root, **params)
     root = paragraph_returns(root, **params)
+    root = dt_nobreak_cstyle(root)
     # root = special_characters(root, **params)
     return [ root ]
 
@@ -102,15 +101,25 @@ def paragraph_returns(root, **params):
     t = etree.tounicode(root).strip()
     t = re.sub('\s*\n\s*', '', t)
     root = etree.fromstring(t)
-    pp = root.xpath("//html:p[(not(ancestor::html:table) and following::html:*) or (following-sibling::html:*)]", namespaces=NS)
+    xpath = """//html:*[
+        (name()='p' or name()='li' or name()='dd' 
+            or name()='h1' or name()='h2' or name()='h3' 
+            or name()='h4' or name()='h5' or name()='h6' or name()='h7')
+        and ((not(ancestor::html:table)
+            and not(descendant::html:li or descendant::html:p or descendant::html:h1 
+                or descendant::html:h2 or descendant::html:h3 or descendant::html:h4 
+                or descendant::html:h5 or descendant::html:h6 or descendant::html:h7))
+            or (ancestor::html:table
+                and following-sibling::html:*))
+    ]"""
+    pp = Document.xpath(root, xpath)
     log.debug('%d paragraphs in %r' % (len(pp), root.tag))
     for p in pp:
-        # following = XML.find(p, "following::*")
-        # if (following is not None 
-        #     and following.tag not in ["{%(pub)s}colbreak" % NS, "{%(pub)s}framebreak" % NS, "{%(pub)s}pagebreak" % NS]
-        # ):
         p.tail = '\n'
-    # # breaks need a line so that new paragraphs can form
-    # for br in root.xpath("//pub:colbreak | //pub:framebreak | //pub:pagebreak", namespaces=NS):
-    #     br.text = '\n'
+    return root
+
+def dt_nobreak_cstyle(root):
+    """remove "nobreak" from dt cstyle"""
+    for dt in Document.xpath(root, "//html:dt"):
+        dt.set('{%(aid)s}cstyle' % NS, (dt.get('{%(aid)s}cstyle' % NS) or '').replace('nobreak', '').strip())
     return root
