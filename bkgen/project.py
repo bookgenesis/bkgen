@@ -585,6 +585,7 @@ class Project(XML, Source):
                     for resource 
                     in self.root.xpath("pub:resources/pub:resource[not(@include='False')]", namespaces=NS)]
         for resource in resources:
+            log.debug(resource.attrib)
             f = File(fn=os.path.abspath(os.path.join(self.path, resource.get('href'))))
             if resource.get('class')=='stylesheet':
                 outfn = self.output_stylesheet(f.fn, output_path)
@@ -594,7 +595,6 @@ class Project(XML, Source):
                 outfn = os.path.join(output_path, f.relpath(os.path.dirname(self.fn)))
                 f.write(fn=outfn)
             resource.set('href', File(fn=outfn).relpath(output_path))
-            log.debug(resource.attrib)
         return resources
 
     def output_stylesheet(self, fn, output_path=None):
@@ -729,17 +729,21 @@ class Project(XML, Source):
             if os.path.exists(project_css_fn):
                 head = endnotes_html.find(endnotes_html.root, "html:head", namespaces=NS)
                 head.append(H.link(rel="stylesheet", type="text/css", href=os.path.relpath(project_css_fn, endnotes_html.path)))
+            body = endnotes_html.find(endnotes_html.root, "//html:body")
+            if body is None:
+                body = H.body('\n'); body.tail = '\n'
+                endnotes_html.root.append(body)
             section = H.section('\n', {'class': 'endnotes', 'id':'Collected-Endnotes'})
-            endnotes_html.root.append(H.body('\n', section, '\n'))
+            body.append(section)
             while len(endnotes) > 0:
                 endnote = endnotes.pop(0)
                 endnote.tail = '\n'
                 section.append(endnote)
             endnotes_html.write(canonicalized=False)
-            spineitem = PUB.spineitem(
+            endnotes_spineitem = PUB.spineitem(
                 href= os.path.relpath(endnotes_html.fn, output_path),
                 title="Endnotes")
-            spineitems.append(spineitem)
+            spineitems.append(endnotes_spineitem)
             outfns.append(endnotes_html.fn)
 
         if singlepage==True and len(spineitems) > 0:
