@@ -22,6 +22,7 @@ transformer_XSLT = etree.XSLT(etree.parse(os.path.splitext(__file__)[0] + '.xsl'
 
 class DocumentIcml(Converter):
     def convert(self, document, **params):
+        document.render_includes(strip=True)
         return document.transform(transformer, XMLClass=ICML, **params)
 
 @transformer.match("elem.tag == '{%(pub)s}document'" % NS)

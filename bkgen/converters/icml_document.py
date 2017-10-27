@@ -118,7 +118,8 @@ def HiddenText(elem, **params):
 # == Note ==
 @transformer.match("elem.tag=='Note'")
 def Note(elem, **params):
-    content = ''.join(XML.xpath(elem, ".//Content/text()") )
+    texts = XML.xpath(elem, ".//Content/text()")
+    content = ''.join(texts)
     if content[0:1]=='<' and content[-1:]=='>':
         e = etree.fromstring(content)
         return [e]
