@@ -53,7 +53,8 @@
 	
 	<xsl:template match="pub:tab">
 		<!-- four spaces are a good substitute for a tab in HTML -->
-	    <xsl:text> &#x00a0;&#x00a0; </xsl:text>
+	    <!-- <xsl:text> &#x00a0;&#x00a0; </xsl:text> -->
+	    <xsl:text> </xsl:text>
 	</xsl:template>
 
 	<xsl:template match="pub:anchor[@id]">
