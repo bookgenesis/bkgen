@@ -370,6 +370,14 @@ class EPUB(ZIP, Source):
 
     @classmethod
     def nav_toc_from_spine_items(C, output_path, spine_items, nav_title="Table of Contents", hidden=""):
+        # # first see if there is a nav toc in the content -- if so, use it
+        # for spine_item in spine_items:
+        #     if spine_item.get('landmark')=='toc':
+        #         toc_file = XML(fn=os.path.join(output_path, spine_item.get('href').split('#')[0]))
+        #         nav_toc = toc_file.find(toc_file.root, "//html:nav[@epub:type='toc']", namespaces=C.NS)
+        #         if nav_toc is not None:
+        #             return deepcopy(nav_toc)
+        # fallback: build a nav toc from the spine
         nav_items = []
         for spine_item in spine_items:
             # either a title or a landmark in the spine item qualifies it for inclusion in the TOC
