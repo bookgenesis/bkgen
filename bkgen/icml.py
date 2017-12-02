@@ -214,10 +214,10 @@ class ICML(XML, Source):
             style['-webkit-hyphens:'] = 'none'
 
         # letter-spacing
-        if elem.get('DesiredLetterSpacing') is not None:
-            n = int(elem.get('DesiredLetterSpacing'))
-            if n != 0:
-                style['letter-spacing:'] = "%d%%" % n
+        # if elem.get('DesiredLetterSpacing') is not None:
+        #     n = int(elem.get('DesiredLetterSpacing'))
+        #     if n != 0:
+        #         style['letter-spacing:'] = "%d%%" % n
 
         # margin-left
         if elem.get('LeftIndent') is not None:
@@ -292,8 +292,8 @@ class ICML(XML, Source):
             log.warn("Position=%r, CharacterAlignment=%r" % (position, alignment))
 
         # tracking
-        if elem.get('Tracking') is not None:
-            style['letter-spacing:'] = "%.03fem" % (float(elem.get('Tracking'))/1000)   # tracking in 1/1000 ems
+        # if elem.get('Tracking') is not None:
+        #     style['letter-spacing:'] = "%.03fem" % (float(elem.get('Tracking'))/1000)   # tracking in 1/1000 ems
 
         # word-spacing
         if elem.get('DesiredWordSpacing') is not None:

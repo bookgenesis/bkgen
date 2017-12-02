@@ -5,6 +5,7 @@
     xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/"
     xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/"
     xmlns:pub="http://publishingxml.org/ns"
+    xmlns:epub="http://www.idpf.org/2007/ops"
     exclude-result-prefixes="html">
 
     <xsl:output method="xml" encoding="utf-8" indent="no"/>

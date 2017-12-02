@@ -90,7 +90,7 @@ def special_characters(root, **params):
 
 def image_hrefs(root, **params):
     for img in root.xpath("//html:img", namespaces=NS):
-        img.set('href', 'file://'+os.path.abspath(os.path.join(os.path.dirname(params['fn']), img.get('src'))))
+        img.set('href', 'file://'+img.get('src'))   # relative paths are fine in AID XML.
     return root
 
 def paragraph_returns(root, **params):

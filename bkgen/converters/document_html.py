@@ -1,6 +1,7 @@
 """convert pub:document and document fragments to (X)HTML"""
 
 import os, logging
+from copy import deepcopy
 from lxml import etree
 from bxml.xt import XT
 from bxml.builder import Builder
@@ -37,6 +38,7 @@ def default(elem, **params):
     root = process_endnotes(root, **params)
     root = process_pub_attributes(root, **params)
     root = replace_ligature_characters(root)
+    root = render_simple_tables(root)
     return [ root ]
 
 def fill_head(root, **params):
@@ -82,7 +84,7 @@ def omit_unsupported_font_formatting(root, **params):
 
 def render_footnotes(root, **params):
     """render the footnotes within the given section at the end of the section"""
-    sections = root.xpath(".//html:section", namespaces=NS)
+    sections = root.xpath(".//html:section[@id and descendant::pub:footnote]", namespaces=NS)
     for section in sections:
         footnotes_section = XML.find(section, ".//html:section[@class='footnotes']", namespaces=NS)
         if footnotes_section is None:
@@ -188,4 +190,35 @@ def replace_ligature_characters(root):
     for lig, chars in ligatures.items():
         text = text.replace(lig, chars)
     root = etree.fromstring(text)
+    return root
+
+def render_simple_tables(root):
+    """If a table's first row is <th> cells, and every row has the same number of cells,
+    then convert the table into a series of two column tables, one per row, 
+    with the <th> cells on the left and the <td> cells on the right.
+    """
+    for table in Document.xpath(root, "//html:table"):
+        first_row = Document.find(table, "html:tr")
+        if first_row is None: continue
+        if len(first_row.getchildren()) != len(Document.xpath(first_row, "html:th")):
+            continue
+        additional_rows = Document.xpath(table, "html:tr")[1:]
+        next_table = False
+        for row in additional_rows:
+            if len(row.getchildren()) != len(first_row.getchildren()):
+                next_table = True
+                break
+        if next_table == True:
+            continue
+        # Okay, this is a table we can transform
+        parent = table.getparent()
+        for row in additional_rows:
+            row_table = B.html.table('\n\t')
+            row_table.tail = '\n'
+            for i in range(len(first_row)):
+                tr = B.html.tr('\n\t\t', deepcopy(first_row[i]), '\n\t\t', deepcopy(row[i]))
+                tr.tail = '\n\t'
+                row_table.append(tr)
+            parent.insert(parent.index(table), row_table)
+        parent.remove(table)
     return root

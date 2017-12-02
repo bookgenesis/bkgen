@@ -465,7 +465,7 @@ def paragraphs_with_newlines(root):
 
 def anchors_in_paragraphs(root):
     """make sure anchors are inside paragraphs"""
-    for a in root.xpath("""//html:a[not(
+    for a in root.xpath("""//html:*[(name()='a' or @class='anchor') and not(
         ancestor::html:p or ancestor::html:h1 or ancestor::html:h2 or ancestor::html:h3 
         or ancestor::html:h4 or ancestor::html:h5 or ancestor::html:h6 or ancestor::html:h7 
         or ancestor::html:h8 or ancestor::html:h9)]""", namespaces=NS

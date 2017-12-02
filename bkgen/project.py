@@ -179,7 +179,7 @@ class Project(XML, Source):
     # CLASSMETHODS
 
     @classmethod
-    def create(Class, parent_path, title, name=None, include_stylesheet=True, **project_params):
+    def create(Class, parent_path, title, name=None, path=None, basename='project', include_stylesheet=True, **project_params):
         """create a new project.
             parent_path = the filesystem path to the parent folder that this project is in
             title = the title for the project
@@ -196,19 +196,19 @@ class Project(XML, Source):
             os.makedirs(parent_path)
             # raise ValueError("Before creating the project, first create the parent folder, %s" % parent_path)
 
-        project_path = os.path.join(parent_path, name)
+        project_path = path or os.path.join(parent_path, name)
         if not os.path.exists(project_path):
             os.makedirs(project_path)
         else:
             log.info("Project folder already exists: %s" % project_path)
 
-        project_fn = os.path.join(project_path, 'project.xml')
+        project_fn = os.path.join(project_path, '%s.xml' % basename)
         if os.path.exists(project_fn):
             log.info("Project file already exists, not overwriting: %s" % project_fn)
             project = Class(fn=project_fn, **project_params)
         else:        
             project = Class(fn=os.path.join(PATH, 'templates', 'project.xml'), **project_params)
-            project.fn = os.path.join(project_path,'project.xml')
+            project.fn = project_fn
             project.root.set('name', name)
             project.find(project.root, "opf:metadata/dc:title", namespaces=NS).text = title
 
@@ -225,11 +225,11 @@ class Project(XML, Source):
             if not os.path.exists(stylesheet_fn):
                 stylesheet_elem.getparent().remove(stylesheet_elem)
                 stylesheet_elem = None
-        if stylesheet_elem is None:
-            stylesheet_fn = os.path.join(project.path, 'project.css')
+        if stylesheet_elem is None and include_stylesheet==True:
+            stylesheet_fn = os.path.splitext(project_fn)[0]+'.css'
             stylesheet_href = os.path.relpath(stylesheet_fn, project.path)
             project.add_resource(stylesheet_href, 'stylesheet')
-            if not os.path.exists(stylesheet_fn) and include_stylesheet==True:
+            if not os.path.exists(stylesheet_fn):
                 log.debug("stylesheet does not exist, creating")
                 from bl.text import Text
                 stylesheet = Text(fn=os.path.join(PATH, 'templates', 'project.css'))

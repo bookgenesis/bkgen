@@ -114,7 +114,7 @@ if __name__=='__main__':
     from bkgen.epub import EPUB
     logging.basicConfig(**config.Logging)
     for build_path in sys.argv[2:]:
-        if sys.argv[1]=='build':
+        if sys.argv[1]=='compile':
             opffn = EPUB.get_opf_fn(build_path)
             MOBI().compile_mobi(build_path, opffn)
         else:

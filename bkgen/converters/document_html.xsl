@@ -115,25 +115,25 @@
 	<xsl:template match="pub:modified"><xsl:apply-templates/></xsl:template>
 
 	<!-- MathML: If an altimg is available, use it; otherwise, leave the MathML alone -->
-	<xsl:template match="m:math[@altimg] | math[@altimg]">
+<!-- 	<xsl:template match="m:math[@altimg] | math[@altimg]">
 	    <img>
 	    	<xsl:attribute name="src">
 	    	    <xsl:value-of select="@altimg"/>
 	    	</xsl:attribute>
-<!-- 	    	<xsl:if test="@altimg-valign">
+	    	<xsl:if test="@altimg-valign">
 	    	    <xsl:attribute name="style">
 	    	        <xsl:text>vertical-align:</xsl:text>
 	    	        <xsl:value-of select="@altimg-valign"/>
 	    	        <xsl:text>px</xsl:text>
 	    	    </xsl:attribute>
 	    	</xsl:if>
- -->
+
 	    </img>
 	</xsl:template>
 
     <xsl:template match="m:math[not(@altimg)] | math[not(@altimg)]">
     	<xsl:copy><xsl:apply-templates select="@*|node()"/></xsl:copy>
 	</xsl:template>
-
+ -->
 
 </xsl:stylesheet>
