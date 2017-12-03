@@ -431,16 +431,19 @@ class Project(XML, Source):
     def import_image(self, fn, **params):
         """import the image from a local file. Process through GraphicsMagick to ensure clean."""
         # import the image to the project image folder
+        from bf.image import Image
         basename = self.make_basename(fn, ext='.jpg')
-        outfn = os.path.join(self.path, self.image_folder, basename)
+        if params.get('class') is not None and 'cover' in params.get('class'):
+            outfn = os.path.join(self.path, self.cover_folder, basename)
+        else:
+            outfn = os.path.join(self.path, self.image_folder, basename)
         log.debug('image: %s' % os.path.relpath(fn, self.path))
         ext = os.path.splitext(fn)[-1].lower()
         if ext == '.pdf':
             from bf.pdf import PDF
             PDF(fn=fn).gswrite(fn=outfn, device='jpeg', res=600)
         else:
-            from bf.image import Image
-            Image(fn=fn).convert(outfn, format='jpg', quality=100)
+            Image(fn=fn).convert(outfn, format='jpg', res=300, quality=100)
 
         # create / update the resource for the image
         image_file = File(fn=outfn)
