@@ -428,10 +428,12 @@ class Project(XML, Source):
         for image in images:
             self.import_image(image.fn)
 
-    def import_image(self, fn, **params):
+    def import_image(self, fn, gs=None, **params):
         """import the image from a local file. Process through GraphicsMagick to ensure clean."""
         # import the image to the project image folder
         from bf.image import Image
+        if gs in params:
+            gs = params.pop('gs')
         basename = self.make_basename(fn, ext='.jpg')
         if params.get('class') is not None and 'cover' in params.get('class'):
             outfn = os.path.join(self.path, self.cover_folder, basename)
@@ -441,7 +443,7 @@ class Project(XML, Source):
         ext = os.path.splitext(fn)[-1].lower()
         if ext == '.pdf':
             from bf.pdf import PDF
-            PDF(fn=fn).gswrite(fn=outfn, device='jpeg', res=600)
+            PDF(fn=fn).gswrite(fn=outfn, device='jpeg', res=600, gs=gs)
         else:
             Image(fn=fn).convert(outfn, format='jpg', res=300, quality=100)
 
@@ -614,10 +616,12 @@ class Project(XML, Source):
         return outfn
 
     def output_image(self, fn, output_path=None, outfn=None, svg=True,
-            format='jpeg', ext='.jpg', res=300, quality=80, maxwh=2048, maxpixels=4e6, **img_args):
+            format='jpeg', ext='.jpg', res=300, quality=80, maxwh=2048, maxpixels=4e6, gs=None, **img_args):
         from bf.image import Image
         f = File(fn=fn)
         mimetype = mimetypes.guess_type(fn)
+        if 'gs' in img_args:
+            gs = img_args.pop('gs')
         output_path = output_path or os.path.join(self.path, self.output_folder)
         outfn = outfn or os.path.splitext(os.path.join(output_path, f.relpath(self.path)))[0] + ext
         log.debug("%s %r" % (outfn, mimetype))
@@ -631,7 +635,7 @@ class Project(XML, Source):
                 # write the output image
                 if mimetype=='application/pdf' or f.ext.lower() == '.pdf':
                     from bf.pdf import PDF
-                    PDF(fn=fn).gswrite(fn=outfn, device=format, res=res)
+                    PDF(fn=fn).gswrite(fn=outfn, device=format, res=res, gs=gs)
                 elif format in mimetype or f.ext == ext:
                     f.write(fn=outfn)
                 else:
