@@ -36,16 +36,18 @@ class HTML(XML, Source):
     def stylesheet(self):
         return self.css_template()
 
-    def css_template(self):
+    def css_template(self, tags=None):
         from .css import CSS
         from bf.styles import Styles
         styles = Styles()
-        tags = self.element_map(include_attribs=['class'], attrib_vals=True, hierarchy=False)
+        if tags is None:
+            tags = self.element_map(include_attribs=['class'], attrib_vals=True, hierarchy=False)
         for tag in [tag for tag in tags if NS.html in tag]:
             tagname = XML.tag_name(tag)
             styles[tagname] = {}
             for c in (tags[tag].attributes.get('class') or []):
-                styles[tagname+'.'+c] = {}
+                for s in c.split(' '):
+                    styles[tagname+'.'+s] = {}
         css = CSS(fn=os.path.splitext(self.fn)[0]+'.css', styles=styles)
         return css
 
