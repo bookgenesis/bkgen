@@ -869,8 +869,12 @@ def import_all(project_path):
         project.import_image(fn, **{'class':'cover', 'kind':'digital'})
 
 def build_project(project_path, format=None, check=None, doc_stylesheets=True, singlepage=False):
-    log.debug("== BUILD PROJECT == %s" % os.path.basename(project_path))
-    project = Project(fn=os.path.join(project_path, 'project.xml'), **(config.Project or {}))
+    if os.path.isfile(project_path):
+        project_fn = project_path
+    elif os.path.isdir(project_path) and os.path.isfile(os.path.join(project_path, 'project.xml')):
+        project_fn = os.path.join(project_path, 'project.xml')
+    project = Project(fn=project_fn, **(config.Project or {}))
+    log.debug("== BUILD PROJECT == %s" % os.path.basename(os.path.dirname(project.fn)))
 
     # default formats
     if format is None or 'epub' in format:

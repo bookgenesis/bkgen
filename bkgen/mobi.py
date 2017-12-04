@@ -40,7 +40,7 @@ class MOBI(Dict):
         if before_compile is not None:
             before_compile(build_path)
         self.compile_mobi(build_path, opffn, mobifn=mobifn)
-        result.fn=mobifn
+        result.update(fn=mobifn, log=mobifn+'.kindlegen.txt', format='mobi')
         return result
 
     @classmethod
@@ -91,7 +91,6 @@ class MOBI(Dict):
                     log.debug("%dx%d\t%dx%d\t%s" % (w, h, width, height, os.path.relpath(srcfn, os.path.dirname(opffn))))
             x.write(canonicalized=False)
 
-
     def compile_mobi(self, build_path, opffn, mobifn=None, config=config):
         """generate .mobi file using kindlegen"""
         if mobifn is None: 
@@ -108,6 +107,8 @@ class MOBI(Dict):
             if os.path.exists(mobifn) and mobifn != mobi_build_fn:
                 os.remove(mobifn)
             os.rename(mobi_build_fn, mobifn)
+        result = dict(fn=mobifn, log=logfn, format='mobi')
+        return result
 
 if __name__=='__main__':
     import sys

@@ -243,8 +243,7 @@ class EPUB(ZIP, Source):
         mimetype_fn = C.make_mimetype_file(output_path)
         container_fn = C.make_container_file(output_path, opffn)
         
-        result = Dict(
-            fn=C.epub_fn(output_path, epub_name))
+        result = Dict(fn=C.epub_fn(output_path, epub_name), format='epub')
         if before_compile is not None:
             before_compile(output_path)
         if zip==True:
