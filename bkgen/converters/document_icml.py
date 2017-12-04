@@ -490,8 +490,8 @@ def build_endnote_marker(elem):
         if endnote_fmt[:5] == 'upper':
             endnote_marker = endnote_marker.upper()
     elif endnote_fmt[-5:] == 'Roman':
-        from be.integer import to_roman
-        endnote_marker = to_roman(index + 1)    # uppercase roman numeral
+        from bl.int import Int
+        endnote_marker = Int.to_roman(index + 1)    # uppercase roman numeral
         if endnote_fmt[:5] == 'lower':
             endnote_marker = endnote_marker.lower()
     elif endnote_fmt == 'chicago':
