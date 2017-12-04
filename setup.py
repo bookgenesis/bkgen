@@ -1,6 +1,6 @@
 config = {
     "name": "bkgen",
-    "version": "0.9.0",
+    "version": "0.10.0",
     "description": "Core functionality for bookgenesis",
     "url": "https://gitlab.com/bookgenesis/bkgen",
     "author": "Sean Harrison",
@@ -12,7 +12,7 @@ config = {
         "Programming Language :: Python :: 3"
     ],
     "entry_points": {},
-    "install_requires": ["bl", "bf", "bxml", "bsql"],
+    "install_requires": ["bl", "bf", "bxml"],
     "extras_require": {
         "dev": [],
         "test": []

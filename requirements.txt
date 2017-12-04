@@ -4,7 +4,6 @@ Babel==2.4.0
 -e git+https://github.com/BlackEarth/bf@b048dda25606e3f446358216f073e1891e1f8db2#egg=bf
 -e git+git@gitlab.com:bookgenesis/bkgen.git@14ea81ae915e428d745a834113a0175cc97e938a#egg=bkgen
 -e git+https://github.com/BlackEarth/bl.git@9f395128d5ac68fd56c92841ec56fadebafb63d4#egg=bl
--e git+https://github.com/BlackEarth/bsql.git@13e19fd380dc5d6305b8f8a5ce791868243ee870#egg=bsql
 -e git+https://github.com/BlackEarth/bxml@35c0f00562c00982089335a92d33d102a201f2d3#egg=bxml
 click==6.7
 cssselect==1.0.1
