@@ -621,43 +621,49 @@ class Project(XML, Source):
         output_path = output_path or os.path.join(self.path, self.output_folder)
         outfn = outfn or os.path.splitext(os.path.join(output_path, f.relpath(self.path)))[0] + ext
         log.debug("%s %r" % (outfn, mimetype))
-        if not os.path.exists(os.path.dirname(outfn)):
-            os.makedirs(os.path.dirname(outfn))
-        if (mimetype=='image/svg+xml' or f.ext=='.svg') and svg==True:
-            outfn = os.path.splitext(outfn)[0] + '.svg'
-            f.write(fn=outfn)
-        else:
-            # write the output image
-            if mimetype=='application/pdf' or f.ext.lower() == '.pdf':
-                from bf.pdf import PDF
-                PDF(fn=fn).gswrite(fn=outfn, device=format, res=res)
-            elif format in mimetype or f.ext == ext:
+        try:
+            if not os.path.exists(os.path.dirname(outfn)):
+                os.makedirs(os.path.dirname(outfn))
+            if (mimetype=='image/svg+xml' or f.ext=='.svg') and svg==True:
+                outfn = os.path.splitext(outfn)[0] + '.svg'
                 f.write(fn=outfn)
             else:
-                Image(fn=fn).convert(outfn, format=format)
+                # write the output image
+                if mimetype=='application/pdf' or f.ext.lower() == '.pdf':
+                    from bf.pdf import PDF
+                    PDF(fn=fn).gswrite(fn=outfn, device=format, res=res)
+                elif format in mimetype or f.ext == ext:
+                    f.write(fn=outfn)
+                else:
+                    Image(fn=fn).convert(outfn, format=format)
 
-            # make sure the output image fits the parameters
-            log.debug("%s %r" % (outfn, os.path.exists(outfn)))
-            image = Image(fn=outfn)
-            width, height = [int(i) for i in image.identify(format="%w,%h").split(',')]
-            if width * height > maxpixels:                          # reduce dimension to fit maxpixels
-                fraction = (maxpixels / (width * height)) ** 0.5
-                width *= fraction
-                height = height * fraction
-            if width > maxwh:                                       # reduce dimensions to fit maxwh
-                height *= maxwh / width
-                width = maxwh
-            if height > maxwh:
-                width *= maxwh / height
-                height = maxwh
-            width, height = int(width), int(height)
+                # make sure the output image fits the parameters
+                log.debug("%s %r" % (outfn, os.path.exists(outfn)))
+                image = Image(fn=outfn)
+                width, height = [int(i) for i in image.identify(format="%w,%h").split(',')]
+                if width * height > maxpixels:                          # reduce dimension to fit maxpixels
+                    fraction = (maxpixels / (width * height)) ** 0.5
+                    width *= fraction
+                    height = height * fraction
+                if width > maxwh:                                       # reduce dimensions to fit maxwh
+                    height *= maxwh / width
+                    width = maxwh
+                if height > maxwh:
+                    width *= maxwh / height
+                    height = maxwh
+                width, height = int(width), int(height)
 
-            log.debug("res=%r, width=%r, height=%r" % (res, width, height))
-            img_args.update(density="%dx%d" % (res,res), geometry="%dx%d>" % (width, height))
-            if format.lower() in ['jpeg', 'jpg']:
-                img_args.update(quality=quality)
-            image.mogrify(**img_args)
-            log.debug("img: %r %r" % (outfn, img_args))
+                log.debug("res=%r, width=%r, height=%r" % (res, width, height))
+                img_args.update(density="%dx%d" % (res,res), geometry="%dx%d>" % (width, height))
+                if format.lower() in ['jpeg', 'jpg']:
+                    img_args.update(quality=quality)
+                image.mogrify(**img_args)
+                log.debug("img: %r %r" % (outfn, img_args))
+        except:
+                # the show must go on
+                log.critical(fn)
+                log.critical(outfn)
+                log.critical(traceback.format_exc())
         return outfn
 
     def output_spineitems(self, output_path=None, ext='.xhtml', resources=None, singlepage=False,
