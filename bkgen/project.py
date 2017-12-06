@@ -204,13 +204,15 @@ class Project(XML, Source):
 
         project_fn = os.path.join(project_path, '%s.xml' % basename)
         if os.path.exists(project_fn):
-            log.info("Project file already exists, not overwriting: %s" % project_fn)
+            log.info("Project file already exists: %s" % project_fn)
             project = Class(fn=project_fn, **project_params)
         else:        
             project = Class(fn=os.path.join(PATH, 'templates', 'project.xml'), **project_params)
             project.fn = project_fn
             project.root.set('name', name)
-            project.find(project.root, "opf:metadata/dc:title", namespaces=NS).text = title
+
+        # update the title from what is given
+        project.find(project.root, "opf:metadata/dc:title", namespaces=NS).text = title
 
         # make sure there is a base set of project folders
         for folder in [project.get(k) for k in project.keys() if '_folder' in k and project.get(k) is not None]:
