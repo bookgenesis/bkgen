@@ -115,12 +115,13 @@ class ICML(XML, Source):
     @classmethod
     def lang_attribute(Class, elem):
         import pycountry
-        if elem.get('AppliedLanguage') is not None:
+        key = 'AppliedLanguage'
+        if elem.get(key) is not None:
             lang = pycountry.languages.lookup(elem.get(key).split('/')[-1].split(':')[0])
             if lang is not None:
                 return lang.alpha_2
             else:
-                log.warn('AppliedLanguage=%r' % elem.get('AppliedLanguage'))
+                log.warn('%s=%r' % (key, elem.get(key)))
 
     @classmethod
     def style_attribute(Class, elem, pts_per_em=None):
