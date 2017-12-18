@@ -490,7 +490,6 @@ class Project(XML, Source):
         """
         log.info("build_outputs: %s %r" % (self.fn, dict(kind=kind, cleanup=cleanup, before_compile=before_compile, doc_stylesheets=doc_stylesheets, singlepage=singlepage)))
         output_kinds = [k for k in self.OUTPUT_KINDS.keys() if kind is None or k==kind]
-        log.info("output_kinds: %r" % output_kinds)
         results = []
         for output_kind in output_kinds:
             try:
