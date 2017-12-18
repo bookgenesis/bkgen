@@ -3,6 +3,7 @@ import os, logging, re, subprocess
 from bl.dict import Dict
 from bf.image import Image
 from bxml.xml import XML, etree
+from bkgen.html import HTML
 from bkgen import NS, config
 
 log = logging.getLogger(__name__)
@@ -35,6 +36,7 @@ class MOBI(Dict):
         opffn = EPUB.get_opf_fn(build_path)
         self.move_anchors_before_paragraphs(build_path, opffn)
         EPUB.unhide_toc(os.path.join(build_path, nav_href))
+        self.strip_header_elements(build_path, opffn)
         EPUB.append_toc_to_spine(opffn, nav_href)
         self.size_images(opffn)
         if before_compile is not None:
@@ -64,6 +66,16 @@ class MOBI(Dict):
                     a.tail = ''
                     parent.insert(parent.index(p), a)
             x.write()
+
+    @classmethod
+    def strip_header_elements(C, build_path, opffn):
+        """Kindle has trouble with header elements, so we just have to strip them."""
+        opf = XML(fn=opffn)
+        for item in opf.root.xpath("opf:manifest/opf:item[contains(@media-type, 'html')]", namespaces=C.NS):
+            h = HTML(fn=os.path.join(build_path, item.get('href')))
+            for header in h.xpath(h.root, "//html:header"):
+                HTML.replace_with_contents(header)
+            h.write()
 
     def size_images(self, opffn):
         """resample images to the width / height specified in the img tag, and remove those size attributes"""
