@@ -932,6 +932,13 @@ if __name__=='__main__':
         log.warn("Usage: python -m bkgen.project command project_path [project_path] ...")
     else:
         project_path = os.path.abspath(sys.argv[2])
+        if os.path.isdir(project_path):
+            project_fn = os.path.join(project_path, 'project.xml')
+        else:
+            project_fn = project_path
+            project_path = os.path.dirname(project_path)
+        project = Project(fn=project_fn)
+
         if 'create' in sys.argv[1]:
             Project.create(os.path.dirname(project_path), os.path.basename(project_path))
         
