@@ -612,13 +612,12 @@ class Project(XML, Source):
         output_path = output_path or os.path.join(self.path, self.output_folder)
         outfn = os.path.join(output_path, os.path.relpath(fn, self.path))
         log.debug("project.output_stylesheet(): %r" % outfn)
-        css = self.stylesheet()
-        if os.path.splitext(css.fn)[-1] == '.scss':
+        if os.path.splitext(fn)[-1] == '.scss':
             from bf.scss import SCSS
             outfn = os.path.splitext(outfn)[0]+'.css'
-            SCSS(fn=css.fn).render_css().write(fn=outfn)
+            SCSS(fn=fn).render_css().write(fn=outfn)
         else:
-            css.write(fn=outfn)
+            Text(fn=fn).write(fn=outfn)
         return outfn
 
     def output_image(self, fn, output_path=None, outfn=None, svg=True, png=True,
