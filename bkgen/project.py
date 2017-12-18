@@ -617,7 +617,7 @@ class Project(XML, Source):
             css.write(fn=outfn)
         return outfn
 
-    def output_image(self, fn, output_path=None, outfn=None, svg=True,
+    def output_image(self, fn, output_path=None, outfn=None, svg=True, png=True,
             format='jpeg', ext='.jpg', res=300, quality=80, maxwh=2048, maxpixels=4e6, gs=None, **img_args):
         from bf.image import Image
         f = File(fn=fn)
@@ -630,7 +630,11 @@ class Project(XML, Source):
         try:
             if not os.path.exists(os.path.dirname(outfn)):
                 os.makedirs(os.path.dirname(outfn))
-            if (mimetype=='image/svg+xml' or f.ext=='.svg') and svg==True:
+                
+            if (mimetype=='image/png' or f.ext=='.png') and png==True:
+                outfn = os.path.splitext(outfn)[0] + '.png'
+                f.write(fn=outfn)
+            elif (mimetype=='image/svg+xml' or f.ext=='.svg') and svg==True:
                 outfn = os.path.splitext(outfn)[0] + '.svg'
                 f.write(fn=outfn)
             else:
