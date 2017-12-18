@@ -78,7 +78,7 @@ def omit_print_conditions(root, **params):
 def omit_unsupported_font_formatting(root, **params):
     # omit unsupported font formatting
     for span in XML.xpath(root, "//html:span", namespaces=NS):
-        for key in [key for key in span.attrib.keys() if key not in ['class', 'id', 'style']]:
+        for key in [key for key in span.attrib.keys() if key not in ['class', 'id', 'style', '{%(epub)s}type'%NS, 'title']]:
             _=span.attrib.pop(key)
     return root
 

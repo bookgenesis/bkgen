@@ -109,7 +109,7 @@
 	<!-- NOT YET IMPLEMENTED and therefore ignored (stripped, leaving content) -->
 	<xsl:template match="pub:field"><xsl:apply-templates/></xsl:template>
 	<xsl:template match="pub:cref"><xsl:apply-templates/></xsl:template>
-	<xsl:template match="pub:xe"><xsl:apply-templates/></xsl:template>
+	<!-- <xsl:template match="pub:xe"><xsl:apply-templates/></xsl:template> -->
 	<xsl:template match="pub:index"><xsl:apply-templates/></xsl:template>
 	<xsl:template match="pub:toc"><xsl:apply-templates/></xsl:template>
 	<xsl:template match="pub:modified"><xsl:apply-templates/></xsl:template>
