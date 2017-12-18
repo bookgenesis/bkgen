@@ -365,6 +365,7 @@ class Project(XML, Source):
         """
         if documents is None: return
         spine_elem = self.find(self.root, "pub:spine", namespaces=NS)
+            log.debug('there is no spine element, add one')
         spine_hrefs = [
             spineitem.get('href') 
             for spineitem in self.xpath(spine_elem, "pub:spineitem", namespaces=NS)
