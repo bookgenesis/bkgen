@@ -1,6 +1,6 @@
 config = {
     "name": "bkgen",
-    "version": "0.10.2",
+    "version": "0.12.0",
     "description": "Core functionality for bookgenesis",
     "url": "https://gitlab.com/bookgenesis/bkgen",
     "author": "Sean Harrison",
