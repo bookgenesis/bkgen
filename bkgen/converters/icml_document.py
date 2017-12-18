@@ -457,7 +457,7 @@ omitted = [
     'Bookmark', 'Cell', 'Color', 'ColorGroup', 'Column', 'CompositeFont', 'CrossReferenceFormat', 
     'DocumentUser', 'FontFamily', 'FrameFittingOption', 'Group', 'Hyperlink', 'HyperlinkURLDestination', 
     'InCopyExportOption', 'Ink', 'MetadataPacketPreference', 'NumberingList', 'ObjectExportOption',
-    'Properties', 'RootCellStyleGroup', 'RootCharacterStyleGroup', 'RootObjectStyleGroup',
+    'Oval', 'Properties', 'RootCellStyleGroup', 'RootCharacterStyleGroup', 'RootObjectStyleGroup',
     'RootParagraphStyleGroup', 'RootTableStyleGroup', 'StandaloneDocumentPreference', 
     'StoryPreference', 'StrokeStyle', 'Swatch', 'TextWrapPreference',
     'TinDocumentDataObject', 'TransparencyDefaultContainerObject', 'Condition', 'TextVariable',
