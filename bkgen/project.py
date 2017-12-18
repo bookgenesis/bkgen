@@ -364,8 +364,12 @@ class Project(XML, Source):
         (3) importing referenced images, if available
         """
         if documents is None: return
-        spine_elem = self.find(self.root, "pub:spine", namespaces=NS)
+        spine_elem = self.find(self.root, "pub:spine")
+        if spine_elem is None:
             log.debug('there is no spine element, add one')
+            spine_elem = PUB.spine('\n\t\t')
+            spine_elem.tail='\n\n\t'
+            self.root.append(spine_elem)
         spine_hrefs = [
             spineitem.get('href') 
             for spineitem in self.xpath(spine_elem, "pub:spineitem", namespaces=NS)
