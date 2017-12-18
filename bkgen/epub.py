@@ -188,31 +188,62 @@ class EPUB(ZIP, Source):
             cover_html_relpath = None
 
         # nav file
+
+        # If the spine includes a toc landmark, then use it as the base nav document,
+        # and add to it spine items that have titles
+        landmarks = [spineitem.get('landmark') for spineitem in spine_items]
+        if 'toc' in landmarks:
+            toc_item = spine_items[landmarks.index('toc')]
+            nav = XML(fn=os.path.join(output_path, toc_item.get('href')))
+            nav_elem = nav.find(nav.root, "//html:nav", namespaces=NS)
+            nav_elem.set('{%(epub)s}type'%NS, 'toc')
+            if show_nav != True: 
+                nav_elem.set('hidden', "")
+            
+            # must update hrefs and srcs to the nav_href location.
+            for element in nav.xpath(nav.root, "//*[@href or @src]"):
+                href = element.get('href')
+                if href is not None:
+                    element.set('href',
+                        os.path.relpath(
+                            os.path.abspath(os.path.join(os.path.dirname(nav.fn), href)), 
+                            os.path.dirname(os.path.join(output_path, nav_href))))
+                src = element.get('src')
+                if src is not None:
+                    element.set('src',
+                        os.path.relpath(
+                            os.path.abspath(os.path.join(os.path.dirname(nav.fn), src)), 
+                            os.path.dirname(os.path.join(output_path, nav_href))))
+
+            # make the nav element the only child of the body
+            body = nav.find(nav.root, "html:body", namespaces=NS)
+            for ch in body.getchildren():
+                XML.remove(ch)
+            body.append(nav_elem)
+            
+            nav.fn = os.path.join(output_path, nav_href)
+            nav.write(doctype="<!DOCTYPE html>", canonicalized=False)
+            navfn = nav.fn
+        
+        else:
+            if nav_toc is None:
+                nav_toc = C.nav_toc_from_spine_items(output_path, spine_items)
+            navfn = C.make_nav_file(output_path, nav_toc, nav_href=nav_href, title=nav_title)
+
+        nav = XML(fn=navfn)
+        body = nav.find(nav.root, "html:body", namespaces=NS)
+
         if nav_landmarks is None:
             nav_landmarks = C.nav_landmarks_from_spine_items(output_path, spine_items)
-        if nav_toc is None:
-            nav_toc = C.nav_toc_from_spine_items(output_path, spine_items)
+        if nav_landmarks is not None:
+            body.append(nav_landmarks)
 
         if nav_page_list is None:
             nav_page_list = C.nav_page_list_from_spine_items(output_path, spine_items)
-        navfn = C.make_nav_file(output_path, nav_toc, nav_landmarks, nav_page_list,
-                                    nav_href=nav_href, title=nav_title)
+        if nav_page_list is not None:
+            body.append(nav_page_list)
 
-        # make sure there's a 'toc' landmark in the nav file
-        # nav = XML(fn=navfn)
-        # landmarks = HTML.find(nav.root, ".//html:nav[@epub:type='landmarks']")
-        # log.info("landmarks: %r" % landmarks)
-        # if landmarks is not None:
-        #     toc_landmark = HTML.find(landmarks, ".//*[@epub:type='toc']")
-        #     log.info("toc_landmark: %r" % toc_landmark)
-        #     if toc_landmark is None:
-        #         ol = HTML.find(landmarks, ".//html:ol")
-        #         href = os.path.relpath(navfn, output_path).replace('\\', '/')
-        #         li = H.li(
-        #             H.a({'href': href, '{%(epub)s}type'%NS: 'toc'}, 'Contents'))
-        #         li.tail = '\n\t\t'
-        #         ol.append(li)
-        #         nav.write()
+        nav.write(doctype="<!DOCTYPE html>", canonicalized=False)
 
         # ncx file
         ncx_fn = C.make_ncx_file(output_path, navfn, opf_metadata)
@@ -362,21 +393,15 @@ class EPUB(ZIP, Source):
                                 type="text/css"),
                             '\n\t'),
                         '\n\t', 
-                        H.body('\n', *nav_elems)))
+                        H.body('\n', 
+                            H.section('\n', *nav_elems),
+                            '\n')))
         nav.fn=os.path.join(output_path,nav_href)
         nav.write(doctype="<!DOCTYPE html>", canonicalized=False)
         return nav.fn
 
     @classmethod
     def nav_toc_from_spine_items(C, output_path, spine_items, nav_title="Table of Contents", hidden=""):
-        # # first see if there is a nav toc in the content -- if so, use it
-        # for spine_item in spine_items:
-        #     if spine_item.get('landmark')=='toc':
-        #         toc_file = XML(fn=os.path.join(output_path, spine_item.get('href').split('#')[0]))
-        #         nav_toc = toc_file.find(toc_file.root, "//html:nav[@epub:type='toc']", namespaces=C.NS)
-        #         if nav_toc is not None:
-        #             return deepcopy(nav_toc)
-        # fallback: build a nav toc from the spine
         nav_items = []
         for spine_item in spine_items:
             # either a title or a landmark in the spine item qualifies it for inclusion in the TOC
@@ -429,7 +454,10 @@ class EPUB(ZIP, Source):
             fn=os.path.join(output_path, href)
             if os.path.splitext(fn)[1] not in ['.html', '.xhtml']: 
                 continue
-            for pagebreak in XML(fn=fn).root.xpath("//*[@epub:type='pagebreak']", namespaces=C.NS):
+            for pagebreak in XML(fn=fn).root.xpath("//*[@epub:type='pagebreak' and @title]", namespaces=C.NS):
+                if pagebreak.get('id') is None:
+                    log.warn('pagebreak without id: %r' % pagebreak.attrib)
+                    continue
                 page_list_items.append({
                     'href':href+'#'+pagebreak.get('id'), 
                     'title':pagebreak.get('title')})
@@ -457,6 +485,7 @@ class EPUB(ZIP, Source):
         nav_elem = H.nav('\n\t', h1, '\n\t', H.ol(), '\n'); nav_elem.tail = '\n\n'
         if epub_type is not None: 
             nav_elem.set('{%(epub)s}type' % C.NS, epub_type)
+            nav_elem.set('class', epub_type)
         if hidden is not None: 
             nav_elem.set('hidden', hidden)
         ol_elem = nav_elem.find("{%(html)s}ol" % C.NS)
