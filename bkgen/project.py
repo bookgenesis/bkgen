@@ -944,8 +944,10 @@ if __name__=='__main__':
         
         if 'import-all' in sys.argv[1]:
             import_all(project_path)
+        elif 'import-cover' in sys.argv[1]:
+            project.import_image(sys.argv[3], **{'class':'cover'})
         elif 'import' in sys.argv[1]:
-            project = Project(fn=os.path.join(sys.argv[2], 'project.xml'))
+            project = Project(fn=project_fn)
             for fn in sys.argv[3:]:
                 project.import_source_file(fn, fns=sys.argv[3:])
         
