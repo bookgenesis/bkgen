@@ -200,11 +200,11 @@ class Project(XML, Source):
         if not os.path.exists(project_path):
             os.makedirs(project_path)
         else:
-            log.info("Project folder already exists: %s" % project_path)
+            log.debug("Project folder already exists: %s" % project_path)
 
         project_fn = os.path.join(project_path, '%s.xml' % basename)
         if os.path.exists(project_fn):
-            log.info("Project file already exists: %s" % project_fn)
+            log.debug("Project file already exists: %s" % project_fn)
             project = Class(fn=project_fn, **project_params)
         else:        
             project = Class(fn=os.path.join(PATH, 'templates', 'project.xml'), **project_params)
