@@ -32,10 +32,9 @@ class MOBI(Dict):
         result = EPUB(**self).build(build_path, metadata, 
                     epub_name=mobi_name, spine_items=spine_items, cover_src=cover_src, cover_html=False,
                     nav_toc=nav_toc, nav_landmarks=nav_landmarks, nav_page_list=nav_page_list, 
-                    nav_href=nav_href, nav_title=nav_title, zip=False)
+                    nav_href=nav_href, nav_title=nav_title, show_nav=True, zip=False)
         opffn = EPUB.get_opf_fn(build_path)
         self.move_anchors_before_paragraphs(build_path, opffn)
-        EPUB.unhide_toc(os.path.join(build_path, nav_href))
         self.strip_header_elements(build_path, opffn)
         EPUB.append_toc_to_spine(opffn, nav_href)
         self.size_images(opffn)
