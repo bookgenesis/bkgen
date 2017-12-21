@@ -456,26 +456,26 @@ class Project(XML, Source):
 
         # create / update the resource for the image
         image_file = File(fn=outfn)
-        log.debug("resource = %s" % os.path.relpath(image_file.fn, self.path))
-        href = os.path.relpath(image_file.fn, self.path)
+        log.debug("resource = %s" % image_file.relpath(self.path))
+        href = image_file.relpath(self.path)
         resource = self.find(self.root, "//pub:resource[@href='%s']" % href, namespaces=NS)
         if resource is None:
             resource = etree.Element("{%(pub)s}resource" % NS, href=href, **params)
             resource.tail = '\n\t'
-        log.debug("resource.attrib = %r" % resource.attrib)
-
+        
         resources = self.find(self.root, "pub:resources")
 
         if 'cover' in (resource.get('class') or ''):
-            if ((params.get('kind') is None or 'digital' in params.get('kind')) 
-            and os.path.splitext(resource.get('href'))[-1]=='.jpg'):
+            if ((params.get('kind') is None or 'digital' in params.get('kind'))):
                 existing_cover_digital = self.find(self.root, 
                     "//pub:resource[contains(@class,'cover') and (@kind='%s' or not(@kind))]" 
                     % params.get('kind') or 'digital', namespaces=NS)
                 if existing_cover_digital is not None:
                     resources.remove(existing_cover_digital)
+                log.debug("removing existing cover: %r" % existing_cover_digital.attrib)
 
         resources.append(resource)
+        log.debug("appending resource: %r" % resource.attrib)
 
         self.write()
 
