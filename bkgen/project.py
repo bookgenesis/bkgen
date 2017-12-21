@@ -472,7 +472,7 @@ class Project(XML, Source):
                     % params.get('kind') or 'digital', namespaces=NS)
                 if existing_cover_digital is not None:
                     resources.remove(existing_cover_digital)
-                log.debug("removing existing cover: %r" % existing_cover_digital.attrib)
+                    log.debug("removing existing cover: %r" % existing_cover_digital.attrib)
 
         resources.append(resource)
         log.debug("appending resource: %r" % resource.attrib)
