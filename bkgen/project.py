@@ -892,6 +892,9 @@ def build_project(project_path, format=None, check=None, doc_stylesheets=True, s
         project_fn = project_path
     elif os.path.isdir(project_path) and os.path.isfile(os.path.join(project_path, 'project.xml')):
         project_fn = os.path.join(project_path, 'project.xml')
+    else:
+        log.error("Project not found: %s" % project_path)
+        return
     project = Project(fn=project_fn, **(config.Project or {}))
     log.debug("== BUILD PROJECT == %s" % os.path.basename(os.path.dirname(project.fn)))
 
@@ -952,19 +955,23 @@ if __name__=='__main__':
                 project.import_source_file(fn, fns=sys.argv[3:])
         
         if 'build' in sys.argv[1]:
+            if sys.argv[1]=='build': 
+                args=dict(check=True)
+                project.build_outputs(**args)
             if '-epub' in sys.argv[1]: 
-                args=dict(format='epub', check='check' in sys.argv[1])
-            elif '-mobi' in sys.argv[1]: 
-                args=dict(format='mobi')
-            elif '-html' in sys.argv[1]:
-                args=dict(format='html')
+                args=dict(kind='EPUB', check='check' in sys.argv[1])
+                project.build_outputs(**args)
+            if '-mobi' in sys.argv[1]: 
+                args=dict(kind='Kindle')
+                project.build_outputs(**args)
+            if '-html' in sys.argv[1]:
+                args=dict(kind='HTML')
                 if '-single' in sys.argv[1]:
                     args['singlepage'] = True
-            elif '-archive' in sys.argv[1]: 
-                args=dict(format='archive')
-            else: 
-                args=dict(check=True)
-            build_project(project_path, **args)
+                project.build_outputs(**args)
+            if '-archive' in sys.argv[1]: 
+                args=dict(kind='archive')
+                project.build_outputs(**args)
         if 'clean' in sys.argv[1]:
             cleanup_project(project_path)
         if 'zip' in sys.argv[1]:
