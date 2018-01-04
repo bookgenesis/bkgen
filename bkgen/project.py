@@ -572,7 +572,7 @@ class Project(XML, Source):
             doc_stylesheets=True, **image_args):
         from .mobi import MOBI
         mobi_isbn = self.metadata().identifier(id_patterns=['mobi', 'ebook', 'isbn'])
-        if mobi_isbn is not None:
+        if mobi_isbn is not None and mobi_isbn.text is not None:
             mobi_name = mobi_isbn.text.replace('-', '') + '_Kindle'
         else:
             mobi_name = self.name + '_Kindle'
