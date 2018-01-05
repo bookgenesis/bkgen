@@ -452,7 +452,7 @@ class Project(XML, Source):
             from bf.pdf import PDF
             PDF(fn=fn).gswrite(fn=outfn, device='jpeg', res=600, gs=gs)
         else:
-            Image(fn=fn).convert(outfn, format='jpg', res=300, quality=100)
+            Image(fn=fn).convert(outfn, format='jpg', quality=100)
 
         # create / update the resource for the image
         image_file = File(fn=outfn)
