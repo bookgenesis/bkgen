@@ -484,7 +484,7 @@ class Project(XML, Source):
             pub:resources/pub:resource[contains(@class, 'cover') and 
                 (not(@kind) or contains(@kind, '%s'))]/@href""" % kind, namespaces=NS)        
 
-    def build_outputs(self, kind=None, cleanup=True, before_compile=None, doc_stylesheets=True, singlepage=False):
+    def build_outputs(self, kind=None, cleanup=False, before_compile=None, doc_stylesheets=True, singlepage=False):
         """build the project outputs
             kind=None:      which kind of output to build; if None, build all
         """
@@ -524,16 +524,33 @@ class Project(XML, Source):
         result = Dict(fn=zipfn)
         return result
 
-    def build_epub(self, clean=True, show_nav=False, doc_stylesheets=True, 
+    def build_epub(self, clean=True, show_nav=False, doc_stylesheets=True, archive_old=False,
             zip=True, check=True, cleanup=False, before_compile=None, **image_args):
         from .epub import EPUB
         epub_isbn = self.metadata().identifier(id_patterns=['epub', 'ebook', 'isbn'])
+        
         if epub_isbn is not None and epub_isbn.text is not None:
             epub_name = epub_isbn.text.replace('-', '')
         else:
             epub_name = self.name
+        
         epub_path = os.path.join(self.path, self.output_folder, epub_name+"_EPUB")
-        if clean==True and os.path.isdir(epub_path): shutil.rmtree(epub_path)
+        
+        if clean==True: 
+            if os.path.isdir(epub_path):
+                shutil.rmtree(epub_path)
+
+        if archive_old==True: 
+            epubfn = EPUB.epub_fn(epub_path)
+            if os.path.exists(epubfn):
+                output_archive_path = os.path.join(self.path, self.output_folder, 'archive')
+                if not os.path.exists(output_archive_path):
+                    os.makedirs(output_archive_path)
+                newfn = os.path.join(output_archive_path, 
+                    "%s_EPUB_%s.epub" % (epub_name, File(fn=epubfn).last_modified.strftime("%Y%m%d-%H%M%S")))
+                log.info("archiving old epub to %s" % newfn)
+                os.rename(epubfn, newfn)
+
         if not os.path.isdir(epub_path): os.makedirs(epub_path)
         resources = self.output_resources(output_path=epub_path, **image_args)
         metadata = self.find(self.root, "opf:metadata", namespaces=NS)
@@ -568,7 +585,7 @@ class Project(XML, Source):
                 shutil.rmtree(html_path)
         return result
 
-    def build_mobi(self, clean=True, cleanup=False, before_compile=None, 
+    def build_mobi(self, clean=True, cleanup=False, before_compile=None, archive_old=False, 
             doc_stylesheets=True, **image_args):
         from .mobi import MOBI
         mobi_isbn = self.metadata().identifier(id_patterns=['mobi', 'ebook', 'isbn'])
@@ -577,7 +594,21 @@ class Project(XML, Source):
         else:
             mobi_name = self.name + '_Kindle'
         mobi_path = os.path.join(self.path, self.output_folder, mobi_name)
-        if clean==True and os.path.isdir(mobi_path): shutil.rmtree(mobi_path)
+        
+        if clean==True and os.path.isdir(mobi_path): 
+            shutil.rmtree(mobi_path)
+
+        if archive_old==True: 
+            mobifn = MOBI.mobi_fn(mobi_path)
+            if os.path.exists(mobifn):
+                output_archive_path = os.path.join(self.path, self.output_folder, 'archive')
+                if not os.path.exists(output_archive_path):
+                    os.makedirs(output_archive_path)
+                newfn = os.path.join(output_archive_path, 
+                    "%s_Kindle_%s.mobi" % (mobi_name, File(fn=mobifn).last_modified.strftime("%Y%m%d-%H%M%S")))
+                os.rename(mobifn, newfn)
+                log.info("archiving old mobi to %s" % newfn)
+
         if not os.path.isdir(mobi_path): os.makedirs(mobi_path)
         resources = self.output_resources(output_path=mobi_path, **image_args)
         metadata = self.root.find("{%(opf)s}metadata" % NS)
@@ -625,11 +656,12 @@ class Project(XML, Source):
         from bf.image import Image
         f = File(fn=fn)
         mimetype = mimetypes.guess_type(fn)
+        log.debug("srcfn: %s %r %r" % (fn, mimetype, os.path.exists(fn)))
         if 'gs' in img_args:
             gs = img_args.pop('gs')
         output_path = output_path or os.path.join(self.path, self.output_folder)
         outfn = outfn or os.path.splitext(os.path.join(output_path, f.relpath(self.path)))[0] + ext
-        log.debug("%s %r" % (outfn, mimetype))
+        log.debug("outfn: %s" % outfn)
         try:
             if not os.path.exists(os.path.dirname(outfn)):
                 os.makedirs(os.path.dirname(outfn))
@@ -959,7 +991,7 @@ if __name__=='__main__':
                 args=dict(check=True)
                 project.build_outputs(**args)
             if '-epub' in sys.argv[1]: 
-                args=dict(kind='EPUB', check='check' in sys.argv[1])
+                args=dict(kind='EPUB')
                 project.build_outputs(**args)
             if '-mobi' in sys.argv[1]: 
                 args=dict(kind='Kindle')
