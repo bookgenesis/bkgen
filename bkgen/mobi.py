@@ -36,7 +36,6 @@ class MOBI(Dict):
         opffn = EPUB.get_opf_fn(build_path)
         self.move_anchors_before_paragraphs(build_path, opffn)
         self.strip_header_elements(build_path, opffn)
-        EPUB.append_toc_to_spine(opffn, nav_href)
         self.size_images(opffn)
         if before_compile is not None:
             before_compile(build_path)
