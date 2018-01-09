@@ -524,7 +524,7 @@ class Project(XML, Source):
         result = Dict(fn=zipfn)
         return result
 
-    def build_epub(self, clean=True, show_nav=False, doc_stylesheets=True, archive_old=False,
+    def build_epub(self, clean=True, show_nav=False, doc_stylesheets=True,
             zip=True, check=True, cleanup=False, before_compile=None, **image_args):
         from .epub import EPUB
         epub_isbn = self.metadata().identifier(id_patterns=['epub', 'ebook', 'isbn'])
@@ -539,17 +539,6 @@ class Project(XML, Source):
         if clean==True: 
             if os.path.isdir(epub_path):
                 shutil.rmtree(epub_path)
-
-        if archive_old==True: 
-            epubfn = EPUB.epub_fn(epub_path)
-            if os.path.exists(epubfn):
-                output_archive_path = os.path.join(self.path, self.output_folder, 'archive')
-                if not os.path.exists(output_archive_path):
-                    os.makedirs(output_archive_path)
-                newfn = os.path.join(output_archive_path, 
-                    "%s_EPUB_%s.epub" % (epub_name, File(fn=epubfn).last_modified.strftime("%Y%m%d-%H%M%S")))
-                log.info("archiving old epub to %s" % newfn)
-                os.rename(epubfn, newfn)
 
         if not os.path.isdir(epub_path): os.makedirs(epub_path)
         resources = self.output_resources(output_path=epub_path, **image_args)
@@ -585,7 +574,7 @@ class Project(XML, Source):
                 shutil.rmtree(html_path)
         return result
 
-    def build_mobi(self, clean=True, cleanup=False, before_compile=None, archive_old=False, 
+    def build_mobi(self, clean=True, cleanup=False, before_compile=None,
             doc_stylesheets=True, **image_args):
         from .mobi import MOBI
         mobi_isbn = self.metadata().identifier(id_patterns=['mobi', 'ebook', 'isbn'])
@@ -597,17 +586,6 @@ class Project(XML, Source):
         
         if clean==True and os.path.isdir(mobi_path): 
             shutil.rmtree(mobi_path)
-
-        if archive_old==True: 
-            mobifn = MOBI.mobi_fn(mobi_path)
-            if os.path.exists(mobifn):
-                output_archive_path = os.path.join(self.path, self.output_folder, 'archive')
-                if not os.path.exists(output_archive_path):
-                    os.makedirs(output_archive_path)
-                newfn = os.path.join(output_archive_path, 
-                    "%s_Kindle_%s.mobi" % (mobi_name, File(fn=mobifn).last_modified.strftime("%Y%m%d-%H%M%S")))
-                os.rename(mobifn, newfn)
-                log.info("archiving old mobi to %s" % newfn)
 
         if not os.path.isdir(mobi_path): os.makedirs(mobi_path)
         resources = self.output_resources(output_path=mobi_path, **image_args)
