@@ -563,7 +563,7 @@ class Project(XML, Source):
         html_path = os.path.join(self.output_path, self.name+'_HTML')
         if clean==True and os.path.isdir(html_path): shutil.rmtree(html_path)
         if not os.path.isdir(html_path): os.makedirs(html_path)
-        result = {}
+        result = Dict(format="html")
         resources = self.output_resources(output_path=html_path, **image_args)
         self.output_spineitems(output_path=html_path, resources=resources, 
             ext=ext, singlepage=singlepage, doc_stylesheets=doc_stylesheets, **image_args)
@@ -572,6 +572,8 @@ class Project(XML, Source):
             result['fn'] = ZIP.zip_path(html_path)
             if cleanup==True: 
                 shutil.rmtree(html_path)
+        else:
+            result['fn'] = html_path
         return result
 
     def build_mobi(self, clean=True, cleanup=False, before_compile=None,
