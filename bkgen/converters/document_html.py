@@ -37,6 +37,7 @@ def default(elem, **params):
     root = render_footnotes(root, **params)
     root = process_endnotes(root, **params)
     root = process_pub_attributes(root, **params)
+    root = process_index_entries(root, **params)
     root = replace_ligature_characters(root)
     root = render_simple_tables(root)
     return [ root ]
@@ -176,9 +177,18 @@ def process_pub_attributes(root, **params):
         e.set('style', '; '.join(styles))
     return root
 
+def process_index_entries(root, **params):
+    """replace index entries (pub:xe) with spans"""
+    for e in Document.xpath(root, "//pub:xe"):
+        e.tag = "{%(html)s}span" % Document.NS
+        for key in [k for k in e.attrib.keys() if k != 'id']:
+            _=e.attrib.pop(key)
+        e.set('class', 'xe')
+    return root
+
 def replace_ligature_characters(root):
     """Sometimes ligature characters (fl, fi) are used in books directly, 
-    but these don't work well in HTML contexts, so replace them with their equivalents.
+    but these don't work well in HTML contexts, so replace them with their multi-character equivalents.
     """
     ligatures = {
         '\uA732':'AA', '\uA733':'aa', '\u00C6': 'AE', '\u00E6': 'ae', '\uA734': 'AO', '\uA735': 'ao', 
