@@ -484,7 +484,8 @@ class Project(XML, Source):
             pub:resources/pub:resource[contains(@class, 'cover') and 
                 (not(@kind) or contains(@kind, '%s'))]/@href""" % kind, namespaces=NS)        
 
-    def build_outputs(self, kind=None, cleanup=False, before_compile=None, doc_stylesheets=True, singlepage=False):
+    def build_outputs(self, kind=None, cleanup=False, before_compile=None, before_compile_params={}, 
+        doc_stylesheets=True, singlepage=False):
         """build the project outputs
             kind=None:      which kind of output to build; if None, build all
         """
@@ -496,11 +497,14 @@ class Project(XML, Source):
                 log.info("output kind=%r" % output_kind)
                 assert output_kind in self.OUTPUT_KINDS.keys()
                 if output_kind=='EPUB':
-                    result = self.build_epub(cleanup=cleanup, before_compile=before_compile, doc_stylesheets=doc_stylesheets)
+                    result = self.build_epub(cleanup=cleanup, doc_stylesheets=doc_stylesheets, 
+                        before_compile=before_compile, before_compile_params=before_compile_params)
                 elif output_kind=='Kindle':
-                    result = self.build_mobi(cleanup=cleanup, before_compile=before_compile, doc_stylesheets=doc_stylesheets)
+                    result = self.build_mobi(cleanup=cleanup, doc_stylesheets=doc_stylesheets, 
+                        before_compile=before_compile, before_compile_params=before_compile_params)
                 elif output_kind=='HTML':
-                    result = self.build_html(cleanup=cleanup, doc_stylesheets=doc_stylesheets, singlepage=singlepage)
+                    result = self.build_html(cleanup=cleanup, doc_stylesheets=doc_stylesheets, 
+                        singlepage=singlepage)
                 elif output_kind=='Archive':
                     result = self.build_archive()
             except:
