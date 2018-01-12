@@ -530,10 +530,11 @@ class Project(XML, Source):
         epub_isbn = self.metadata().identifier(id_patterns=['epub', 'ebook', 'isbn'])
         
         if epub_isbn is not None and epub_isbn.text is not None:
-            epub_name = epub_isbn.text.replace('-', '')
+            epub_name = str(String(epub_isbn.text)
+                .resub('[\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', '')) # remove any dash
         else:
             epub_name = self.name
-        
+
         epub_path = os.path.join(self.path, self.output_folder, epub_name+"_EPUB")
         
         if clean==True: 
@@ -581,7 +582,8 @@ class Project(XML, Source):
         from .mobi import MOBI
         mobi_isbn = self.metadata().identifier(id_patterns=['mobi', 'ebook', 'isbn'])
         if mobi_isbn is not None and mobi_isbn.text is not None:
-            mobi_name = mobi_isbn.text.replace('-', '') + '_Kindle'
+            mobi_name = str(String(mobi_isbn.text)
+                .resub('[\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', '')) # remove any dash
         else:
             mobi_name = self.name + '_Kindle'
         mobi_path = os.path.join(self.path, self.output_folder, mobi_name)
