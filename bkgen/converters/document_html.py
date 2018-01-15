@@ -39,7 +39,8 @@ def default(elem, **params):
     root = process_pub_attributes(root, **params)
     root = process_index_entries(root, **params)
     root = replace_ligature_characters(root)
-    root = render_simple_tables(root)
+    if params.get('simple_tables')==True:
+        root = render_simple_tables(root)
     return [ root ]
 
 def fill_head(root, **params):
