@@ -105,10 +105,7 @@ class EPUB(ZIP, Source):
         for item in items:
             href = item.get('href')
             zf_path = os.path.relpath(
-                os.path.join(
-                    os.path.dirname(opf.fn), 
-                    href), 
-                self.fn).replace('\\','/')
+                os.path.join(os.path.dirname(opf.fn), href), self.fn).replace('\\','/')
             fn = os.path.join(path, href)
             fd = self.zipfile.read(zf_path)
             f = File(fn=fn, mediatype=item.get('media-type'))
@@ -182,7 +179,8 @@ class EPUB(ZIP, Source):
         opf_metadata = C.opf_package_metadata(metadata, cover_src=cover_src) 
 
         if cover_src is not None and cover_html==True:
-            cover_html_relpath = os.path.relpath(C.make_cover_html(output_path, cover_src), output_path)
+            cover_html_relpath = os.path.relpath(
+                C.make_cover_html(output_path, cover_src), output_path).replace('\\','')
             spine_items.insert(0, Dict(href=cover_html_relpath, landmark='cover'))
         else:
             cover_html_relpath = None
@@ -207,13 +205,13 @@ class EPUB(ZIP, Source):
                     element.set('href',
                         os.path.relpath(
                             os.path.abspath(os.path.join(os.path.dirname(nav.fn), href)), 
-                            os.path.dirname(os.path.join(output_path, nav_href))))
+                            os.path.dirname(os.path.join(output_path, nav_href))).replace('\\','/'))
                 src = element.get('src')
                 if src is not None:
                     element.set('src',
                         os.path.relpath(
                             os.path.abspath(os.path.join(os.path.dirname(nav.fn), src)), 
-                            os.path.dirname(os.path.join(output_path, nav_href))))
+                            os.path.dirname(os.path.join(output_path, nav_href))).replace('\\','/'))
 
             # make the nav element the only child of the body
             body = nav.find(nav.root, "html:body", namespaces=NS)
@@ -247,7 +245,7 @@ class EPUB(ZIP, Source):
 
         # ncx file
         ncx_fn = C.make_ncx_file(output_path, navfn, opf_metadata)
-        ncx_href = os.path.normpath(os.path.relpath(ncx_fn, output_path)).replace(os.path.sep, '/')
+        ncx_href = os.path.normpath(os.path.relpath(ncx_fn, output_path)).replace('\\', '/')
         
         # manifest
         if manifest is None: 
@@ -260,7 +258,8 @@ class EPUB(ZIP, Source):
         spine = C.opf_spine(output_path, spine_items=spine_items, manifest=manifest, ncx_href=ncx_href)
 
         # guide
-        guide = C.opf_guide(output_path, cover=cover_html_relpath, toc=os.path.relpath(navfn, output_path))
+        guide = C.opf_guide(output_path, cover=cover_html_relpath, 
+            toc=os.path.relpath(navfn, output_path).replace('\\','/'))
 
         # opf file -- pull it all together
         opffn = C.make_opf_file(output_path, 
@@ -337,7 +336,7 @@ class EPUB(ZIP, Source):
             for fp in walk_tuple[-1]:
                 fn = os.path.normpath(os.path.join(dirpath, fp))
                 if fn in excludefns: continue
-                href = os.path.normpath(os.path.relpath(fn, opf_path)).replace(os.path.sep,'/')
+                href = os.path.normpath(os.path.relpath(fn, opf_path)).replace('\\','/')
                 item = C.opf_manifest_item(opf_path, href)
                 if href == nav_href:
                     item.set('properties', 'nav')
@@ -733,7 +732,7 @@ class EPUB(ZIP, Source):
                         {'version':'1.0'},
                         Container.rootfiles(*[
                             Container.rootfile(
-                                {'full-path': os.path.normpath(os.path.relpath(opf_fn, output_path)).replace(os.path.sep,'/'),
+                                {'full-path': os.path.normpath(os.path.relpath(opf_fn, output_path)).replace('\\','/'),
                                 'media-type': C.MEDIATYPES.get('.opf')})
                             for opf_fn in opf_fns
                             ]))
@@ -774,26 +773,28 @@ class EPUB(ZIP, Source):
         # mimetype must be first, and not be compressed
         if mimetype_fn is None:
             mimetype_fn = C.make_mimetype_file(output_path)
-        epub.zipfile.write(mimetype_fn, os.path.relpath(mimetype_fn, output_path), compress_type=zipfile.ZIP_STORED)
+        epub.zipfile.write(mimetype_fn, 
+            os.path.relpath(mimetype_fn, output_path).replace('\\','/'), 
+            compress_type=zipfile.ZIP_STORED)
         
         if opf_fn is None:
             opf_fn = C.get_opf_fn(output_path)
-        epub.zipfile.write(opf_fn, os.path.relpath(opf_fn, output_path))
+        epub.zipfile.write(opf_fn, os.path.relpath(opf_fn, output_path).replace('\\','/'))
 
         if container_fn is None:
             container_fn = C.make_container_file(output_path, opf_fn)
-        epub.zipfile.write(container_fn, os.path.relpath(container_fn, output_path))
+        epub.zipfile.write(container_fn, os.path.relpath(container_fn, output_path).replace('\\','/'))
 
         # write everything listed in opf:manifest
         opf = XML(fn=opf_fn or C.get_opf_fn(output_path))
         for item in opf.root.xpath("opf:manifest/opf:item", namespaces=C.NS):
             href = item.get('href')
             fn = os.path.join(output_path, href)
-            epub.zipfile.write(fn, os.path.relpath(fn, output_path))
+            epub.zipfile.write(fn, os.path.relpath(fn, output_path).replace('\\','/'))
 
         # write other_fns, such as special contents of META-INF
         for fn in other_fns:
-            epub.zipfile.write(other_fn, os.path.relpath(fn, output_path))
+            epub.zipfile.write(other_fn, os.path.relpath(fn, output_path).replace('\\','/'))
 
         epub.close()
         the_epub = C(fn=epub.fn)
