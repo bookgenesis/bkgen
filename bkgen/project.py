@@ -229,7 +229,7 @@ class Project(XML, Source):
                 stylesheet_elem = None
         if stylesheet_elem is None and include_stylesheet==True:
             stylesheet_fn = os.path.splitext(project_fn)[0]+'.css'
-            stylesheet_href = os.path.relpath(stylesheet_fn, project.path)
+            stylesheet_href = os.path.relpath(stylesheet_fn, project.path).replace('\\','/')
             project.add_resource(stylesheet_href, 'stylesheet')
             if not os.path.exists(stylesheet_fn):
                 log.debug("stylesheet does not exist, creating")
@@ -392,13 +392,13 @@ class Project(XML, Source):
                             if os.path.exists(imgfn):
                                 os.remove(imgfn)
                             shutil.copy(srcfn, imgfn)
-                        img.set('src', os.path.relpath(imgfn, doc.path))
+                        img.set('src', os.path.relpath(imgfn, doc.path).replace('\\','/'))
             doc.write(canonicalized=True)
 
             # update the project spine element: append anything that is new.
             sections = doc.root.xpath("html:body/html:section[@id]", namespaces=NS)
             for section in sections:
-                section_href = os.path.relpath(doc.fn, self.path) + '#' + section.get('id')
+                section_href = os.path.relpath(doc.fn, self.path).replace('\\','/') + '#' + section.get('id')
                 if section_href not in spine_hrefs:
                     spineitem = PUB.spineitem(href=section_href); spineitem.tail = '\n\t\t'
                     for attrib in ['title', 'epub:type']:
@@ -446,7 +446,7 @@ class Project(XML, Source):
             outfn = os.path.join(self.path, self.cover_folder, basename)
         else:
             outfn = os.path.join(self.path, self.image_folder, basename)
-        log.debug('image: %s' % os.path.relpath(fn, self.path))
+        log.debug('image: %s' % os.path.relpath(fn, self.path).replace('\\','/'))
         ext = os.path.splitext(fn)[-1].lower()
         if ext == '.pdf':
             from bf.pdf import PDF
@@ -524,7 +524,7 @@ class Project(XML, Source):
         """create a zip archive of the project folder itself"""
         outfn = os.path.join(self.path, self.output_folder, self.name+'.zip')
         zipfn = ZIP.zip_path(self.path, fn=outfn, mode='w',
-            exclude=[os.path.relpath(outfn, self.path)])            # avoid recursive self-inclusion
+            exclude=[os.path.relpath(outfn, self.path).replace('\\','/')])            # avoid recursive self-inclusion
         result = Dict(fn=zipfn)
         return result
 
@@ -627,7 +627,7 @@ class Project(XML, Source):
 
     def output_stylesheet(self, fn, output_path=None):
         output_path = output_path or os.path.join(self.path, self.output_folder)
-        outfn = os.path.join(output_path, os.path.relpath(fn, self.path))
+        outfn = os.path.join(output_path, os.path.relpath(fn, self.path).replace('\\','/'))
         log.debug("project.output_stylesheet(): %r" % outfn)
         if os.path.splitext(fn)[-1] == '.scss':
             from bf.scss import SCSS
@@ -722,7 +722,7 @@ class Project(XML, Source):
                 d = Document.load(fn=docfn, id=split_href[1])
             else:
                 d = Document.load(fn=docfn)
-            outfn = os.path.splitext(os.path.join(output_path, os.path.relpath(d.fn, self.path)))[0] + ext
+            outfn = os.path.splitext(os.path.join(output_path, os.path.relpath(d.fn, self.path).replace('\\','/')))[0] + ext
             if 'html' in ext:
                 # create the output html for this document
                 h = d.html(fn=outfn, ext=ext, output_path=output_path, http_equiv_content_type=http_equiv_content_type,
@@ -736,7 +736,7 @@ class Project(XML, Source):
                         head.remove(css_link)    # we won't need the project stylesheets separately, because we're merging
                     for doc_css_fn in doc_css_fns:
                         out_css_fn = os.path.splitext(
-                            os.path.join(output_path, os.path.relpath(doc_css_fn, self.path))
+                            os.path.join(output_path, os.path.relpath(doc_css_fn, self.path).replace('\\','/'))
                             )[0]+'.css'
                         if not os.path.exists(out_css_fn):
                             merge_css_fns = css_fns + [doc_css_fn]
@@ -744,7 +744,7 @@ class Project(XML, Source):
                             out_css.fn = out_css_fn
                             out_css.write()
                         log.debug("doc_css: %r" % out_css_fn)
-                        href = os.path.relpath(out_css_fn, h.dirpath())
+                        href = os.path.relpath(out_css_fn, h.dirpath()).replace('\\','/')
                         link = etree.Element("{%(html)s}link" % NS, rel="stylesheet", href=href, type="text/css")
                         head.append(link)
 
@@ -754,13 +754,13 @@ class Project(XML, Source):
                     if os.path.exists(srcfn):
                         args = dict(**image_args)
                         outfn = self.output_image(srcfn, output_path=output_path, **args)
-                        img.set('src', os.path.relpath(outfn, h.path))
+                        img.set('src', os.path.relpath(outfn, h.path).replace('\\','/'))
                     else:
                         log.warn("IMAGE NOT FOUND: %s" % srcfn)
 
                 h.write(doctype="<!DOCTYPE html>", canonicalized=False)
                 outfns.append(h.fn)
-                spineitem.set('href', os.path.relpath(h.fn, output_path))
+                spineitem.set('href', os.path.relpath(h.fn, output_path).replace('\\','/'))
 
         project_css_fn = os.path.join(output_path, self.find(self.root, "pub:resources/pub:resource[@class='stylesheet']/@href", namespaces=NS) or 'project.css')
 
@@ -768,7 +768,9 @@ class Project(XML, Source):
             endnotes_html = Document().html(fn=os.path.join(output_path, self.content_folder, 'Collected-Endnotes'+ext))
             if os.path.exists(project_css_fn):
                 head = endnotes_html.find(endnotes_html.root, "html:head", namespaces=NS)
-                head.append(H.link(rel="stylesheet", type="text/css", href=os.path.relpath(project_css_fn, endnotes_html.path)))
+                head.append(
+                    H.link(rel="stylesheet", type="text/css", 
+                        href=os.path.relpath(project_css_fn, endnotes_html.path).replace('\\','/')))
             body = endnotes_html.find(endnotes_html.root, "//html:body")
             if body is None:
                 body = H.body('\n'); body.tail = '\n'
@@ -781,7 +783,7 @@ class Project(XML, Source):
                 section.append(endnote)
             endnotes_html.write(canonicalized=False)
             endnotes_spineitem = PUB.spineitem(
-                href= os.path.relpath(endnotes_html.fn, output_path),
+                href= os.path.relpath(endnotes_html.fn, output_path).replace('\\','/'),
                 title="Endnotes")
             spineitems.append(endnotes_spineitem)
             outfns.append(endnotes_html.fn)
@@ -792,12 +794,13 @@ class Project(XML, Source):
             html = HTML()
             html.fn = os.path.join(output_path, self.content_folder, self.name + ext)
             title = self.metadata().title.text if self.metadata().title is not None else ''
-            spineitems = [PUB.spineitem(href=os.path.relpath(html.fn, output_path), title=title)]
+            spineitems = [PUB.spineitem(href=os.path.relpath(html.fn, output_path).replace('\\','/'), title=title)]
             html.root.append(
                 H.head(
                     H.title(title),
                     H.meta({'charset': 'UTF-8'}),
-                    H.link(rel="stylesheet", type="text/css", href=os.path.relpath(project_css_fn, html.path))))
+                    H.link(rel="stylesheet", type="text/css", 
+                        href=os.path.relpath(project_css_fn, html.path).replace('\\','/'))))
             body = H.body('\n')
             html.root.append(body)
             html.write()
@@ -834,7 +837,7 @@ class Project(XML, Source):
                     if len(hreflist) > 1:      # we have an id -- use it to resolve the link
                         id = hreflist[1]
                         if id in ids:
-                            e.set('href', os.path.relpath(ids[id], x.path)+'#'+id)
+                            e.set('href', os.path.relpath(ids[id], x.path).replace('\\','/')+'#'+id)
                     else:               # only a filename
                         outfb = os.path.splitext(
                             os.path.abspath(
@@ -842,7 +845,7 @@ class Project(XML, Source):
                                     os.path.dirname(outfn), hreflist[0])))[0]
                         for hfn in outfns:
                             if outfb in hfn:
-                                e.set('href', os.path.relpath(hfn, os.path.dirname(outfn)))
+                                e.set('href', os.path.relpath(hfn, os.path.dirname(outfn)).replace('\\','/'))
                                 break
                     e.set('href', URL(e.get('href')).quoted())      # urls need to be quoted.
                 # images will be jpegs
