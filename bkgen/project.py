@@ -180,11 +180,13 @@ class Project(XML, Source):
     # CLASSMETHODS
 
     @classmethod
-    def create(Class, parent_path, title, name=None, path=None, basename='project', include_stylesheet=True, **project_params):
+    def create(Class, parent_path, title, name=None, path=None, basename='project', refresh=False,
+        include_stylesheet=True, **project_params):
         """create a new project.
             parent_path = the filesystem path to the parent folder that this project is in
             title = the title for the project
             name = the name of the project, which becomes its folder name and URL slug
+            refresh=False: if True, delete any existing project file rather than loading it.
             project_params = parameters passed to the Project.__init__()
         
         Returns the Project XML object.
@@ -204,6 +206,9 @@ class Project(XML, Source):
             log.debug("Project folder already exists: %s" % project_path)
 
         project_fn = os.path.join(project_path, '%s.xml' % basename)
+        if os.path.exists(project_fn) and refresh==True:
+            log.debug("Refreshing project by removing existing project file: %s" % project_fn)
+            os.remove(project_fn)
         if os.path.exists(project_fn):
             log.debug("Project file already exists: %s" % project_fn)
             project = Class(fn=project_fn, **project_params)
