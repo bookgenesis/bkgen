@@ -179,9 +179,11 @@ class EPUB(ZIP, Source):
         
         opf_metadata = C.opf_package_metadata(metadata, cover_src=cover_src) 
 
+        log.debug("cover_src: %r" % cover_src)
         if cover_src is not None and cover_html==True:
-            cover_html_relpath = os.path.relpath(
-                C.make_cover_html(output_path, cover_src), output_path).replace('\\','')
+            cover_html_fn = C.make_cover_html(output_path, cover_src)
+            cover_html_relpath = str(URL(File(cover_html_fn).relpath(output_path)))
+            log.debug("cover_html_relpath: %r" % cover_html_relpath)
             spine_items.insert(0, Dict(href=cover_html_relpath, landmark='cover'))
         else:
             cover_html_relpath = None
@@ -295,7 +297,7 @@ class EPUB(ZIP, Source):
     @classmethod
     def make_cover_html(C, output_path, cover_src):
         cover_html = XML(fn=os.path.join(os.path.dirname(FILENAME), 'templates', 'cover.xhtml'))
-        cover_html_relpath = os.path.splitext(cover_src)[0]+'.xhtml'
+        cover_html_relpath = os.path.splitext(str(URL(cover_src)))[0]+'.xhtml'
         cover_html.fn = os.path.join(output_path, cover_html_relpath)
         img = XML.find(cover_html.root, "//html:img", namespaces=EPUB.NS)
         img.set('src', os.path.splitext(os.path.basename(cover_src))[0]+'.jpg')
