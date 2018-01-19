@@ -572,8 +572,11 @@ class Project(XML, Source):
         """
         log.debug("build_html: %r" % dict(clean=clean, singlepage=singlepage, ext=ext, doc_stylesheets=doc_stylesheets, zip=zip, cleanup=cleanup, **image_args))
         html_path = os.path.join(self.output_path, self.name+'_HTML')
-        if clean==True and os.path.isdir(html_path): shutil.rmtree(html_path)
-        if not os.path.isdir(html_path): os.makedirs(html_path)
+        log.info(html_path)
+        if clean==True and os.path.isdir(html_path): 
+            shutil.rmtree(html_path)
+        if not os.path.isdir(html_path): 
+            os.makedirs(html_path)
         result = Dict(format="html")
         resources = self.output_resources(output_path=html_path, **image_args)
         self.output_spineitems(output_path=html_path, resources=resources, 

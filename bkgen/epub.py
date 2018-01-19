@@ -201,18 +201,18 @@ class EPUB(ZIP, Source):
             
             # must update hrefs and srcs to the nav_href location.
             for element in nav.xpath(nav.root, "//*[@href or @src]"):
-                href = str(URL(element.get('href')))
+                href = element.get('href')
                 if href is not None:
-                    element.set('href',
+                    element.set('href', str(URL(
                         os.path.relpath(
                             os.path.abspath(os.path.join(os.path.dirname(nav.fn), href)), 
-                            os.path.dirname(os.path.join(output_path, nav_href))).replace('\\','/'))
-                src = str(URL(element.get('src')))
+                            os.path.dirname(os.path.join(output_path, nav_href))))))
+                src = element.get('src')
                 if src is not None:
-                    element.set('src',
+                    element.set('src', str(URL(
                         os.path.relpath(
                             os.path.abspath(os.path.join(os.path.dirname(nav.fn), src)), 
-                            os.path.dirname(os.path.join(output_path, nav_href))).replace('\\','/'))
+                            os.path.dirname(os.path.join(output_path, nav_href))))))
 
             # make the nav element the only child of the body
             body = nav.find(nav.root, "html:body", namespaces=NS)
