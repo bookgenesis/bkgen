@@ -1,6 +1,7 @@
 
 import os, logging, re, subprocess
 from bl.dict import Dict
+from bl.url import URL
 from bf.image import Image
 from bxml.xml import XML, etree
 from bkgen.html import HTML
@@ -50,7 +51,7 @@ class MOBI(Dict):
         opf = XML(fn=opffn)
         n = 0
         for item in opf.root.xpath("opf:manifest/opf:item[contains(@media-type, 'html')]", namespaces=C.NS):
-            x = XML(fn=os.path.join(build_path, item.get('href')))
+            x = XML(fn=os.path.join(build_path, str(URL(item.get('href')))))
             anchors = [a for a in 
                     x.root.xpath("//html:a[@id and not(@href)]", namespaces=C.NS)
                     if len(a.getchildren())==0 and a.text in [None, '']]
@@ -70,7 +71,7 @@ class MOBI(Dict):
         """Kindle has trouble with header elements, so we just have to strip them."""
         opf = XML(fn=opffn)
         for item in opf.root.xpath("opf:manifest/opf:item[contains(@media-type, 'html')]", namespaces=C.NS):
-            h = HTML(fn=os.path.join(build_path, item.get('href')))
+            h = HTML(fn=os.path.join(build_path, str(URL(item.get('href')))))
             for header in h.xpath(h.root, "//html:header"):
                 HTML.replace_with_contents(header)
             h.write()
@@ -82,9 +83,9 @@ class MOBI(Dict):
                 item for item 
                 in opf.root.xpath("//opf:manifest/opf:item", namespaces=self.NS) 
                 if item.get('href')[-4:].lower()=='html']:
-            x = XML(os.path.join(os.path.dirname(opffn), item.get('href')))
+            x = XML(os.path.join(os.path.dirname(opffn), str(URL(item.get('href')))))
             for img in x.root.xpath("//html:img[@width or @height]", namespaces=self.NS):
-                srcfn = os.path.join(os.path.dirname(x.fn), img.get('src'))
+                srcfn = os.path.join(os.path.dirname(x.fn), str(URL(img.get('src'))))
                 if os.path.splitext(srcfn)[-1] in ['.svg']: continue
                 w, h = [int(i) for i in Image(fn=srcfn).identify(format="%w,%h").split(',')]
                 width, height = w, h

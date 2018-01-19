@@ -23,6 +23,7 @@ from bl.dict import Dict
 from bl.url import URL
 from bl.zip import ZIP
 from bxml.xml import XML, etree
+from bxml.xslt import XSLT # side-effect: registers lowercase and uppercase xpath functions
 from bxml.builder import Builder
 
 from bkgen import NS, config, mimetypes, PATH
@@ -223,7 +224,7 @@ class Project(XML, Source):
         stylesheet_elem = project.find(project.root, 
             "pub:resources/pub:resource[@class='stylesheet']", namespaces=NS)
         if stylesheet_elem is not None:
-            stylesheet_fn = os.path.abspath(os.path.join(project.path, stylesheet_elem.get('href')))
+            stylesheet_fn = os.path.abspath(os.path.join(project.path, str(URL(stylesheet_elem.get('href')))))
             if not os.path.exists(stylesheet_fn):
                 stylesheet_elem.getparent().remove(stylesheet_elem)
                 stylesheet_elem = None
@@ -371,7 +372,7 @@ class Project(XML, Source):
             spine_elem.tail='\n\n\t'
             self.root.append(spine_elem)
         spine_hrefs = [
-            spineitem.get('href') 
+            str(URL(spineitem.get('href')))
             for spineitem in self.xpath(spine_elem, "pub:spineitem", namespaces=NS)
         ]
         for doc in documents:
@@ -382,7 +383,7 @@ class Project(XML, Source):
             # import referenced images, and update the image locations.
             if source_path is not None:
                 for img in doc.root.xpath("//html:img[@src]", namespaces=NS):
-                    srcfn = os.path.join(source_path, img.get('src'))
+                    srcfn = os.path.join(source_path, str(URL(img.get('src'))))
                     log.debug("img srcfn=%r exists? %r" % (srcfn, os.path.exists(srcfn)))
                     if os.path.exists(srcfn):
                         imgfn = os.path.join(self.image_path, self.make_basename(srcfn))
@@ -589,8 +590,9 @@ class Project(XML, Source):
             mobi_name = str(String(mobi_isbn.text)
                 .resub('[\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', '')) # remove any dash
         else:
-            mobi_name = self.name + '_Kindle'
-        mobi_path = os.path.join(self.path, self.output_folder, mobi_name)
+            mobi_name = self.name
+
+        mobi_path = os.path.join(self.path, self.output_folder, mobi_name + '_Kindle')
         
         if clean==True and os.path.isdir(mobi_path): 
             shutil.rmtree(mobi_path)
@@ -614,7 +616,7 @@ class Project(XML, Source):
                     in self.root.xpath("pub:resources/pub:resource[not(@include='False')]", namespaces=NS)]
         for resource in resources:
             log.debug(resource.attrib)
-            f = File(fn=os.path.abspath(os.path.join(self.path, resource.get('href'))))
+            f = File(fn=os.path.abspath(os.path.join(self.path, str(URL(resource.get('href'))))))
             if resource.get('class')=='stylesheet':
                 outfn = self.output_stylesheet(f.fn, output_path)
             elif resource.get('class') in ['cover', 'cover-digital', 'image']:
@@ -711,7 +713,7 @@ class Project(XML, Source):
         css_fns = glob(os.path.join(self.path, self.content_folder, '*.css'))
         endnotes = []                   # collect endnotes and pass into and out of Document.html()
         for spineitem in spineitems:
-            split_href = spineitem.get('href').split('#')
+            split_href = str(URL(spineitem.get('href'))).split('#')
             log.debug(split_href)
             docfn = os.path.join(self.path, split_href[0])
             if os.path.dirname(docfn) == self.content_path:
@@ -732,7 +734,7 @@ class Project(XML, Source):
                     css_fns = []
                     head = h.find(h.root, "html:head", namespaces=NS)
                     for css_link in h.xpath(head, "html:link[@rel='stylesheet' and @href]", namespaces=NS):
-                        css_fns.append(os.path.abspath(os.path.join(h.path, css_link.get('href'))))
+                        css_fns.append(os.path.abspath(os.path.join(h.path, str(URL(css_link.get('href'))))))
                         head.remove(css_link)    # we won't need the project stylesheets separately, because we're merging
                     for doc_css_fn in doc_css_fns:
                         out_css_fn = os.path.splitext(
@@ -750,7 +752,7 @@ class Project(XML, Source):
 
                 # output any images that are referenced from the document and are locally available
                 for img in h.root.xpath("//html:img", namespaces=NS):
-                    srcfn = os.path.join(d.path, img.get('src'))
+                    srcfn = os.path.join(d.path, str(URL(img.get('src'))))
                     if os.path.exists(srcfn):
                         args = dict(**image_args)
                         outfn = self.output_image(srcfn, output_path=output_path, **args)
@@ -833,7 +835,7 @@ class Project(XML, Source):
                         e.get('href')[0]=='#'
                         or e.get('href').split('#')[0] not in basenames)
                 ]:
-                    hreflist = e.get('href').split('#')
+                    hreflist = str(URL(e.get('href'))).split('#')
                     if len(hreflist) > 1:      # we have an id -- use it to resolve the link
                         id = hreflist[1]
                         if id in ids:
@@ -850,7 +852,7 @@ class Project(XML, Source):
                     e.set('href', URL(e.get('href')).quoted())      # urls need to be quoted.
                 # images will be jpegs
                 # for e in x.root.xpath("//html:img[@src]", namespaces=NS):
-                #     e.set('src', os.path.splitext(e.get('src'))[0]+'.jpg')
+                #     e.set('src', os.path.splitext(str(URL(e.get('src'))))[0]+'.jpg')
                 x.write(canonicalized=False)
 
         return spineitems
@@ -977,22 +979,15 @@ if __name__=='__main__':
         
         if 'build' in sys.argv[1]:
             if sys.argv[1]=='build': 
-                args=dict(check=True)
-                project.build_outputs(**args)
+                project.build_outputs(check=True)
             if '-epub' in sys.argv[1]: 
-                args=dict(kind='EPUB')
-                project.build_outputs(**args)
+                project.build_epub(check=True)
             if '-mobi' in sys.argv[1]: 
-                args=dict(kind='Kindle')
-                project.build_outputs(**args)
+                project.build_mobi()
             if '-html' in sys.argv[1]:
-                args=dict(kind='HTML')
-                if '-single' in sys.argv[1]:
-                    args['singlepage'] = True
-                project.build_outputs(**args)
+                project.build_outputs(kind='HTML', singlepage='-single' in sys.argv[1])
             if '-archive' in sys.argv[1]: 
-                args=dict(kind='archive')
-                project.build_outputs(**args)
+                project.build_outputs(kind='archive')
         if 'clean' in sys.argv[1]:
             cleanup_project(project_path)
         if 'zip' in sys.argv[1]:

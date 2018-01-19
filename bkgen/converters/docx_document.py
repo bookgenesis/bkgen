@@ -410,8 +410,8 @@ def get_images(root, **params):
         elif link_rel is not None:
             img.set('src', link_rel.get('Target'))
         if img.get('src') is not None:
-            srcfn = os.path.join(os.path.dirname(params['docx'].fn), img.get('src'))
-            outfn = os.path.join(output_path, img.get('src'))
+            srcfn = os.path.join(os.path.dirname(params['docx'].fn), str(URL(img.get('src'))))
+            outfn = os.path.join(output_path, str(URL(img.get('src'))))
             if os.path.exists(srcfn) and not os.path.exists(outfn):
                 shutil.copy(srcfn, outfn)
             if img.get('data-link-id') is not None: _=img.attrib.pop('data-link-id')

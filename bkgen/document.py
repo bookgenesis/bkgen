@@ -5,6 +5,7 @@ log = logging.getLogger(__name__)
 import os, re
 from lxml import etree
 from bl.dict import Dict
+from bl.url import URL
 from bxml import XML
 from bxml.builder import Builder
 from . import NS
@@ -50,7 +51,7 @@ class Document(XML, Source):
     def images(self):
         from bf.image import Image
         images = [
-            Image(fn=os.path.join(self.path, img.get('src')))
+            Image(fn=os.path.join(self.path, str(URL(img.get('src')))))
             for img 
             in self.xpath(self.root, "//html:img[@src]", namespaces=NS)]
         return images
@@ -112,11 +113,11 @@ class Document(XML, Source):
                 incl.remove(ch)
 
             # fill the include with the included content from the source 
-            srcfn = os.path.abspath(os.path.join(os.path.dirname(self.fn), incl.get('src').split('#')[0]))
+            srcfn = os.path.abspath(os.path.join(os.path.dirname(self.fn), str(URL(incl.get('src'))).split('#')[0]))
             if os.path.exists(srcfn):
                 src = Document(fn=srcfn)
                 if '#' in incl.get('src'):
-                    srcid = incl.get('src').split('#')[-1]
+                    srcid = str(URL(incl.get('src'))).split('#')[-1]
                     incl_elems = XML.xpath(src.root, "//*[@id='%s']" % srcid)
                 else:
                     incl_elems = XML.xpath(src.root, "html:body/*", namespaces=NS)

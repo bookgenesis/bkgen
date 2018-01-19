@@ -12,6 +12,7 @@ from bxml.xml import XML
 from bl.zip import ZIP
 from bl.text import Text
 from bl.file import File
+from bl.url import URL
 from bxml.builder import Builder
 from bkgen import NS, config
 from bkgen.source import Source
@@ -103,7 +104,7 @@ class EPUB(ZIP, Source):
         ]
         found_cover = False
         for item in items:
-            href = item.get('href')
+            href = str(URL(item.get('href')))
             zf_path = os.path.relpath(
                 os.path.join(os.path.dirname(opf.fn), href), self.fn).replace('\\','/')
             fn = os.path.join(path, href)
@@ -123,7 +124,7 @@ class EPUB(ZIP, Source):
                 item = opf.find(opf.root, 
                     "opf:manifest/opf:item[@id='%s']" % cover_id, namespaces=NS)
                 if item is not None:
-                    fn = os.path.join(path, item.get('href'))
+                    fn = os.path.join(path, str(URL(item.get('href'))))
                     fns = [f.fn for f in res]
                     if fn in fns:
                         f = res[fns.index(fn)]
@@ -192,7 +193,7 @@ class EPUB(ZIP, Source):
         landmarks = [spineitem.get('landmark') for spineitem in spine_items]
         if 'toc' in landmarks:
             toc_item = spine_items[landmarks.index('toc')]
-            nav = XML(fn=os.path.join(output_path, toc_item.get('href')))
+            nav = XML(fn=os.path.join(output_path, str(URL(toc_item.get('href')))))
             nav_elem = nav.find(nav.root, "//html:nav", namespaces=NS)
             nav_elem.set('{%(epub)s}type'%NS, 'toc')
             if show_nav != True: 
@@ -200,13 +201,13 @@ class EPUB(ZIP, Source):
             
             # must update hrefs and srcs to the nav_href location.
             for element in nav.xpath(nav.root, "//*[@href or @src]"):
-                href = element.get('href')
+                href = str(URL(element.get('href')))
                 if href is not None:
                     element.set('href',
                         os.path.relpath(
                             os.path.abspath(os.path.join(os.path.dirname(nav.fn), href)), 
                             os.path.dirname(os.path.join(output_path, nav_href))).replace('\\','/'))
-                src = element.get('src')
+                src = str(URL(element.get('src')))
                 if src is not None:
                     element.set('src',
                         os.path.relpath(
@@ -362,7 +363,7 @@ class EPUB(ZIP, Source):
         """A list of spine_item dicts (see spec above under EPUB.build())"""
         spine_items = []
         for item in [item for item in manifest.getchildren() if item.get('href')[-4:]=='html']:
-            spine_item = Dict(href=item.get('href'), idref=item.get('id'))
+            spine_item = Dict(href=str(URL(item.get('href'))), idref=item.get('id'))
             # transfer relevant properties to the spine
             if 'cover-image' in item.get('properties'):
                 spine_item.landmark = 'cover'
@@ -407,7 +408,7 @@ class EPUB(ZIP, Source):
             item_title = spine_item.get('title') or String(spine_item.get('landmark') or '').titleify()
             if item_title not in [None, '']:
                 nav_item = Dict(
-                    href=spine_item.get('href'), 
+                    href=str(URL(spine_item.get('href'))), 
                     title=item_title)
                 nav_items.append(nav_item)
         if len(nav_items) > 0:
@@ -419,7 +420,7 @@ class EPUB(ZIP, Source):
             which if given is the epub_type of that landmark.
         """
         landmarks = [
-            Dict(href=spine_item.get('href'), 
+            Dict(href=str(URL(spine_item.get('href'))), 
                     title=spine_item.get('title'),
                     epub_type=spine_item.get('landmark'))
             for spine_item in spine_items if spine_item.get('landmark') is not None
@@ -449,7 +450,7 @@ class EPUB(ZIP, Source):
         """builds a page-list nav element from the content listed in the manifest."""
         page_list_items = []
         for spine_item in spine_items:
-            href = spine_item.get("href")
+            href = str(URL(spine_item.get('href')))
             fn=os.path.join(output_path, href)
             if os.path.splitext(fn)[1] not in ['.html', '.xhtml']: 
                 continue
@@ -489,7 +490,7 @@ class EPUB(ZIP, Source):
             nav_elem.set('hidden', hidden)
         ol_elem = nav_elem.find("{%(html)s}ol" % C.NS)
         for nav_item in nav_items:
-            a_elem = H.a({'href': nav_item.get('href')}, 
+            a_elem = H.a({'href': str(URL(nav_item.get('href')))}, 
                 nav_item.get('title') or String(nav_item.get('epub_type')).titleify())
             if nav_item.get('epub_type') is not None: 
                 a_elem.set("{%(epub)s}type" % C.NS, nav_item.get('epub_type'))
@@ -537,7 +538,7 @@ class EPUB(ZIP, Source):
         playOrder = 0
         for a in nav.root.xpath("//html:nav[@epub:type='toc']//html:li/html:a[@href]", namespaces=C.NS):
             playOrder += 1
-            href = a.get('href')
+            href = str(URL(a.get('href')))
             navPoint = N.navPoint({'id': String(href).identifier(), 'playOrder': "%d" % playOrder},
                             N.navLabel(N.text(a.text)),
                             N.content({'src': href}))
@@ -553,11 +554,11 @@ class EPUB(ZIP, Source):
                 pageList.append(
                     N.pageTarget({
                             'type': 'normal',
-                            'id': C.href_to_id(a.get('href')),
+                            'id': str(URL(C.href_to_id(a.get('href')))),
                             'value': a.text,
                             'playOrder': str(playOrder)},
                         N.navLabel(N.text(a.text)),
-                        N.content(src=a.get('href'))
+                        N.content(src=str(URL(a.get('href'))))
                         ))
             ncx.root.append(pageList)
 
@@ -705,7 +706,7 @@ class EPUB(ZIP, Source):
         itemref = C.OPF.itemref({
                 'idref': spine_item.get('idref')        # use @idref if given
                         or (spine_item.get('href')      # otherwise generate from @href
-                            and C.href_to_id(spine_item.get('href')))
+                            and C.href_to_id(str(URL(spine_item.get('href'))))
             })
 
         if spine_item.get('linear') is not None:
@@ -788,7 +789,7 @@ class EPUB(ZIP, Source):
         # write everything listed in opf:manifest
         opf = XML(fn=opf_fn or C.get_opf_fn(output_path))
         for item in opf.root.xpath("opf:manifest/opf:item", namespaces=C.NS):
-            href = item.get('href')
+            href = str(URL(item.get('href')))
             fn = os.path.join(output_path, href)
             epub.zipfile.write(fn, os.path.relpath(fn, output_path).replace('\\','/'))
 
@@ -815,7 +816,7 @@ class EPUB(ZIP, Source):
             opf = XML(fn=opffn)
             nav_item = opf.root.find(".//{%(opf)s}item[@properties='nav']" % C.NS)
             if nav_item is not None:
-                navfn = os.path.abspath(os.path.join(os.path.dirname(opffn), nav_item.get('href')))
+                navfn = os.path.abspath(os.path.join(os.path.dirname(opffn), str(URL(nav_item.get('href')))))
                 return navfn
     
 if __name__=='__main__':

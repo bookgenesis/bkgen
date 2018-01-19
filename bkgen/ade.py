@@ -1,5 +1,6 @@
 
 import os
+from bl.url import URL
 from bxml.xml import XML
 from .epub import EPUB
 
@@ -54,6 +55,6 @@ class ADE(EPUB):
                 pagemap.root.append(
                     C.OPF.page(
                         name=a.text, 
-                        href=a.get('href')))
+                        href=str(URL(a.get('href')))))
             pagemap.write()
             return pagemap.fn

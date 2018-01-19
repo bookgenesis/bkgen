@@ -7,6 +7,7 @@ from bxml.xt import XT
 from bxml.builder import Builder
 from bl.file import File
 from bl.string import String
+from bl.url import URL
 from bxml.xml import XML
 
 from bkgen import NS
@@ -53,9 +54,9 @@ def fill_head(root, **params):
         and XML.find(head, "html:meta[@http-equiv='Content-Type']", namespaces=NS) is None:
             head.append(H.meta({'http-equiv':'Content-Type', 'content':'text/html; charset=utf-8'}))
         for resource in params.get('resources') or []:
-            srcfn = os.path.join(output_path, resource.get('href'))
+            srcfn = os.path.join(output_path, str(URL(resource.get('href'))))
             mimetype = File(fn=srcfn).mimetype()
-            href = os.path.relpath(srcfn, os.path.dirname(params.get('fn')))
+            href = File(srcfn).relpath(os.path.dirname(params.get('fn')))
             if resource.get('class')=='stylesheet':
                 head.append(H.link(rel='stylesheet', type=mimetype, href=href))
             elif resource.get('class')=='script':
@@ -74,7 +75,8 @@ def omit_print_conditions(root, **params):
         condition = conditional_elem.attrib.pop("{%(pub)s}cond" % NS).lower()
         if 'print' in condition:
             # display: none keeps the content in the file -- perhaps usable by assistive technologies?
-            conditional_elem.set('style', 'display:none;'+(conditional_elem.get('style') or ''))
+            # conditional_elem.set('style', 'display:none;'+(conditional_elem.get('style') or ''))
+            XML.remove(conditional_elem)
     return root
 
 def omit_unsupported_font_formatting(root, **params):

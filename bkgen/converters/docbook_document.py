@@ -32,8 +32,8 @@ def document(elem, **params):
     root = transformer_XSLT(root).getroot()
     docroot = B.pub.document(B._.body('\n', root, '\n'))
     for e in docroot.xpath("//*[@href or @src]"):
-        if e.get('href') is not None: e.set('href', e.get('href').replace('\\','/'))
-        if e.get('src') is not None: e.set('src', e.get('src').replace('\\','/'))
+        if e.get('href') is not None: e.set('href', str(URL(e.get('href'))))
+        if e.get('src') is not None: e.set('src', str(URL(e.get('src'))))
     for img in docroot.xpath("//html:img[@height]", namespaces=NS):
         img.set('style', 'height:%s;%s' % (img.attrib.pop('height'), img.get('style') or ''))
     return [ docroot ]

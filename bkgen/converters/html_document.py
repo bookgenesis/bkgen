@@ -119,7 +119,7 @@ def hrefs_to_xml(root):
 
 def normalize_img_src(root):
     for e in root.xpath("//html:img[@src]", namespaces=NS):
-        src = os.path.splitext(File(fn=e.get('src')).clean_filename())[0]+'.jpg'
+        src = os.path.splitext(File(fn=str(URL(e.get('src')))).clean_filename())[0]+'.jpg'
         e.set('src', src)
     return root
 

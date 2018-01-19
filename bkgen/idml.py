@@ -7,8 +7,9 @@ from lxml import etree
 from bl.dict import Dict
 from bl.file import File
 from bl.id import random_id
-from bl.zip import ZIP
 from bl.string import String
+from bl.url import URL
+from bl.zip import ZIP
 from bxml import XML
 from .icml import ICML
 from bkgen import NS
@@ -40,7 +41,7 @@ class IDML(ZIP, Source):
         if self.__stories is None:
             self.__stories = []
             for story in self.designmap.root.xpath("idPkg:Story", namespaces=self.NS):
-                fn = os.path.join(self.splitext()[0], os.path.basename(story.get('src')))
+                fn = os.path.join(self.splitext()[0], os.path.basename(str(URL(story.get('src')))))
                 icml = ICML(fn=fn, root=self.read(story.get('src')))
                 self.__stories.append(icml)
         return self.__stories
@@ -77,8 +78,8 @@ class IDML(ZIP, Source):
             documents += self.articles_documents(path=path, sources=sources)
         else:                                                                   # or Stories?
             for story in self.designmap.root.xpath("idPkg:Story", namespaces=self.NS):
-                outfn = os.path.join(path, self.clean_filename(self.basename), os.path.basename(story.get('src')))
-                icml = ICML(fn=outfn, root=self.read(story.get('src')))
+                outfn = os.path.join(path, self.clean_filename(self.basename), os.path.basename(str(URL(story.get('src')))))
+                icml = ICML(fn=outfn, root=self.read(str(URL(story.get('src')))))
                 document = icml.document(srcfn=self.fn, sources=sources)
                 document.write()
                 documents.append(document)
@@ -119,7 +120,7 @@ class IDML(ZIP, Source):
                         "//idPkg:Story[contains(@src, '%s')]" % story_id, namespaces=ICML.NS)
 
                     # Add the story to the Article document as a section
-                    story_icml = ICML(root=self.read(pkg_story.get('src')))
+                    story_icml = ICML(root=self.read(str(URL(pkg_story.get('src')))))
                     for story in story_icml.root.xpath("//Story"): 
                         article_icml.root.append(story)
             document = article_icml.document(srcfn=self.fn, sources=sources)

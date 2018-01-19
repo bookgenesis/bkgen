@@ -4,6 +4,7 @@ from lxml import etree
 import markdown.extensions.wikilinks
 from bl.text import Text
 from bl.string import String
+from bl.url import URL
 from bxml.builder import Builder
 from bkgen import NS
 from bkgen.html import HTML
@@ -40,7 +41,7 @@ class Markdown(Text, Source):
             body = etree.fromstring("""<body xmlns="%s">\n%s\n</body>""" % (NS.html, content))
             root = B.html.html('\n\t', body, '\n')
             for e in root.xpath("//*[contains(@href, '.md')]"):
-                l = e.get('href').split('#')
+                l = str(URL(e.get('href'))).split('#')
                 l[0] = os.path.splitext(l[0])[0] + '.html'
                 e.set('href', '#'.join(l))
             for e in root.xpath("//*[@id]"):
