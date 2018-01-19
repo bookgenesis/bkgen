@@ -706,7 +706,7 @@ class EPUB(ZIP, Source):
         itemref = C.OPF.itemref({
                 'idref': spine_item.get('idref')        # use @idref if given
                         or (spine_item.get('href')      # otherwise generate from @href
-                            and C.href_to_id(str(URL(spine_item.get('href'))))
+                            and C.href_to_id(str(URL(spine_item.get('href')))))
             })
 
         if spine_item.get('linear') is not None:
