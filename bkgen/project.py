@@ -544,8 +544,8 @@ class Project(XML, Source):
                 .resub('[\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', '')) # remove any dash
         else:
             epub_name = self.name
-
-        epub_path = os.path.join(self.path, self.output_folder, epub_name+"_EPUB")
+        epub_name += '_EPUB'
+        epub_path = os.path.join(self.path, self.output_folder, epub_name)
         
         if clean==True: 
             if os.path.isdir(epub_path):
@@ -599,8 +599,8 @@ class Project(XML, Source):
                 .resub('[\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', '')) # remove any dash
         else:
             mobi_name = self.name
-
-        mobi_path = os.path.join(self.path, self.output_folder, mobi_name + '_Kindle')
+        mobi_name += '_Kindle'
+        mobi_path = os.path.join(self.path, self.output_folder, mobi_name)
         
         if clean==True and os.path.isdir(mobi_path): 
             shutil.rmtree(mobi_path)
