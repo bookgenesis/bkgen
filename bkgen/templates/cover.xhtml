@@ -2,28 +2,18 @@
 	<head>
 		<title>Cover</title>
 		<style>
-body.fullpage {
-	margin: 0;
-	padding: 0;
-}
 section#cover {
 	text-align: center;
-	display: block;
-	height: 99%;
 }
-img#coverimage {
-	padding: 0;
-	margin: 0;
-	height: 99%;
-}
-img#coverimage:only-of-type {
-	height: 99vh;
+img {
+	max-height: 99%;
+	max-width: 99%;
 }
 		</style>
 	</head>
-	<body class="fullpage">
+	<body>
 		<section id="cover" epub:type="cover">
-			<img id="coverimage" src="" alt="cover image" />
+			<img id="coverimage" src="" alt="Cover Image"/>
 		</section>
 	</body>
 </html>
