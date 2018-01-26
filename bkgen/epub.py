@@ -184,7 +184,7 @@ class EPUB(ZIP, Source):
             cover_html_fn = C.make_cover_html(output_path, cover_src)
             cover_html_relpath = str(URL(File(cover_html_fn).relpath(output_path)))
             log.debug("cover_html_relpath: %r" % cover_html_relpath)
-            spine_items.insert(0, Dict(href=cover_html_relpath, landmark='cover'))
+            spine_items.insert(0, Dict(href=cover_html_relpath, landmark='cover', linear='no'))
         else:
             cover_html_relpath = None
 
