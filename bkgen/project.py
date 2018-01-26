@@ -987,9 +987,9 @@ if __name__=='__main__':
         
         if 'build' in sys.argv[1]:
             if sys.argv[1]=='build': 
-                project.build_outputs(check=True)
+                project.build_outputs()
             if '-epub' in sys.argv[1]: 
-                project.build_epub(check=True)
+                project.build_epub()
             if '-mobi' in sys.argv[1]: 
                 project.build_mobi()
             if '-html' in sys.argv[1]:
