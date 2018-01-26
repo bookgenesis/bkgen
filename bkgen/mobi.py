@@ -37,7 +37,7 @@ class MOBI(Dict):
                     nav_toc=nav_toc, nav_landmarks=nav_landmarks, nav_page_list=nav_page_list, 
                     nav_href=nav_href, nav_title=nav_title, show_nav=True, zip=False)
         opffn = EPUB.get_opf_fn(build_path)
-        self.move_anchors_before_paragraphs(build_path, opffn)
+        # self.move_anchors_before_paragraphs(build_path, opffn)
         self.strip_header_elements(build_path, opffn)
         self.size_images(opffn)
         if before_compile is not None:
@@ -48,7 +48,7 @@ class MOBI(Dict):
 
     @classmethod
     def move_anchors_before_paragraphs(C, build_path, opffn):
-        """In Kindle ebooks, link targets need to be moved before the containing paragraph so that the 
+        """In Kindle ebooks, link targets **NO LONGER** need to be moved before the containing paragraph so that the 
         paragraph formatting can be displayed properly."""
         opf = XML(fn=opffn)
         n = 0
