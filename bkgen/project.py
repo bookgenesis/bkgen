@@ -865,6 +865,18 @@ class Project(XML, Source):
 
         return spineitems
 
+    def cleanup(self):
+        """clean up the project:
+        1. remove all folders from the output folder
+        [2. remove all non-referenced images and resources -- LATER]
+        exclude = folder name patterns to exclude from deletion
+        """
+        dirs = [d for d in glob(self.output_path+'/*') if os.path.isdir(d)]
+        for d in dirs:
+            log.info("removing: %s" % d)
+            shutil.rmtree(d)
+
+
 # == COMMAND INTERFACE METHODS == 
 
 def import_all(project_path):
@@ -947,10 +959,7 @@ def build_project(project_path, format=None, check=None, doc_stylesheets=True, s
 
 def cleanup_project(project_path):
     project = Project(fn=os.path.join(project_path, 'project.xml'), **(config.Project or {}))
-    dirs = [d for d in glob(project.output_path+'/*') if os.path.isdir(d)]
-    for d in dirs:
-        log.info("cleanup: %s" % d)
-        shutil.rmtree(d)
+    project.cleanup()
 
 def zip_project(project_path):
     from bl.zip import ZIP
