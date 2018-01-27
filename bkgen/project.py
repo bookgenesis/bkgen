@@ -865,17 +865,48 @@ class Project(XML, Source):
 
         return spineitems
 
-    def cleanup(self):
+    def cleanup(self, resources=False, outputs=False, exclude=None):
         """clean up the project:
-        1. remove all folders from the output folder
-        [2. remove all non-referenced images and resources -- LATER]
-        exclude = folder name patterns to exclude from deletion
+        outputs=True:   remove all folders from the output folder
+        resources=True: remove all non-referenced resources (non-xml) from the content folder
+        exclude=None:   regexp pattern to exclude from cleanup
         """
-        dirs = [d for d in glob(self.output_path+'/*') if os.path.isdir(d)]
-        for d in dirs:
-            log.info("removing: %s" % d)
-            shutil.rmtree(d)
-
+        log.info("cleanup %s: %r" % (self.name, {'resources':resources, 'outputs':outputs,'exclude':exclude}))
+        if outputs==True:
+            dirs = [
+                d for d in glob(self.output_path+'/*') 
+                if os.path.isdir(d)
+                and (exclude is None or re.search(exclude, fn) is None)
+            ]
+            log.info("-- removing %d output directories" % len(dirs))
+            for d in dirs:
+                log.info("removing: %s" % d)
+                shutil.rmtree(d)
+        if resources==True:
+            resourcefns = list(set([
+                    File(fn=fn).splitext()[0] 
+                    for fn in rglob(self.content_path, "*.*") 
+                    if os.path.splitext(fn)[-1].lower()!='.xml'
+                    and (exclude is None or re.search(exclude, fn) is None)
+            ]))
+            log.debug('%d content resources' % len(resourcefns))
+            xmlfns = [self.fn] + rglob(self.content_path,'*.xml')
+            for xmlfn in xmlfns:
+                x = XML(fn=xmlfn)
+                hreffns = list(set([
+                    File(fn=os.path.abspath(os.path.join(x.path, href.split('#')[0]))).splitext()[0]
+                    for href in Document.xpath(x.root, "//@href|//@src|//@altimg")
+                ]))
+                log.debug('%d hrefs in %s' % (len(hreffns), x.fn))
+                for hreffn in hreffns:
+                    if hreffn in resourcefns:
+                        log.debug('retain: %s' % hreffn)
+                        resourcefns.pop(resourcefns.index(hreffn))
+            log.info('-- removing %d orphaned content resources' % len(resourcefns))
+            for resourcefn in resourcefns:
+                fns = glob(resourcefn+'.*')
+                for fn in fns:
+                    os.remove(fn)
 
 # == COMMAND INTERFACE METHODS == 
 
