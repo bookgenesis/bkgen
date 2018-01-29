@@ -876,20 +876,22 @@ class Project(XML, Source):
             dirs = [
                 d for d in glob(self.output_path+'/*') 
                 if os.path.isdir(d)
-                and (exclude is None or re.search(exclude, fn) is None)
+                and (exclude is None or re.search(exclude, d) is None)
             ]
             log.info("-- removing %d output directories" % len(dirs))
             for d in dirs:
                 log.info("removing: %s" % d)
                 shutil.rmtree(d)
         if resources==True:
+            # Get all the resource filenames that don't match the exclusion pattern
             resourcefns = list(set([
-                    File(fn=fn).splitext()[0] 
-                    for fn in rglob(self.content_path, "*.*") 
-                    if os.path.splitext(fn)[-1].lower()!='.xml'
-                    and (exclude is None or re.search(exclude, fn) is None)
+                File(fn=fn).splitext()[0] 
+                for fn in rglob(self.content_path, "*.*") 
+                if os.path.splitext(fn)[-1].lower()!='.xml'
+                and (exclude is None or re.search(exclude, fn) is None)
             ]))
             log.debug('%d content resources' % len(resourcefns))
+            # pop from the list those that are referenced from the content
             xmlfns = [self.fn] + rglob(self.content_path,'*.xml')
             for xmlfn in xmlfns:
                 x = XML(fn=xmlfn)
@@ -903,6 +905,7 @@ class Project(XML, Source):
                         log.debug('retain: %s' % hreffn)
                         resourcefns.pop(resourcefns.index(hreffn))
             log.info('-- removing %d orphaned content resources' % len(resourcefns))
+            # delete those that remain -- not excluded, not referenced
             for resourcefn in resourcefns:
                 fns = glob(resourcefn+'.*')
                 for fn in fns:
