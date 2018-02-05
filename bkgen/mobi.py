@@ -21,7 +21,7 @@ class MOBI(Dict):
             os.path.dirname(os.path.abspath(mobi_path)), 
             (mobi_name or (os.path.basename(mobi_path.rstrip(os.path.sep))))+ext)
 
-    def build(self, build_path, metadata, mobi_name=None, manifest=None, spine_items=None, cover_src=None, 
+    def build(self, build_path, metadata, mobi_name=None, manifest=None, spine_items=None, cover_src=None, lang='en',
                 nav_toc=None, nav_landmarks=None, nav_page_list=None, before_compile=None, 
                 nav_href='nav.html', nav_title="Navigation"):
         """build MOBI (Kindle ebook) output of the given project"""
@@ -32,7 +32,7 @@ class MOBI(Dict):
         mobifn = self.mobi_fn(build_path, mobi_name=mobi_name)
         if nav_landmarks is None:
             nav_landmarks = EPUB.nav_landmarks({'href':nav_href, 'title':'Table of Contents', 'epub_type':'toc'})
-        result = EPUB(**self).build(build_path, metadata, 
+        result = EPUB(**self).build(build_path, metadata, lang=lang,
                     epub_name=mobi_name, spine_items=spine_items, cover_src=cover_src, cover_html=False,
                     nav_toc=nav_toc, nav_landmarks=nav_landmarks, nav_page_list=nav_page_list, 
                     nav_href=nav_href, nav_title=nav_title, show_nav=True, zip=False)

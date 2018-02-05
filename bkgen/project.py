@@ -535,7 +535,7 @@ class Project(XML, Source):
         return result
 
     def build_epub(self, clean=True, show_nav=False, doc_stylesheets=True,
-            zip=True, check=True, cleanup=False, before_compile=None, **image_args):
+            zip=True, check=True, cleanup=False, before_compile=None, lang=None, **image_args):
         from .epub import EPUB
         epub_isbn = self.metadata().identifier(id_patterns=['epub', 'ebook', 'isbn'])
         
@@ -555,16 +555,22 @@ class Project(XML, Source):
         resources = self.output_resources(output_path=epub_path, **image_args)
         metadata = self.find(self.root, "opf:metadata", namespaces=NS)
         cover_src = self.get_cover_href(kind='digital')
+        if lang is None: 
+            dclang = self.find(metadata,'dc:language')
+            if dclang is not None:
+                lang = dclang.text
+            else:
+                lang = 'en'
         spine_items = self.output_spineitems(output_path=epub_path, resources=resources, 
-            ext='.xhtml', doc_stylesheets=doc_stylesheets, **image_args)
-        result = EPUB().build(epub_path, metadata, 
+            ext='.xhtml', doc_stylesheets=doc_stylesheets, lang=lang, **image_args)
+        result = EPUB().build(epub_path, metadata, lang=lang,
             epub_name=epub_name, spine_items=spine_items, cover_src=cover_src, 
             show_nav=show_nav, before_compile=before_compile, zip=zip, check=check)
         if cleanup==True: shutil.rmtree(epub_path)
         return result
 
     def build_html(self, clean=True, singlepage=False, ext='.xhtml', doc_stylesheets=True, 
-            zip=True, cleanup=False, **image_args):
+            zip=True, cleanup=False, lang=None, **image_args):
         """build html output of the project. 
         * singlepage=False  : whether to build the HTML in a single page
         * zip=True          : whether to zip the output
@@ -579,8 +585,14 @@ class Project(XML, Source):
             os.makedirs(html_path)
         result = Dict(format="html")
         resources = self.output_resources(output_path=html_path, **image_args)
+        if lang is None: 
+            dclang = self.find(self.root,'opf:metadata/dc:language')
+            if dclang is not None:
+                lang = dclang.text
+            else:
+                lang = 'en'
         self.output_spineitems(output_path=html_path, resources=resources, 
-            ext=ext, singlepage=singlepage, doc_stylesheets=doc_stylesheets, **image_args)
+            ext=ext, singlepage=singlepage, doc_stylesheets=doc_stylesheets, lang=lang **image_args)
         if zip==True:
             from bl.zip import ZIP
             result['fn'] = ZIP.zip_path(html_path)
@@ -609,9 +621,15 @@ class Project(XML, Source):
         resources = self.output_resources(output_path=mobi_path, **image_args)
         metadata = self.root.find("{%(opf)s}metadata" % NS)
         cover_src = self.get_cover_href(kind='digital')
+        if lang is None: 
+            dclang = self.find(metadata,'dc:language')
+            if dclang is not None:
+                lang = dclang.text
+            else:
+                lang = 'en'
         spine_items = self.output_spineitems(output_path=mobi_path, resources=resources, 
-            ext='.html', http_equiv_content_type=True, doc_stylesheets=doc_stylesheets, **image_args)
-        result = MOBI().build(mobi_path, metadata, 
+            ext='.html', http_equiv_content_type=True, doc_stylesheets=doc_stylesheets, lang=lang, **image_args)
+        result = MOBI().build(mobi_path, metadata, lang=lang,
                 mobi_name=mobi_name, spine_items=spine_items, cover_src=cover_src, before_compile=before_compile)
         if cleanup==True: shutil.rmtree(mobi_path)
         return result
@@ -708,7 +726,7 @@ class Project(XML, Source):
         return outfn
 
     def output_spineitems(self, output_path=None, ext='.xhtml', resources=None, singlepage=False,
-                http_equiv_content_type=False, doc_stylesheets=True, **image_args):
+                http_equiv_content_type=False, doc_stylesheets=True, lang='en', **image_args):
         from bf.image import Image
         from .document import Document
         log.debug("project.output_spineitems()")
@@ -736,7 +754,7 @@ class Project(XML, Source):
             if 'html' in ext:
                 # create the output html for this document
                 h = d.html(fn=outfn, ext=ext, output_path=output_path, http_equiv_content_type=http_equiv_content_type,
-                        resources=resources, endnotes=endnotes)
+                        resources=resources, endnotes=endnotes, lang=lang)
                 # add the document-specific CSS, if it exists
                 if len(doc_css_fns) > 0 and doc_stylesheets==True:
                     css_fns = []
@@ -802,6 +820,8 @@ class Project(XML, Source):
             # concatenate all the outfns into a single document
             from .html import HTML
             html = HTML()
+            html.root.set('lang', lang)
+            html.root.set('{%(xml)s}lang'%NS, lang)
             html.fn = os.path.join(output_path, self.content_folder, self.name + ext)
             title = self.metadata().title.text if self.metadata().title is not None else ''
             spineitems = [PUB.spineitem(href=os.path.relpath(html.fn, output_path).replace('\\','/'), title=title)]

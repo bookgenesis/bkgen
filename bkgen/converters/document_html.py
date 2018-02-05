@@ -32,6 +32,7 @@ class DocumentHtml(Converter):
 @transformer.match("True")
 def default(elem, **params):
     root = transformer_XSLT(elem).getroot()
+    root = html_lang(root, **params)
     root = fill_head(root, **params)
     root = omit_print_conditions(root, **params)
     root = omit_unsupported_font_formatting(root, **params)
@@ -43,6 +44,13 @@ def default(elem, **params):
     if params.get('simple_tables')==True:
         root = render_simple_tables(root)
     return [ root ]
+
+def html_lang(root, lang='en', **params):
+    """make sure the html sets lang and xml:lang"""
+    if root.get('lang') is None and lang is not None:
+        root.set('lang', lang)
+        root.set('{%(xml)s}lang' % NS, lang)
+    return root
 
 def fill_head(root, **params):
     head = XML.find(root, "//html:head", namespaces=NS)
@@ -81,8 +89,11 @@ def omit_print_conditions(root, **params):
 
 def omit_unsupported_font_formatting(root, **params):
     # omit unsupported font formatting
+    supported_keys = ['class', 'id', 'style', 
+        '{%(epub)s}type'%NS, 'title', 'role', 'aria-labelledby', 'aria-label'
+    ]
     for span in XML.xpath(root, "//html:span", namespaces=NS):
-        for key in [key for key in span.attrib.keys() if key not in ['class', 'id', 'style', '{%(epub)s}type'%NS, 'title']]:
+        for key in [key for key in span.attrib.keys() if key not in supported_keys]:
             _=span.attrib.pop(key)
     return root
 

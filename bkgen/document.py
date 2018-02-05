@@ -89,13 +89,13 @@ class Document(XML, Source):
         converter = DocumentAid()
         return converter.convert(self, **params)
 
-    def html(self, fn=None, ext='.xhtml', output_path=None, resources=[], **args):
+    def html(self, fn=None, ext='.xhtml', output_path=None, resources=[], lang='en', **args):
         from .converters.document_html import DocumentHtml
         converter = DocumentHtml()
         B = self.Builder()
         fn = fn or os.path.splitext(self.fn)[0] + ext
         output_path = output_path or self.path
-        h = converter.convert(self, fn=fn, output_path=output_path, resources=resources, **args)
+        h = converter.convert(self, fn=fn, output_path=output_path, resources=resources, lang=lang, **args)
         return h
 
     def html_content(self, fn=None, output_path=None, resources=[], **args):

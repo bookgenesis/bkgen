@@ -138,7 +138,7 @@ class EPUB(ZIP, Source):
         return opf.find(opf.root, "opf:metadata", namespaces=NS)
 
     @classmethod
-    def build(C, output_path, metadata, epub_name=None, manifest=None, spine_items=None, 
+    def build(C, output_path, metadata, epub_name=None, manifest=None, spine_items=None, lang='en',
                 cover_src=None, cover_html=True, nav_toc=None, nav_landmarks=None, 
                 nav_page_list=None, nav_href='nav.xhtml', nav_title="Navigation", 
                 show_nav=False, before_compile=None, zip=True, check=True):
@@ -181,7 +181,7 @@ class EPUB(ZIP, Source):
 
         log.debug("cover_src: %r" % cover_src)
         if cover_src is not None and cover_html==True:
-            cover_html_fn = C.make_cover_html(output_path, cover_src)
+            cover_html_fn = C.make_cover_html(output_path, cover_src, lang=lang)
             cover_html_relpath = str(URL(File(cover_html_fn).relpath(output_path)))
             log.debug("cover_html_relpath: %r" % cover_html_relpath)
             spine_items.insert(0, Dict(href=cover_html_relpath, landmark='cover', linear='no'))
@@ -295,8 +295,11 @@ class EPUB(ZIP, Source):
         return result
 
     @classmethod
-    def make_cover_html(C, output_path, cover_src):
+    def make_cover_html(C, output_path, cover_src, lang=None):
         cover_html = XML(fn=os.path.join(os.path.dirname(FILENAME), 'templates', 'cover.xhtml'))
+        if lang is not None:
+            cover_html.root.set('lang', lang)
+            cover_html.root.set('{%(xml)s}lang'%NS, lang)
         cover_html_relpath = os.path.splitext(str(URL(cover_src)))[0]+'.xhtml'
         cover_html.fn = os.path.join(output_path, cover_html_relpath)
         img = XML.find(cover_html.root, "//html:img", namespaces=EPUB.NS)
