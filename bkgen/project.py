@@ -592,7 +592,7 @@ class Project(XML, Source):
             else:
                 lang = 'en'
         self.output_spineitems(output_path=html_path, resources=resources, 
-            ext=ext, singlepage=singlepage, doc_stylesheets=doc_stylesheets, lang=lang **image_args)
+            ext=ext, singlepage=singlepage, doc_stylesheets=doc_stylesheets, lang=lang, **image_args)
         if zip==True:
             from bl.zip import ZIP
             result['fn'] = ZIP.zip_path(html_path)
@@ -603,7 +603,7 @@ class Project(XML, Source):
         return result
 
     def build_mobi(self, clean=True, cleanup=False, before_compile=None,
-            doc_stylesheets=True, **image_args):
+            doc_stylesheets=True, lang=None, **image_args):
         from .mobi import MOBI
         mobi_isbn = self.metadata().identifier(id_patterns=['mobi', 'ebook', 'isbn'])
         if mobi_isbn is not None and mobi_isbn.text is not None:
