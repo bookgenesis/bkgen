@@ -1,29 +1,11 @@
-alabaster==0.7.10
-appdirs==1.4.3
-Babel==2.4.0
--e git+https://github.com/BlackEarth/bf@b048dda25606e3f446358216f073e1891e1f8db2#egg=bf
--e git+git@gitlab.com:bookgenesis/bkgen.git@14ea81ae915e428d745a834113a0175cc97e938a#egg=bkgen
--e git+https://github.com/BlackEarth/bl.git@9f395128d5ac68fd56c92841ec56fadebafb63d4#egg=bl
--e git+https://github.com/BlackEarth/bxml@35c0f00562c00982089335a92d33d102a201f2d3#egg=bxml
-click==6.7
-cssselect==1.0.1
+-e git+https://github.com/BlackEarth/bf.git@396da79fc7324deeda905a5b02797036bb7595c7#egg=bf
+-e git+https://gitlab.com/bookgenesis/bkgen.git@abcea8add1993433cc2883207b78db75ac2bfb20#egg=bkgen
+-e git+https://github.com/BlackEarth/bl.git@858401c26255e7e421c2baf34804c3b73bfe5363#egg=bl
+-e git+https://github.com/BlackEarth/bxml.git@4cf1cd9230f739159514fe8d4d1c58fab6281bec#egg=bxml
+cssselect==1.0.3
 cssutils==1.0.2
-docutils==0.13.1
-imagesize==0.7.1
-Jinja2==2.9.6
-libsass==0.12.3
-lxml==3.8.0
-Markdown==2.6.8
-MarkupSafe==1.0
-packaging==16.8
-pycountry==17.1.8
-Pygments==2.2.0
-pyparsing==2.2.0
-pytz==2017.2
-requests==2.13.0
-six==1.10.0
-snowballstemmer==1.2.1
-Sphinx==1.6.1
-sphinxcontrib-websupport==1.0.1
-typing==3.6.1
+libsass==0.13.4
+lxml==4.1.1
+pycountry==17.9.23
+six==1.11.0
 Unum==4.1.3
