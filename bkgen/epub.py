@@ -197,9 +197,12 @@ class EPUB(ZIP, Source):
             toc_item = spine_items[landmarks.index('toc')]
             nav = XML(fn=os.path.join(output_path, str(URL(toc_item.get('href')))))
             nav_elem = nav.find(nav.root, "//html:nav", namespaces=NS)
-            nav_elem.set('{%(epub)s}type'%NS, 'toc')
-            if show_nav != True: 
-                nav_elem.set('hidden', "")
+            if nav_elem is None:
+                log.error("No '<nav>' element found in the 'toc' landmark document. There should be one.")
+            else:
+                nav_elem.set('{%(epub)s}type'%NS, 'toc')
+                if show_nav != True: 
+                    nav_elem.set('hidden', "")
             
             # must update hrefs and srcs to the nav_href location.
             for element in nav.xpath(nav.root, "//*[@href or @src]"):
@@ -217,10 +220,11 @@ class EPUB(ZIP, Source):
                             os.path.dirname(os.path.join(output_path, nav_href))))))
 
             # make the nav element the only child of the body
-            body = nav.find(nav.root, "html:body", namespaces=NS)
-            for ch in body.getchildren():
-                XML.remove(ch)
-            body.append(nav_elem)
+            if nav_elem is not None:    # None is an error condition, logged above
+                body = nav.find(nav.root, "html:body", namespaces=NS)
+                for ch in body.getchildren():
+                    XML.remove(ch)
+                body.append(nav_elem)
             
             nav.fn = os.path.join(output_path, nav_href)
             nav.write(doctype="<!DOCTYPE html>", canonicalized=False)
