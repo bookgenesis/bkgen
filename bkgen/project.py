@@ -867,7 +867,10 @@ class Project(XML, Source):
                     if len(hreflist) > 1:      # we have an id -- use it to resolve the link
                         id = hreflist[1]
                         if id in ids:
-                            e.set('href', os.path.relpath(ids[id], x.path).replace('\\','/')+'#'+id)
+                            rp = os.path.relpath(ids[id], x.path).replace('\\','/')
+                            if rp == x.basename:        # location in the same file, omit filename
+                                rp = ''
+                            e.set('href', rp+'#'+id)
                     else:               # only a filename
                         outfb = os.path.splitext(
                             os.path.abspath(
