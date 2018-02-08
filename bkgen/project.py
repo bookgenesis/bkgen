@@ -1011,9 +1011,9 @@ def build_project(project_path, format=None, check=None, doc_stylesheets=True, s
         if 'archive' in format:
             project.build_archive()
 
-def cleanup_project(project_path):
+def cleanup_project(project_path, outputs=False, resources=False, exclude=None):
     project = Project(fn=os.path.join(project_path, 'project.xml'), **(config.Project or {}))
-    project.cleanup()
+    project.cleanup(outputs=outputs, resources=resources, exclude=exclude)
 
 def zip_project(project_path):
     from bl.zip import ZIP
@@ -1060,7 +1060,7 @@ if __name__=='__main__':
             if '-archive' in sys.argv[1]: 
                 project.build_outputs(kind='archive')
         if 'clean' in sys.argv[1]:
-            cleanup_project(project_path)
+            cleanup_project(project_path, outputs='outputs' in sys.argv[1], resources='resources' in sys.argv[1])
         if 'zip' in sys.argv[1]:
             zip_project(project_path)
         if 'remove' in sys.argv[1]:
