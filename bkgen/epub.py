@@ -203,6 +203,16 @@ class EPUB(ZIP, Source):
                 nav_elem.set('{%(epub)s}type'%NS, 'toc')
                 if show_nav != True: 
                     nav_elem.set('hidden', "")
+                
+                # make the nav element the only child of the body
+                body = nav.find(nav.root, "html:body", namespaces=NS)
+                for ch in body.getchildren():
+                    XML.remove(ch)
+                body.append(nav_elem)
+
+                # remove any pagebreaks from the nav -- allowed in the interior, not allowed in EPUB nav document
+                for pagebreak in nav.xpath(nav_elem, ".//html:span[@epub:type='pagebreak']", namespaces=NS):
+                    nav.remove(pagebreak, leave_tail=True)
             
             # must update hrefs and srcs to the nav_href location.
             for element in nav.xpath(nav.root, "//*[@href or @src]"):
@@ -219,13 +229,6 @@ class EPUB(ZIP, Source):
                             os.path.abspath(os.path.join(os.path.dirname(nav.fn), src)), 
                             os.path.dirname(os.path.join(output_path, nav_href))))))
 
-            # make the nav element the only child of the body
-            if nav_elem is not None:    # None is an error condition, logged above
-                body = nav.find(nav.root, "html:body", namespaces=NS)
-                for ch in body.getchildren():
-                    XML.remove(ch)
-                body.append(nav_elem)
-            
             nav.fn = os.path.join(output_path, nav_href)
             nav.write(doctype="<!DOCTYPE html>", canonicalized=False)
             navfn = nav.fn
