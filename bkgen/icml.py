@@ -195,7 +195,7 @@ class ICML(XML, Source):
                 style['font-weight:'] = '800'
             elif 'Black' in fs:
                 style['font-weight:'] = '900'
-            elif 'Medium' in fs or 'Regular' in fs:
+            elif 'Medium' in fs or 'Regular' in fs or 'Roman' in fs:
                 style['font-weight:'] = 'normal'
             elif 'Extralight' in fs or 'Thin' in fs:
                 style['font-weight:'] = '100'
@@ -220,26 +220,35 @@ class ICML(XML, Source):
         #     if n != 0:
         #         style['letter-spacing:'] = "%d%%" % n
 
+        # margins and spacing: use the elem 'PointSize' if available to calculate a relative em
+        # otherwise, use rem -- not relative to the current type size.
+
+        if elem.get('PointSize') is not None:
+            pts = float(elem.get('PointSize'))
+            unit = 'em'
+        else:
+            pts = pts_per_em
+            unit = 'rem'
+
         # margin-left
         if elem.get('LeftIndent') is not None:
-            style['margin-left:'] = "%.02frem" % (float(elem.get('LeftIndent'))/pts_per_em, )
+            style['margin-left:'] = "%.02f%s" % (float(elem.get('LeftIndent'))/pts, unit)
 
         # margin-right
         if elem.get('RightIndent') is not None:
-            style['margin-right:'] = "%.02frem" % (float(elem.get('RightIndent'))/pts_per_em, )
+            style['margin-right:'] = "%.02f%s" % (float(elem.get('RightIndent'))/pts, unit)
 
         # margin-top
         if elem.get('SpaceBefore') is not None:
-            style['margin-top:'] = "%.02frem" % (float(elem.get('SpaceBefore'))/pts_per_em, )
+            style['margin-top:'] = "%.02f%s" % (float(elem.get('SpaceBefore'))/pts, unit)
 
         # margin-bottom
         if elem.get('SpaceAfter') is not None:
-            style['margin-bottom:'] = "%.02frem" % (float(elem.get('SpaceAfter'))/pts_per_em, )
+            style['margin-bottom:'] = "%.02f%s" % (float(elem.get('SpaceAfter'))/pts, unit)
 
         # text-indent
         if elem.get('FirstLineIndent') is not None:
-            style['text-indent:'] = "%.02frem" % (float(elem.get('FirstLineIndent'))/pts_per_em, )
-
+            style['text-indent:'] = "%.02f%s" % (float(elem.get('FirstLineIndent'))/pts, unit)
 
         # page-break-before
         if elem.get('StartParagraph') in ['NextColumn', 'NextFrame', 'NextPage']:
