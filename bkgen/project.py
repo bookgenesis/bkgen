@@ -843,6 +843,14 @@ class Project(XML, Source):
             html.fn = os.path.join(output_path, self.content_folder, self.name + ext)
             title = self.metadata().title.text if self.metadata().title is not None else ''
             spineitems = [PUB.spineitem(href=os.path.relpath(html.fn, output_path).replace('\\','/'), title=title)]
+            # head = H.head(
+            #         H.title(title),
+            #         H.meta({'charset': 'UTF-8'}))
+            # for stylesheet in self.xpath(self.root, "pub:resources/pub:resource[@class='stylesheet']"):
+            #     link = H.link(rel='stylesheet', type='text/css',
+            #         href=os.path.relpath(
+            #             os.path.abspath(os.path.join(self.path, stylesheet.get('href'))),
+            #             html.path)).replace('\\','/')
             html.root.append(
                 H.head(
                     H.title(title),
