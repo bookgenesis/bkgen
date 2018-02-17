@@ -920,16 +920,16 @@ class Project(XML, Source):
         resources=True: remove all non-referenced resources (non-xml) from the content folder
         exclude=None:   regexp pattern to exclude from cleanup
         """
-        log.info("cleanup %s: %r" % (self.name, {'resources':resources, 'outputs':outputs,'exclude':exclude}))
+        log.debug("cleanup %s: %r" % (self.name, {'resources':resources, 'outputs':outputs,'exclude':exclude}))
         if outputs==True:
             dirs = [
                 d for d in glob(self.output_path+'/*') 
                 if os.path.isdir(d)
                 and (exclude is None or re.search(exclude, d) is None)
             ]
-            log.info("-- removing %d output directories" % len(dirs))
+            log.info("cleanup: removing %d output directories from %s" % (len(dirs), self.path))
             for d in dirs:
-                log.info("removing: %s" % d)
+                log.debug("removing: %s" % d)
                 shutil.rmtree(d)
         if resources==True:
             # Get all the resource filenames that don't match the exclusion pattern
@@ -953,7 +953,7 @@ class Project(XML, Source):
                     if hreffn in resourcefns:
                         log.debug('retain: %s' % hreffn)
                         resourcefns.pop(resourcefns.index(hreffn))
-            log.info('-- removing %d orphaned content resources' % len(resourcefns))
+            log.info('cleanup: removing %d orphaned content resources from %s' % (len(resourcefns), self.path))
             # delete those that remain -- not excluded, not referenced
             for resourcefn in resourcefns:
                 fns = glob(resourcefn+'.*')
