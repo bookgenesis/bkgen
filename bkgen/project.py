@@ -207,7 +207,7 @@ class Project(XML, Source):
 
         project_fn = os.path.join(project_path, '%s.xml' % basename)
         if os.path.exists(project_fn) and refresh==True:
-            log.debug("Refreshing project by removing existing project file: %s" % project_fn)
+            log.info("Refreshing project by removing existing project file: %s" % project_fn)
             os.remove(project_fn)
         if os.path.exists(project_fn):
             log.debug("Project file already exists: %s" % project_fn)
