@@ -709,26 +709,27 @@ class Project(XML, Source):
                 if os.path.splitext(outfn)[-1].lower()=='.jpg':
                     img_args.update(quality=quality)
 
-                width, height = [int(i) for i in image.identify(format="%w,%h").split(',')]
-                if (width * height) > maxpixels or width > maxwh or height > maxwh:
-                    if width * height > maxpixels:  # reduce dimension to fit maxpixels
-                        fraction = (maxpixels / (width * height)) ** 0.5
-                        width *= fraction
-                        height = height * fraction
-                    if width > maxwh:               # reduce dimensions to fit maxwh
-                        height *= maxwh / width
-                        width = maxwh
-                    if height > maxwh:
-                        width *= maxwh / height
-                        height = maxwh
-                    width, height = int(width), int(height)
+                if os.path.splitext(outfn)[-1].lower() != '.svg':
+                    width, height = [int(i) for i in image.identify(format="%w,%h").split(',')]
+                    if (width * height) > maxpixels or width > maxwh or height > maxwh:
+                        if width * height > maxpixels:  # reduce dimension to fit maxpixels
+                            fraction = (maxpixels / (width * height)) ** 0.5
+                            width *= fraction
+                            height = height * fraction
+                        if width > maxwh:               # reduce dimensions to fit maxwh
+                            height *= maxwh / width
+                            width = maxwh
+                        if height > maxwh:
+                            width *= maxwh / height
+                            height = maxwh
+                        width, height = int(width), int(height)
 
-                    log.debug("res=%r, width=%r, height=%r" % (res, width, height))
-                    img_args.update(geometry="%dx%d>" % (width, height))
+                        log.debug("res=%r, width=%r, height=%r" % (res, width, height))
+                        img_args.update(geometry="%dx%d>" % (width, height))
 
-                # apply the img_args to the image -- only once, so that we don't lose quality in jpeg output
-                image.mogrify(**img_args)
-                log.debug("img: %r %r" % (outfn, img_args))
+                    # apply the img_args to the image -- only once, so that we don't lose quality in jpeg output
+                    image.mogrify(**img_args)
+                    log.debug("img: %r %r" % (outfn, img_args))
 
                 # here we compare the image_data from this write to what was done previously
                 image_data = open(outfn, 'rb').read()
