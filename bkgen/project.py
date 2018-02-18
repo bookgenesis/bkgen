@@ -665,7 +665,7 @@ class Project(XML, Source):
             Text(fn=fn).write(fn=outfn)
         return outfn
 
-    def output_image(self, fn, output_path=None, outfn=None, jpg=True, png=True, svg=False, 
+    def output_image(self, fn, output_path=None, outfn=None, jpg=True, png=True, svg=True, 
             format='jpeg', ext='.jpg', res=300, quality=80, maxwh=2048, maxpixels=4e6, gs=None, **img_args):
         from bf.image import Image
         f = File(fn=fn)
@@ -679,12 +679,17 @@ class Project(XML, Source):
 
         # try writing the image multiple times (at most 5) to ensure clean output
         image_data_tries = []
-        while len(image_data_tries) < 5:
+        i = 0
+        while i < 5:
+            i += 1
             try:
                 if not os.path.exists(os.path.dirname(outfn)):
                     os.makedirs(os.path.dirname(outfn))
                 
-                if (mimetype=='image/jpeg' or f.ext=='.jpg') and jpg==True:
+                if mimetype=='application/pdf' or f.ext.lower() == '.pdf':
+                    from bf.pdf import PDF
+                    PDF(fn=fn).gswrite(fn=outfn, device=format, res=res, gs=gs)
+                elif (mimetype=='image/jpeg' or f.ext=='.jpg') and jpg==True:
                     outfn = os.path.splitext(outfn)[0] + '.jpg'
                     f.write(fn=outfn)
                 elif (mimetype=='image/png' or f.ext=='.png') and png==True:
@@ -693,13 +698,10 @@ class Project(XML, Source):
                 elif (mimetype=='image/svg+xml' or f.ext=='.svg') and svg==True:
                     outfn = os.path.splitext(outfn)[0] + '.svg'
                     f.write(fn=outfn)
-                elif mimetype=='application/pdf' or f.ext.lower() == '.pdf':
-                    from bf.pdf import PDF
-                    PDF(fn=fn).gswrite(fn=outfn, device=format, res=res, gs=gs)
                 elif format in mimetype or f.ext == ext:
                     f.write(fn=outfn)
-                else:
-                    Image(fn=fn).convert(outfn, format=format)
+                elif f.ext != '.svg':
+                    Image(fn=fn).convert(outfn)
 
                 # make sure the output image fits the parameters
                 log.debug("%s %r" % (outfn, os.path.exists(outfn)))
