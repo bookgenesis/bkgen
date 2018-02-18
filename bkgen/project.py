@@ -665,7 +665,7 @@ class Project(XML, Source):
             Text(fn=fn).write(fn=outfn)
         return outfn
 
-    def output_image(self, fn, output_path=None, outfn=None, jpg=True, svg=True, png=True,
+    def output_image(self, fn, output_path=None, outfn=None, jpg=True, png=True, svg=False, 
             format='jpeg', ext='.jpg', res=300, quality=80, maxwh=2048, maxpixels=4e6, gs=None, **img_args):
         from bf.image import Image
         f = File(fn=fn)
