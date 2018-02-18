@@ -665,7 +665,7 @@ class Project(XML, Source):
             Text(fn=fn).write(fn=outfn)
         return outfn
 
-    def output_image(self, fn, output_path=None, outfn=None, svg=True, png=True,
+    def output_image(self, fn, output_path=None, outfn=None, jpg=True, svg=True, png=True,
             format='jpeg', ext='.jpg', res=300, quality=80, maxwh=2048, maxpixels=4e6, gs=None, **img_args):
         from bf.image import Image
         f = File(fn=fn)
@@ -684,31 +684,38 @@ class Project(XML, Source):
                 if not os.path.exists(os.path.dirname(outfn)):
                     os.makedirs(os.path.dirname(outfn))
                 
-                if (mimetype=='image/png' or f.ext=='.png') and png==True:
+                if (mimetype=='image/jpeg' or f.ext=='.jpg') and jpg==True:
+                    outfn = os.path.splitext(outfn)[0] + '.jpg'
+                    f.write(fn=outfn)
+                elif (mimetype=='image/png' or f.ext=='.png') and png==True:
                     outfn = os.path.splitext(outfn)[0] + '.png'
                     f.write(fn=outfn)
                 elif (mimetype=='image/svg+xml' or f.ext=='.svg') and svg==True:
                     outfn = os.path.splitext(outfn)[0] + '.svg'
                     f.write(fn=outfn)
+                elif mimetype=='application/pdf' or f.ext.lower() == '.pdf':
+                    from bf.pdf import PDF
+                    PDF(fn=fn).gswrite(fn=outfn, device=format, res=res, gs=gs)
+                elif format in mimetype or f.ext == ext:
+                    f.write(fn=outfn)
                 else:
-                    # write the output image
-                    if mimetype=='application/pdf' or f.ext.lower() == '.pdf':
-                        from bf.pdf import PDF
-                        PDF(fn=fn).gswrite(fn=outfn, device=format, res=res, gs=gs)
-                    elif format in mimetype or f.ext == ext:
-                        f.write(fn=outfn)
-                    else:
-                        Image(fn=fn).convert(outfn, format=format)
+                    Image(fn=fn).convert(outfn, format=format)
 
-                    # make sure the output image fits the parameters
-                    log.debug("%s %r" % (outfn, os.path.exists(outfn)))
-                    image = Image(fn=outfn)
-                    width, height = [int(i) for i in image.identify(format="%w,%h").split(',')]
-                    if width * height > maxpixels:                          # reduce dimension to fit maxpixels
+                # make sure the output image fits the parameters
+                log.debug("%s %r" % (outfn, os.path.exists(outfn)))
+                image = Image(fn=outfn)
+
+                img_args.update(density="%dx%d" % (res,res))
+                if os.path.splitext(outfn)[-1].lower()=='.jpg':
+                    img_args.update(quality=quality)
+
+                width, height = [int(i) for i in image.identify(format="%w,%h").split(',')]
+                if (width * height) > maxpixels or width > maxwh or height > maxwh:
+                    if width * height > maxpixels:  # reduce dimension to fit maxpixels
                         fraction = (maxpixels / (width * height)) ** 0.5
                         width *= fraction
                         height = height * fraction
-                    if width > maxwh:                                       # reduce dimensions to fit maxwh
+                    if width > maxwh:               # reduce dimensions to fit maxwh
                         height *= maxwh / width
                         width = maxwh
                     if height > maxwh:
@@ -717,11 +724,11 @@ class Project(XML, Source):
                     width, height = int(width), int(height)
 
                     log.debug("res=%r, width=%r, height=%r" % (res, width, height))
-                    img_args.update(density="%dx%d" % (res,res), geometry="%dx%d>" % (width, height))
-                    if format.lower() in ['jpeg', 'jpg']:
-                        img_args.update(quality=quality)
-                    image.mogrify(**img_args)
-                    log.debug("img: %r %r" % (outfn, img_args))
+                    img_args.update(geometry="%dx%d>" % (width, height))
+
+                # apply the img_args to the image -- only once, so that we don't lose quality in jpeg output
+                image.mogrify(**img_args)
+                log.debug("img: %r %r" % (outfn, img_args))
 
                 # here we compare the image_data from this write to what was done previously
                 image_data = open(outfn, 'rb').read()
