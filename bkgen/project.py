@@ -812,7 +812,8 @@ class Project(XML, Source):
                         outfn = self.output_image(srcfn, output_path=output_path, **args)
                         img.set('src', os.path.relpath(outfn, h.path).replace('\\','/'))
                     else:
-                        log.warn("IMAGE NOT FOUND: %s" % srcfn)
+                        log.error("IMAGE NOT FOUND, REMOVING: %s" % srcfn)
+                        h.remove(img, leave_tail=True)
 
                 h.write(doctype="<!DOCTYPE html>", canonicalized=False)
                 outfns.append(h.fn)
