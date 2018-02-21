@@ -210,9 +210,10 @@ class EPUB(ZIP, Source):
                     XML.remove(ch)
                 body.append(nav_elem)
 
-                # remove any pagebreaks from the nav -- allowed in the interior, not allowed in EPUB nav document
-                for pagebreak in nav.xpath(nav_elem, ".//html:span[@epub:type='pagebreak']", namespaces=NS):
-                    nav.remove(pagebreak, leave_tail=True)
+                # remove any spans in the nav -- replace with content
+                # (this also removes empty spans such as pagebreaks and index entries)
+                for span in nav.xpath(nav_elem, ".//html:span", namespaces=NS):
+                    XML.replace_with_contents(span)
             
             # must update hrefs and srcs to the nav_href location.
             for element in nav.xpath(nav.root, "//*[@href or @src]"):
