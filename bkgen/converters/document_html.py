@@ -194,8 +194,13 @@ def process_pub_attributes(root, **params):
 
 def render_crossrefs(root):
     """pub:crossref uses xpath to select content"""
-    for crossref in Document.xpath(root, "//pub:crossref[@select]"):
-        crossref.text = Document.find(crossref, crossref.get('select'))
+    for crossref in Document.xpath(root, "//pub:crossref"):
+        log.info("pub:crossref: %r" % crossref.attrib)
+        src_id = crossref.get('src').split('#')[-1]
+        src_elem = Document.find(root, "//*[@id='%s']" % src_id)
+        if src_elem is not None:
+            crossref.text = Document.find(src_elem, crossref.get('select'))
+        log.info("select: %s" % crossref.text)
         Document.replace_with_contents(crossref)
     return root
 
