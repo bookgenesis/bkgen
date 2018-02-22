@@ -138,6 +138,9 @@
 	    </img>
 	</xsl:template>
 
+	<!-- altimg attribute (such as on tables) to be removed -->
+	<xsl:template match="@altimg"></xsl:template>
+
     <xsl:template match="m:math[not(@altimg)] | math[not(@altimg)]">
     	<xsl:copy><xsl:apply-templates select="@*|node()"/></xsl:copy>
 	</xsl:template>
