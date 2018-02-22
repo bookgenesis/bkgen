@@ -39,6 +39,7 @@ def default(elem, **params):
     root = render_footnotes(root, **params)
     root = process_endnotes(root, **params)
     root = process_pub_attributes(root, **params)
+    root = render_crossrefs(root)
     root = process_index_entries(root, **params)
     root = replace_ligature_characters(root)
     if params.get('simple_tables')==True:
@@ -189,6 +190,13 @@ def process_pub_attributes(root, **params):
             style = '%s:%s' % (aname, aval)
             styles.append(style)
         e.set('style', '; '.join(styles))
+    return root
+
+def render_crossrefs(root):
+    """pub:crossref uses xpath to select content"""
+    for crossref in Document.xpath(root, "//pub:crossref[@select]"):
+        crossref.text = Document.find(crossref, crossref.get('select'))
+        Document.replace_with_contents(crossref)
     return root
 
 def process_index_entries(root, **params):
