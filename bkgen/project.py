@@ -944,7 +944,7 @@ class Project(XML, Source):
                 shutil.rmtree(d)
         if logs==True:
             log_glob = os.path.join(self.path, '/logs', '*.log')
-            log.debug("removing %s" % log_glob)
+            log.debug("cleanup logs: %s" % log_glob)
             for fn in glob(log_glob):
                 os.remove(fn)
         if resources==True:
