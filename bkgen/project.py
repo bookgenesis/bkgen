@@ -925,13 +925,13 @@ class Project(XML, Source):
 
         return spineitems
 
-    def cleanup(self, resources=False, outputs=False, exclude=None):
+    def cleanup(self, resources=False, outputs=False, logs=False, exclude=None):
         """clean up the project:
         outputs=True:   remove all folders from the output folder
         resources=True: remove all non-referenced resources (non-xml) from the content folder
         exclude=None:   regexp pattern to exclude from cleanup
         """
-        log.debug("cleanup %s: %r" % (self.name, {'resources':resources, 'outputs':outputs,'exclude':exclude}))
+        log.debug("cleanup %s: %r" % (self.name, {'resources':resources, 'outputs':outputs, 'logs':logs, 'exclude':exclude}))
         if outputs==True:
             dirs = [
                 d for d in glob(self.output_path+'/*') 
@@ -942,6 +942,11 @@ class Project(XML, Source):
             for d in dirs:
                 log.debug("removing: %s" % d)
                 shutil.rmtree(d)
+        if logs==True:
+            log_glob = os.path.join(self.path, '/logs', '*.log')
+            log.debug("removing %s" % log_glob)
+            for fn in glob(log_glob):
+                os.remove(fn)
         if resources==True:
             # Get all the resource filenames that don't match the exclusion pattern
             resourcefns = list(set([
@@ -1051,9 +1056,9 @@ def build_project(project_path, format=None, check=None, doc_stylesheets=True, s
         if 'archive' in format:
             project.build_archive()
 
-def cleanup_project(project_path, outputs=False, resources=False, exclude=None):
+def cleanup_project(project_path, outputs=False, resources=False, logs=False, exclude=None):
     project = Project(fn=os.path.join(project_path, 'project.xml'), **(config.Project or {}))
-    project.cleanup(outputs=outputs, resources=resources, exclude=exclude)
+    project.cleanup(outputs=outputs, resources=resources, logs=logs, exclude=exclude)
 
 def zip_project(project_path):
     from bl.zip import ZIP
