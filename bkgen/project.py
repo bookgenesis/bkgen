@@ -534,7 +534,7 @@ class Project(XML, Source):
         result = Dict(fn=zipfn)
         return result
 
-    def build_epub(self, clean=True, show_nav=False, doc_stylesheets=True,
+    def build_epub(self, clean=True, show_nav=False, doc_stylesheets=True, progress=None,
             zip=True, check=True, cleanup=False, before_compile=None, lang=None, **image_args):
         from .epub import EPUB
         epub_isbn = self.metadata().identifier(id_patterns=['epub', 'ebook', 'isbn'])
@@ -553,6 +553,7 @@ class Project(XML, Source):
 
         if not os.path.isdir(epub_path): os.makedirs(epub_path)
         resources = self.output_resources(output_path=epub_path, **image_args)
+        if progress is not None: progress.report()
         metadata = self.find(self.root, "opf:metadata", namespaces=NS)
         cover_src = self.get_cover_href(kind='digital')
         if lang is None: 
@@ -563,13 +564,14 @@ class Project(XML, Source):
                 lang = 'en'
         spine_items = self.output_spineitems(output_path=epub_path, resources=resources, 
             ext='.xhtml', doc_stylesheets=doc_stylesheets, lang=lang, **image_args)
-        result = EPUB().build(epub_path, metadata, lang=lang,
+        if progress is not None: progress.report()
+        result = EPUB().build(epub_path, metadata, progress=progress, lang=lang,
             epub_name=epub_name, spine_items=spine_items, cover_src=cover_src, 
             show_nav=show_nav, before_compile=before_compile, zip=zip, check=check)
         if cleanup==True: shutil.rmtree(epub_path)
         return result
 
-    def build_html(self, clean=True, singlepage=False, ext='.xhtml', doc_stylesheets=True, 
+    def build_html(self, clean=True, singlepage=False, ext='.xhtml', doc_stylesheets=True, progress=None,
             zip=True, cleanup=False, lang=None, **image_args):
         """build html output of the project. 
         * singlepage=False  : whether to build the HTML in a single page
@@ -585,6 +587,7 @@ class Project(XML, Source):
             os.makedirs(html_path)
         result = Dict(format="html")
         resources = self.output_resources(output_path=html_path, **image_args)
+        if progress is not None: progress.report()
         if lang is None: 
             dclang = self.find(self.root,'opf:metadata/dc:language')
             if dclang is not None:
@@ -600,9 +603,10 @@ class Project(XML, Source):
                 shutil.rmtree(html_path)
         else:
             result['fn'] = html_path
+        if progress is not None: progress.report()
         return result
 
-    def build_mobi(self, clean=True, cleanup=False, before_compile=None,
+    def build_mobi(self, clean=True, cleanup=False, before_compile=None, progress=None,
             doc_stylesheets=True, lang=None, **image_args):
         from .mobi import MOBI
         mobi_isbn = self.metadata().identifier(id_patterns=['mobi', 'ebook', 'isbn'])
@@ -619,6 +623,7 @@ class Project(XML, Source):
 
         if not os.path.isdir(mobi_path): os.makedirs(mobi_path)
         resources = self.output_resources(output_path=mobi_path, **image_args)
+        if progress is not None: progress.report()
         metadata = self.root.find("{%(opf)s}metadata" % NS)
         cover_src = self.get_cover_href(kind='digital')
         if lang is None: 
@@ -629,9 +634,11 @@ class Project(XML, Source):
                 lang = 'en'
         spine_items = self.output_spineitems(output_path=mobi_path, resources=resources, 
             ext='.html', http_equiv_content_type=True, doc_stylesheets=doc_stylesheets, lang=lang, **image_args)
+        if progress is not None: progress.report()
         result = MOBI().build(mobi_path, metadata, lang=lang,
                 mobi_name=mobi_name, spine_items=spine_items, cover_src=cover_src, before_compile=before_compile)
         if cleanup==True: shutil.rmtree(mobi_path)
+        if progress is not None: progress.report()
         return result
 
     def output_resources(self, output_path=None, **image_args):

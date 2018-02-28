@@ -138,7 +138,7 @@ class EPUB(ZIP, Source):
         return opf.find(opf.root, "opf:metadata", namespaces=NS)
 
     @classmethod
-    def build(C, output_path, metadata, epub_name=None, manifest=None, spine_items=None, lang='en',
+    def build(C, output_path, metadata, epub_name=None, progress=None, manifest=None, spine_items=None, lang='en',
                 cover_src=None, cover_html=True, nav_toc=None, nav_landmarks=None, 
                 nav_page_list=None, nav_href='nav.xhtml', nav_title="Navigation", 
                 show_nav=False, before_compile=None, zip=True, check=True):
@@ -283,16 +283,18 @@ class EPUB(ZIP, Source):
 
         mimetype_fn = C.make_mimetype_file(output_path)
         container_fn = C.make_container_file(output_path, opffn)
-        
+
         result = Dict(fn=C.epub_fn(output_path, epub_name), format='epub')
         if before_compile is not None:
             before_compile(output_path)
+            
         if zip==True:
             the_epub = C.zip_epub(output_path, 
                 epubfn=result.epubfn,
                 mimetype_fn=mimetype_fn,
                 container_fn=container_fn,
                 opf_fn=opffn)
+            if progress is not None: progress.report()
             if check==True:
                 epubcheckfn = the_epub.check()
                 log.debug(epubcheckfn)
@@ -300,6 +302,7 @@ class EPUB(ZIP, Source):
             result.fn = the_epub.fn
         else:
             result.fn = output_path
+        if progress is not None: progress.report()
         return result
 
     @classmethod

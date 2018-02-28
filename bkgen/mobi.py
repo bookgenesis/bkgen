@@ -22,7 +22,7 @@ class MOBI(Dict):
             (mobi_name or (os.path.basename(mobi_path.rstrip(os.path.sep))))+ext)
 
     def build(self, build_path, metadata, mobi_name=None, manifest=None, spine_items=None, cover_src=None, lang='en',
-                nav_toc=None, nav_landmarks=None, nav_page_list=None, before_compile=None, 
+                nav_toc=None, nav_landmarks=None, nav_page_list=None, before_compile=None, progress=None, 
                 nav_href='nav.html', nav_title="Navigation"):
         """build MOBI (Kindle ebook) output of the given project"""
         
@@ -32,7 +32,7 @@ class MOBI(Dict):
         mobifn = self.mobi_fn(build_path, mobi_name=mobi_name)
         if nav_landmarks is None:
             nav_landmarks = EPUB.nav_landmarks({'href':nav_href, 'title':'Table of Contents', 'epub_type':'toc'})
-        result = EPUB(**self).build(build_path, metadata, lang=lang,
+        result = EPUB(**self).build(build_path, metadata, lang=lang, progress=progress,
                     epub_name=mobi_name, spine_items=spine_items, cover_src=cover_src, cover_html=False,
                     nav_toc=nav_toc, nav_landmarks=nav_landmarks, nav_page_list=nav_page_list, 
                     nav_href=nav_href, nav_title=nav_title, show_nav=True, zip=False)
@@ -42,8 +42,10 @@ class MOBI(Dict):
         self.size_images(opffn)
         if before_compile is not None:
             before_compile(build_path)
+        if progress is not None: progress.report()
         self.compile_mobi(build_path, opffn, mobifn=mobifn)
         result.update(fn=mobifn, log=mobifn+'.kindlegen.txt', format='mobi')
+        if progress is not None: progress.report()
         return result
 
     @classmethod
