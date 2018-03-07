@@ -240,16 +240,16 @@ class EPUB(ZIP, Source):
             navfn = C.make_nav_file(output_path, nav_toc, nav_href=nav_href, title=nav_title)
 
         nav = XML(fn=navfn)
-        body = nav.find(nav.root, "html:body", namespaces=NS)
+        body = nav.find(nav.root, "//html:body", namespaces=NS)
 
         if nav_landmarks is None:
             nav_landmarks = C.nav_landmarks_from_spine_items(output_path, spine_items)
-        if nav_landmarks is not None:
+        if nav_landmarks is not None and body is not None:
             body.append(nav_landmarks)
 
         if nav_page_list is None:
             nav_page_list = C.nav_page_list_from_spine_items(output_path, spine_items)
-        if nav_page_list is not None:
+        if nav_page_list is not None and body is not None:
             body.append(nav_page_list)
 
         nav.write(doctype="<!DOCTYPE html>", canonicalized=False)
