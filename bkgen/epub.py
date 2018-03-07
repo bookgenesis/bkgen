@@ -806,7 +806,7 @@ class EPUB(ZIP, Source):
         opf = XML(fn=opf_fn or C.get_opf_fn(output_path))
         for item in opf.root.xpath("opf:manifest/opf:item", namespaces=C.NS):
             href = str(URL(item.get('href')))
-            fn = os.path.join(output_path, href)
+            fn = os.path.abspath(os.path.join(opf.path, href))
             epub.zipfile.write(fn, os.path.relpath(fn, output_path).replace('\\','/'))
 
         # write other_fns, such as special contents of META-INF
