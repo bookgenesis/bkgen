@@ -672,8 +672,8 @@ class Project(XML, Source):
             Text(fn=fn).write(fn=outfn)
         return outfn
 
-    def output_image(self, fn, output_path=None, outfn=None, jpg=True, png=True, svg=True, 
-            format='jpeg', ext='.jpg', res=300, quality=80, maxwh=2048, maxpixels=4e6, gs=None, **img_args):
+    def output_image(self, fn, output_path=None, outfn=None, jpg=True, png=True, svg=True, gs=None, 
+            format='jpeg', ext='.jpg', res=300, quality=90, maxwh=None, maxpixels=4e6, **img_args):
         from bf.image import Image
         f = File(fn=fn)
         mimetype = mimetypes.guess_type(fn)
@@ -720,7 +720,9 @@ class Project(XML, Source):
 
                 if os.path.splitext(outfn)[-1].lower() != '.svg':
                     width, height = [int(i) for i in image.identify(format="%w,%h").split(',')]
-                    if (width * height) > maxpixels or width > maxwh or height > maxwh:
+                    if ((maxpixels is not None and (width * height) > maxpixels) 
+                        or (maxwh is not None and (width > maxwh or height > maxwh))
+                    ):
                         if width * height > maxpixels:  # reduce dimension to fit maxpixels
                             fraction = (maxpixels / (width * height)) ** 0.5
                             width *= fraction
