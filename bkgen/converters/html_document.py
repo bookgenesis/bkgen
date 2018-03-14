@@ -6,6 +6,7 @@ from bl.id import random_id
 from bl.file import File
 from bl.string import String
 from bl.url import URL
+from bxml import XML
 from bxml.xslt import XSLT
 from bxml.xt import XT
 from bxml.builder import Builder
