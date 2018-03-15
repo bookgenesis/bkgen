@@ -381,12 +381,12 @@ def TextVariableInstance(elem, **params):
 def Rectangle(elem, **params):
     return transformer(elem.getchildren(), **params)
 
-@transformer.match("elem.tag in ['PDF', 'Image']")
+@transformer.match("elem.tag in ['PDF', 'EPS', 'Image']")
 def PDF_or_Image(elem, **params):
     link = elem.find("Link")
     if link is not None and link.get("LinkResourceURI") is not None:
         url = URL(link.get("LinkResourceURI"))
-        log.debug("PDF/Image Link URL = %r %r" % (str(url), url.items()))
+        log.debug("PDF/EPS/Image Link URL = %r %r" % (str(url), url.items()))
         relpath = File(url.path).relpath(os.path.dirname(params.get('srcfn') or params.get('fn') or ''))
         if relpath != url.path:
             src = relpath
