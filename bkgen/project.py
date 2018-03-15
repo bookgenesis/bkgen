@@ -11,7 +11,7 @@ Now all of the methods of the project can be called.
 import logging
 log = logging.getLogger(__name__)
 
-import os, re, shutil, subprocess, sys, time, traceback
+import json, os, re, shutil, subprocess, sys, time, traceback
 from copy import deepcopy
 from glob import glob
 from bl.dict import Dict
@@ -369,6 +369,8 @@ class Project(XML, Source):
         (2) adding sections of the document to the spine, if not present
         (3) importing referenced images, if available
         """
+        with open(os.path.join(PATH, 'resources', 'epubtypes.json'), 'rb') as f:
+            epubtypes = json.load(f)
         if documents is None: return
         spine_elem = self.find(self.root, "pub:spine")
         if spine_elem is None:
@@ -407,9 +409,13 @@ class Project(XML, Source):
                 section_href = os.path.relpath(doc.fn, self.path).replace('\\','/') + '#' + section.get('id')
                 if section_href not in spine_hrefs:
                     spineitem = PUB.spineitem(href=section_href); spineitem.tail = '\n\t\t'
-                    for attrib in ['title', 'epub:type']:
-                        if section.get(attrib) is not None:
-                            spineitem.set(attrib, section.get(attrib))
+                    if section.get('title') is not None:
+                        title = section.get('title')
+                        spineitem.set('title', title)
+                        for epubtype in epubtypes:
+                            if re.search(epubtype['pattern'], title, flags=re.I) is not None:
+                                spineitem.set('landmark', epubtype['type'])
+                                break
                     spine_elem.append(spineitem)
 
     def import_metadata(self, metadata):
@@ -755,10 +761,9 @@ class Project(XML, Source):
             except KeyboardInterrupt:
                 raise
             except:
-                    # the show must go on
-                    log.critical(fn)
-                    log.critical(outfn)
-                    log.critical(traceback.format_exc())
+                # the show must go on
+                log.critical(fn)
+                log.critical(traceback.format_exc())
 
         return outfn
 
