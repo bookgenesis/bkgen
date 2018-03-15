@@ -723,14 +723,14 @@ class Project(XML, Source):
                     if ((maxpixels is not None and (width * height) > maxpixels) 
                         or (maxwh is not None and (width > maxwh or height > maxwh))
                     ):
-                        if width * height > maxpixels:  # reduce dimension to fit maxpixels
+                        if maxpixels is not None and width * height > maxpixels:  # reduce dimension to fit maxpixels
                             fraction = (maxpixels / (width * height)) ** 0.5
                             width *= fraction
                             height = height * fraction
-                        if width > maxwh:               # reduce dimensions to fit maxwh
+                        if maxwh is not None and width > maxwh:               # reduce dimensions to fit maxwh
                             height *= maxwh / width
                             width = maxwh
-                        if height > maxwh:
+                        if maxwh is not None and height > maxwh:
                             width *= maxwh / height
                             height = maxwh
                         width, height = int(width), int(height)
