@@ -113,8 +113,12 @@ def remove_empty_spans(root, **params):
     return root
 
 def remove_empty_paras(root, **params):
-    for p in root.xpath(""".//html:p | .//html:h1 | .//html:h2 | .//html:h3 | .//html:h4 
-            | .//html:h5 | .//html:h6 | .//html:h7 | .//html:h8 | .//html:h9""", namespaces=NS):
+    for p in root.xpath("""
+        .//html:*[
+            not(ancestor::html:table) 
+            and (name()='p' or name()='h1' or name()='h2' or name()='h3' or name()='h4' 
+                or name()='h5' or name()='h6' or name()='h7' or name()='h8' or name()='h9')]
+    """, namespaces=NS):
         if p.text in [None, ''] and len(p.getchildren())==0:
             XML.remove(p, leave_tail=True)
     return root
