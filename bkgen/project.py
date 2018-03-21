@@ -547,7 +547,8 @@ class Project(XML, Source):
         
         if epub_isbn is not None and epub_isbn.text is not None:
             epub_name = str(String(epub_isbn.text)
-                .resub('[\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', '')) # remove any dash
+                # remove any dashes or whitespace
+                .resub('[\s\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', ''))
         else:
             epub_name = self.name
         epub_name += '_EPUB'
@@ -620,7 +621,8 @@ class Project(XML, Source):
         mobi_isbn = self.metadata().identifier(id_patterns=['mobi', 'ebook', 'isbn'])
         if mobi_isbn is not None and mobi_isbn.text is not None:
             mobi_name = str(String(mobi_isbn.text)
-                .resub('[\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', '')) # remove any dash
+                # remove any dashes or whitespace
+                .resub('[\s\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', ''))
         else:
             mobi_name = self.name
         mobi_name += '_Kindle'
