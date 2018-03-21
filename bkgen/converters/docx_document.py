@@ -58,8 +58,8 @@ def document(elem, **params):
     root = get_images(root, **params)
     root = resolve_hyperlinks(root, **params)
     # -- span cleanup -- 
-    root = remove_empty_spans(root, **params)
     root = merge_contiguous_spans(root, **params)
+    root = remove_empty_spans(root, **params)
     # -- fields -- 
     root = nest_fields(root, **params)
     root = field_attributes(root, **params)
@@ -448,19 +448,9 @@ def resolve_hyperlinks(root, **params):
         a.set('href', href)
     return root
 
-def merge_contiguous_spans(doc, **params):
+def merge_contiguous_spans(root, **params):
     """if spans are next to each other and have the same attributes, merge them"""
-    spans = XML.xpath(doc, "//html:span", namespaces=NS)
-    spans.reverse()
-    for span in spans:
-        next = span.getnext()
-        if span.tail in [None, ''] and next is not None \
-        and span.tag==next.tag and span.attrib==next.attrib:
-            XML.remove(next, leave_tail=True)
-            span.text = (span.text or '') + (next.text or '')
-            for ch in next.getchildren(): 
-                span.append(ch)
-    return doc
+    return XML.merge_contiguous(root, "//html:span", namespaces=NS)
 
 def paragraphs_with_newlines(root):
     """paragraphs that are not in tables, comments, footnotes, or endnotes should be followed by a newline"""
