@@ -531,6 +531,12 @@ def field_attributes(root, **params):
             field.set(k, attributes[k])
         if len(tokens) > 0:
             field.set('instr', ' '.join(tokens))
+
+        # -- Field Post-Processing
+        # <a href="file#anchor">
+        if Document.tag_name(field)=='a' and field.get('anchor') is not None:
+            field.set('href', (field.get('href') or '') + '#' + field.attrib.pop('anchor'))
+
     return root
 
 def parse_field_attributes(cls, tokens):
@@ -721,6 +727,7 @@ FIELD_TEMPLATES = {
     },
     'HYPERLINK': {
         '': ['href'],
+        r'\l': ['anchor']
     },
     'INCLUDEPICTURE': {
         '': ['src'],
