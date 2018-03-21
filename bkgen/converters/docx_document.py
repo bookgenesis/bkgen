@@ -47,6 +47,7 @@ def document(elem, **params):
     # -- styles -- 
     root = map_para_styles_levels(root, **params)
     root = map_span_styles(root, **params)
+    root = map_table_styles(root, **params)
     root = font_attributes(root, **params)
     # -- sections -- 
     root = split_level_sections(root, **params)
@@ -355,6 +356,14 @@ def map_span_styles(root, **params):
         cls = stylemap.get(sp.get('class'))
         if cls is not None:
             sp.set('class', DOCX.classname(cls.name))
+    return root
+
+def map_table_styles(root, **params):
+    stylemap = params['docx'].stylemap(cache=True)
+    for table in root.xpath(".//html:table[@class]", namespaces=NS):
+        cls = stylemap.get(table.get('class'))
+        if cls is not None:
+            table.set('class', cls.name)
     return root
 
 def font_attributes(root, **params):
