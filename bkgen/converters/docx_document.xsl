@@ -77,11 +77,17 @@
                             <xsl:value-of select="w:pPr/w:pStyle/@w:val"/>
                         </xsl:attribute>    
                     </xsl:if>
-                    <xsl:if test="w:pPr/w:jc[@w:val='left' or @w:val='right' or @w:val='center']">
-                        <xsl:attribute name="text-align"><xsl:value-of select="w:pPr/w:jc/@w:val"/></xsl:attribute>
-                    </xsl:if>
-                    <xsl:if test="w:pPr/w:jc[@w:val='both']">
-                        <xsl:attribute name="text-align">justify</xsl:attribute>
+                    <xsl:if test="w:pPr/w:jc">
+                        <xsl:attribute name="style">
+                            <xsl:text>text-align:</xsl:text>
+                            <xsl:if test="w:pPr/w:jc[@w:val='left' or @w:val='right' or @w:val='center']">
+                                <xsl:value-of select="w:pPr/w:jc/@w:val"/>
+                            </xsl:if>
+                            <xsl:if test="w:pPr/w:jc[@w:val='both']">
+                                <xsl:text>justify</xsl:text>
+                            </xsl:if>
+                            <xsl:text>;</xsl:text>
+                        </xsl:attribute>                        
                     </xsl:if>
                     <xsl:apply-templates/>
                 </p>                    
