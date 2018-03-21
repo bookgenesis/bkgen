@@ -461,10 +461,34 @@
     </xsl:template>
 
     <xsl:template match="w:tc">
-        <xsl:text>&#xA;&#x9;&#x9;</xsl:text>
-        <td>
-            <xsl:apply-templates/>
-        </td>
+        <xsl:if test="not(w:tcPr/w:vMerge[not(@w:val)])">        
+            <xsl:text>&#xA;&#x9;&#x9;</xsl:text>
+            <td>
+                <!-- style -->
+                <xsl:if test="w:tcPr/w:shd/@w:fill">
+                    <xsl:attribute name="style">
+                        <xsl:text>background-color:#</xsl:text>
+                        <xsl:value-of select="w:tcPr/w:shd/@w:fill"/>
+                        <xsl:text>;</xsl:text>
+                    </xsl:attribute>
+                </xsl:if>
+                <!-- colspan -->
+                <xsl:if test="w:tcPr/w:gridSpan/@w:val">
+                    <xsl:attribute name="colspan">
+                        <xsl:value-of select="w:tcPr/w:gridSpan/@w:val"/>                        
+                    </xsl:attribute>
+                </xsl:if>
+                <!-- rowspan -->
+                <xsl:if test="w:tcPr/w:vMerge/@w:val[.='restart']">
+                    <xsl:attribute name="rowspan">
+                        <xsl:text>2</xsl:text>
+                        <!-- <xsl:value-of select="w:tcPr/w:vMerge/@val"></xsl:value-of> -->
+                    </xsl:attribute>
+                </xsl:if>
+
+                <xsl:apply-templates/>
+            </td>
+        </xsl:if>
     </xsl:template>
 
     <!-- FIELDS -->
