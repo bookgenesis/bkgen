@@ -22,7 +22,7 @@ from bkgen.document import Document
 log = logging.getLogger(__name__)
 B = Document.Builder()
 transformer = XT()
-transformer_XSLT = etree.XSLT(etree.parse(os.path.splitext(__file__)[0] + '.xsl'))
+transformer_XSLT = XSLT(fn=os.path.splitext(__file__)[0] + '.xsl')
 
 class DocxDocument(Converter):
     def convert(self, docx, fn=None, **params):
