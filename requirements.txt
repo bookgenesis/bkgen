@@ -1,7 +1,6 @@
--e git+https://github.com/BlackEarth/bf.git@396da79fc7324deeda905a5b02797036bb7595c7#egg=bf
--e git+https://gitlab.com/bookgenesis/bkgen.git@abcea8add1993433cc2883207b78db75ac2bfb20#egg=bkgen
--e git+https://github.com/BlackEarth/bl.git@858401c26255e7e421c2baf34804c3b73bfe5363#egg=bl
--e git+https://github.com/BlackEarth/bxml.git@4cf1cd9230f739159514fe8d4d1c58fab6281bec#egg=bxml
+-e git+https://github.com/BlackEarth/bf.git@a69297173e2cf4f198e6df9ada82d00faaab57fb#egg=bf
+-e git+https://github.com/BlackEarth/bl.git@656dde8fa4882b7cb9039c43410f8ad140091977#egg=bl
+-e git+https://github.com/BlackEarth/bxml.git@48b2a0ed52daeaca13a85ffe4c085682664c0095#egg=bxml
 cssselect==1.0.3
 cssutils==1.0.2
 libsass==0.13.4
