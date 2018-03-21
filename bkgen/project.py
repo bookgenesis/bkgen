@@ -578,7 +578,7 @@ class Project(XML, Source):
         return result
 
     def build_html(self, clean=True, singlepage=False, ext='.xhtml', doc_stylesheets=True, progress=None,
-            zip=True, cleanup=False, lang=None, **image_args):
+            before_compile=None, zip=True, cleanup=False, lang=None, **image_args):
         """build html output of the project. 
         * singlepage=False  : whether to build the HTML in a single page
         * zip=True          : whether to zip the output
@@ -602,6 +602,8 @@ class Project(XML, Source):
                 lang = 'en'
         self.output_spineitems(output_path=html_path, resources=resources, 
             ext=ext, singlepage=singlepage, doc_stylesheets=doc_stylesheets, lang=lang, **image_args)
+        if before_compile is not None:
+            before_compile(html_path)
         if zip==True:
             from bl.zip import ZIP
             result['fn'] = ZIP.zip_path(html_path)
@@ -732,7 +734,7 @@ class Project(XML, Source):
                         if maxpixels is not None and width * height > maxpixels:  # reduce dimension to fit maxpixels
                             fraction = (maxpixels / (width * height)) ** 0.5
                             width *= fraction
-                            height = height * fraction
+                            height *= fraction
                         if maxwh is not None and width > maxwh:               # reduce dimensions to fit maxwh
                             height *= maxwh / width
                             width = maxwh
