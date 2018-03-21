@@ -435,6 +435,11 @@
     <xsl:template match="w:tbl">
         <xsl:text>&#xA;</xsl:text>
         <table>
+            <xsl:if test="w:tblPr/w:tblStyle/@w:val">
+                <xsl:attribute name="class">
+                    <xsl:value-of select="w:tblPr/w:tblStyle/@w:val"/>
+                </xsl:attribute>
+            </xsl:if>
             <xsl:apply-templates/>
             <xsl:text>&#xA;</xsl:text>
         </table>
