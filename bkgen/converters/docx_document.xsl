@@ -464,12 +464,28 @@
         <xsl:if test="not(w:tcPr/w:vMerge[not(@w:val)])">        
             <xsl:text>&#xA;&#x9;&#x9;</xsl:text>
             <td>
-                <!-- style -->
-                <xsl:if test="w:tcPr/w:shd/@w:fill">
+                <!-- style attribute -->
+                <xsl:if test="w:tcPr[w:shd/@w:fill or w:vAlign/@w:val]">
                     <xsl:attribute name="style">
-                        <xsl:text>background-color:#</xsl:text>
-                        <xsl:value-of select="w:tcPr/w:shd/@w:fill"/>
-                        <xsl:text>;</xsl:text>
+                        <!-- background-color -->
+                        <xsl:if test="w:tcPr/w:shd/@w:fill">
+                            <xsl:text>background-color:#</xsl:text>
+                            <xsl:value-of select="w:tcPr/w:shd/@w:fill"/>
+                            <xsl:text>;</xsl:text>
+                        </xsl:if>
+                        <!-- vertical-align -->
+                        <xsl:if test="w:tcPr/w:vAlign/@w:val">
+                            <xsl:text>vertical-align:</xsl:text>
+                            <xsl:choose>
+                                <xsl:when test="w:tcPr/w:vAlign/@w:val='center'">
+                                    <xsl:text>middle</xsl:text>
+                                </xsl:when>
+                                <xsl:otherwise>
+                                    <xsl:value-of select="w:tcPr/w:vAlign/@w:val"/>
+                                </xsl:otherwise>
+                            </xsl:choose>
+                            <xsl:text>;</xsl:text>
+                        </xsl:if>
                     </xsl:attribute>
                 </xsl:if>
                 <!-- colspan -->
