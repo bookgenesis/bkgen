@@ -589,7 +589,10 @@ class Project(XML, Source):
         html_path = os.path.join(self.output_path, self.name+'_HTML')
         log.info(html_path)
         if clean==True and os.path.isdir(html_path): 
-            shutil.rmtree(html_path)
+            try:
+                shutil.rmtree(html_path)
+            except:
+                log.warning(sys.exc_info()[1])
         if not os.path.isdir(html_path): 
             os.makedirs(html_path)
         result = Dict(format="html")
