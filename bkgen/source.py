@@ -11,7 +11,7 @@ class Source(File):
         to write the source to the filesystem
     """
 
-    def documents(self):
+    def documents(self, path=None, **params):
         """returns a list of XML documents, with the root element tag pub:document, from the Source.
         """
         return []

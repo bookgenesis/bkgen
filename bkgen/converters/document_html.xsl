@@ -57,6 +57,8 @@
 	    <xsl:text> </xsl:text>
 	</xsl:template>
 
+	<xsl:template match="pub:colbreak"/>
+
 	<xsl:template match="pub:anchor[@id]">
 	    <span class="anchor">
 	    	<xsl:attribute name="id">

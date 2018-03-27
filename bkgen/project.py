@@ -260,61 +260,65 @@ class Project(XML, Source):
             log.warn("resource with that href already exists: %r" % resource.attrib)
         return resource
 
-    def import_source_file(self, fn, **args):
+    def import_source_file(self, fn, SourceClass=None, **args):
         """import the source fn. 
         fn = the filesystem path to the file (such as a temporary file location)
         args = arguments that will be passed to Project.import_source()
         """
         content_type = mimetypes.guess_type(fn)[0]
         ext = os.path.splitext(fn)[-1].lower()
-        result = Dict()
+        result = Dict(fns=[])
 
         log.info("import %s" % fn)
         log.debug("%r.import_source_file(%r, **%r)" % (self, fn, args))
         
+        # SourceClass is given
+        if SourceClass is not None:
+            result.fns += self.import_source(SourceClass(fn=fn), **args)
+
         # .DOCX files
-        if (content_type=='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        elif (content_type=='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
                 or ext=='.docx'):
             # write the content data to a temporary folder
             from .docx import DOCX
-            self.import_source(DOCX(fn=fn), **args)
+            result.fns += self.import_source(DOCX(fn=fn), **args)
 
         # .HTML files
         elif (content_type in ['text/html', 'application/xhtml+xml']
                 or ext in ['.htm', '.html', '.xhtml']):
             # write the content data to a temporary folder
             from .html import HTML
-            self.import_source(HTML(fn=fn), **args)
+            result.fns += self.import_source(HTML(fn=fn), **args)
 
         # .MD files
         elif (content_type=='text/x-markdown'
                 or ext in ['.md', '.txt']):
             # write the content data to a temporary folder
             from .markdown import Markdown
-            self.import_source(Markdown(fn=fn), **args)
+            result.fns += self.import_source(Markdown(fn=fn), **args)
 
         # .EPUB files
         elif (content_type=='application/epub+zip'
                 or ext == '.epub'):
             from .epub import EPUB
-            self.import_source(EPUB(fn=fn), **args)
+            result.fns += self.import_source(EPUB(fn=fn), **args)
 
         # .IDML files
         elif (content_type=='application/vnd.adobe.indesign-idml-package'
                 or ext == '.idml'):
             from .idml import IDML
-            self.import_source(IDML(fn=fn), **args)
+            result.fns += self.import_source(IDML(fn=fn), **args)
 
-        # .ICML files
+        # .XML files
         elif (content_type=='application/xml'
-                and ext == '.icml'):
+                and ext == '.icml'): 
             from .icml import ICML
-            self.import_source(ICML(fn=fn), **args)
+            result.fns += self.import_source(ICML(fn=fn), **args)
 
         # Images
         elif (content_type in ['image/jpeg', 'image/png', 'image/bmp', 'image/tiff', 'application/pdf']
                 or ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff', '.pdf']):
-            self.import_image(fn)
+            result.fns += self.import_image(fn)
 
         # not a matching file type
         else:
@@ -328,7 +332,7 @@ class Project(XML, Source):
 
         return result
     
-    def import_source(self, source, documents=True, images=True, stylesheet=True, metadata=False, **params):
+    def import_source(self, source, documents=True, images=True, stylesheet=True, metadata=False, document_before_update_project=None, **params):
         """import a source into the project.
             source = a Source object that contains the content source [REQUIRED]
             documents = whether to import documents from the source (default=True)
@@ -349,21 +353,24 @@ class Project(XML, Source):
             source.fn = fn
 
         # import the documents, metadata, images, and stylesheet from this source
+        fns = []
         if documents==True: 
-            self.import_documents(source.documents(path=self.content_path, **params), source_path=source.path)
+            fns += self.import_documents(source.documents(path=self.content_path, **params), source_path=source.path, document_before_update_project=document_before_update_project)
         if metadata==True: 
             self.import_metadata(source.metadata())
         if images==True: 
-            self.import_images(source.images())
+            fns += self.import_images(source.images())
         if stylesheet==True:
             ss = source.stylesheet()
             if ss is not None:
                 ss.fn = os.path.join(self.path, self.content_folder, self.make_basename(source.fn, ext='.css'))
                 ss.write()
+                fns += [ss.fn]
 
         self.write()
+        return fns
 
-    def import_documents(self, documents, source_path=None):
+    def import_documents(self, documents, source_path=None, document_before_update_project=None):
         """import the given document collection. This includes 
         (1) storing the document in the project.content_folder 
         (2) adding sections of the document to the spine, if not present
@@ -382,6 +389,7 @@ class Project(XML, Source):
             str(URL(spineitem.get('href')))
             for spineitem in self.xpath(spine_elem, "pub:spineitem", namespaces=NS)
         ]
+        fns = []
         for doc in documents:
             # save the document, overwriting any existing document in that location
             if doc.fn is None or self.content_path not in os.path.commonprefix([self.content_path, doc.fn]):
@@ -402,6 +410,10 @@ class Project(XML, Source):
                             shutil.copy(srcfn, imgfn)
                         img.set('src', os.path.relpath(imgfn, doc.path).replace('\\','/'))
             doc.write(canonicalized=True)
+            fns.append(doc.fn)
+
+            if document_before_update_project is not None:
+                document_before_update_project(doc)
 
             # update the project spine element: append anything that is new.
             sections = doc.root.xpath("html:body/html:section[@id]", namespaces=NS)
@@ -417,6 +429,7 @@ class Project(XML, Source):
                                 spineitem.set('landmark', epubtype['type'])
                                 break
                     spine_elem.append(spineitem)
+        return fns
 
     def import_metadata(self, metadata):
         """import the metadata found in the Metadata XML object"""
@@ -444,8 +457,10 @@ class Project(XML, Source):
 
     def import_images(self, images):
         if images is None: return
+        fns = []
         for image in images:
-            self.import_image(image.fn)
+            fns += [self.import_image(image.fn)]
+        return fns
 
     def import_image(self, fn, gs=None, **params):
         """import the image from a local file. Process through GraphicsMagick to ensure clean."""
@@ -490,6 +505,7 @@ class Project(XML, Source):
         log.debug("appending resource: %r" % resource.attrib)
 
         self.write()
+        return outfn
 
     def get_cover_href(self, kind='digital'):
         return self.find(self.root, """
