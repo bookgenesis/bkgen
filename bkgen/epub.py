@@ -212,7 +212,9 @@ class EPUB(ZIP, Source):
 
                 # remove any p and span elements in the nav -- replace with content
                 # (this also removes empty spans such as pagebreaks and index entries)
-                for e in nav.xpath(nav_elem, ".//html:p | .//html:span", namespaces=NS):
+                for e in nav.xpath(nav_elem, ".//html:p", namespaces=NS):
+                    XML.replace_with_contents(e)
+                for e in nav.xpath(nav_elem, ".//html:span[not(parent::html:li)]", namespaces=NS):
                     XML.replace_with_contents(e)
             
             # must update hrefs and srcs to the nav_href location.
