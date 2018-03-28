@@ -512,13 +512,16 @@ class Project(XML, Source):
             pub:resources/pub:resource[contains(@class, 'cover') and 
                 (not(@kind) or contains(@kind, '%s'))]/@href""" % kind, namespaces=NS)        
 
-    def build_outputs(self, kind=None, cleanup=False, before_compile=None, 
+    def build_outputs(self, kind=None, output_kinds=[], cleanup=False, before_compile=None, 
         doc_stylesheets=True, singlepage=False):
         """build the project outputs
             kind=None:      which kind of output to build; if None, build all
         """
         log.info("build_outputs: %s %r" % (self.fn, dict(kind=kind, cleanup=cleanup, before_compile=before_compile, doc_stylesheets=doc_stylesheets, singlepage=singlepage)))
-        output_kinds = [k for k in self.OUTPUT_KINDS.keys() if kind is None or k==kind]
+        if kind is not None:
+            output_kinds = [kind]
+        elif output_kinds==[]:
+            output_kinds = self.OUTPUT_KINDS.keys()
         results = []
         for output_kind in output_kinds:
             try:
@@ -1066,7 +1069,7 @@ def import_all(project_path):
     for fn in fns:
         project.import_image(fn, **{'class':'cover', 'kind':'digital'})
 
-def build_project(project_path, format=None, check=None, doc_stylesheets=True, singlepage=False):
+def build_project(project_path, format=None, check=None, doc_stylesheets=True, singlepage=False, before_compile=None):
     if os.path.isfile(project_path):
         project_fn = project_path
     elif os.path.isdir(project_path) and os.path.isfile(os.path.join(project_path, 'project.xml')):
@@ -1080,16 +1083,16 @@ def build_project(project_path, format=None, check=None, doc_stylesheets=True, s
     # default formats
     if format is None or 'epub' in format:
         image_args = config.EPUB.images or {}
-        project.build_epub(check=check, **image_args)
+        project.build_epub(check=check, before_compile=before_compile, **image_args)
     if format is None or 'mobi' in format:
         image_args = config.Kindle.images or {}
-        project.build_mobi(**image_args)
+        project.build_mobi(before_compile=before_compile, **image_args)
 
     # non-default formats
     if format is not None:
         if 'html' in format:
             image_args = config.EPUB.images or {}
-            project.build_html(singlepage=singlepage, **image_args)
+            project.build_html(singlepage=singlepage, before_compile=before_compile, **image_args)
         if 'archive' in format:
             project.build_archive()
 
