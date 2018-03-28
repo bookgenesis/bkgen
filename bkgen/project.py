@@ -574,8 +574,14 @@ class Project(XML, Source):
         epub_path = os.path.join(self.path, self.output_folder, epub_name)
         
         if clean==True: 
-            if os.path.isdir(epub_path):
-                shutil.rmtree(epub_path)
+            for i in range(3):
+                try:
+                    if os.path.isdir(epub_path):
+                        shutil.rmtree(epub_path)
+                    break
+                except:
+                    if i==2:
+                        log.warn("unable to shutil.rmtree(%r): %s" % (epub_path, sys.exc_info()[1]))
 
         if not os.path.isdir(epub_path): os.makedirs(epub_path)
         resources = self.output_resources(output_path=epub_path, **image_args)
