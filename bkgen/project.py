@@ -574,14 +574,8 @@ class Project(XML, Source):
         epub_path = os.path.join(self.path, self.output_folder, epub_name)
         
         if clean==True: 
-            for i in range(3):
-                try:
-                    if os.path.isdir(epub_path):
-                        shutil.rmtree(epub_path)
-                    break
-                except:
-                    if i==2:
-                        log.warn("unable to shutil.rmtree(%r): %s" % (epub_path, sys.exc_info()[1]))
+            if os.path.isdir(epub_path):
+                shutil.rmtree(epub_path, onerror=rmtree_warn)
 
         if not os.path.isdir(epub_path): os.makedirs(epub_path)
         resources = self.output_resources(output_path=epub_path, **image_args)
@@ -600,7 +594,8 @@ class Project(XML, Source):
         result = EPUB().build(epub_path, metadata, progress=progress, lang=lang,
             epub_name=epub_name, spine_items=spine_items, cover_src=cover_src, 
             show_nav=show_nav, before_compile=before_compile, zip=zip, check=check)
-        if cleanup==True: shutil.rmtree(epub_path)
+        if cleanup==True: 
+            shutil.rmtree(epub_path, onerror=rmtree_warn)
         return result
 
     def build_html(self, clean=True, singlepage=False, ext='.xhtml', doc_stylesheets=True, progress=None,
@@ -614,10 +609,7 @@ class Project(XML, Source):
         html_path = os.path.join(self.output_path, self.name+'_HTML')
         log.info(html_path)
         if clean==True and os.path.isdir(html_path): 
-            try:
-                shutil.rmtree(html_path)
-            except:
-                log.warning(sys.exc_info()[1])
+            shutil.rmtree(html_path, onerror=rmtree_warn)
         if not os.path.isdir(html_path): 
             os.makedirs(html_path)
         result = Dict(format="html")
@@ -637,7 +629,7 @@ class Project(XML, Source):
             from bl.zip import ZIP
             result['fn'] = ZIP.zip_path(html_path)
             if cleanup==True: 
-                shutil.rmtree(html_path)
+                shutil.rmtree(html_path, onerror=rmtree_warn)
         else:
             result['fn'] = html_path
         if progress is not None: progress.report()
@@ -657,7 +649,7 @@ class Project(XML, Source):
         mobi_path = os.path.join(self.path, self.output_folder, mobi_name)
         
         if clean==True and os.path.isdir(mobi_path): 
-            shutil.rmtree(mobi_path)
+            shutil.rmtree(mobi_path, onerror=rmtree_warn)
 
         if not os.path.isdir(mobi_path): os.makedirs(mobi_path)
         resources = self.output_resources(output_path=mobi_path, **image_args)
@@ -675,7 +667,8 @@ class Project(XML, Source):
         if progress is not None: progress.report()
         result = MOBI().build(mobi_path, metadata, lang=lang,
                 mobi_name=mobi_name, spine_items=spine_items, cover_src=cover_src, before_compile=before_compile)
-        if cleanup==True: shutil.rmtree(mobi_path)
+        if cleanup==True: 
+            shutil.rmtree(mobi_path, onerror=rmtree_warn)
         if progress is not None: progress.report()
         return result
 
@@ -987,7 +980,7 @@ class Project(XML, Source):
             log.info("cleanup: removing %d output directories from %s" % (len(dirs), self.path))
             for d in dirs:
                 log.debug("removing: %s" % d)
-                shutil.rmtree(d)
+                shutil.rmtree(d, onerror=rmtree_warn)
         if logs==True:
             log_glob = os.path.join(self.path, '/logs', '*.log')
             log.debug("cleanup logs: %s" % log_glob)
@@ -1021,6 +1014,9 @@ class Project(XML, Source):
                 fns = glob(resourcefn+'.*')
                 for fn in fns:
                     os.remove(fn)
+
+def rmtree_warn(function, path, excinfo):
+    log.warn("%s: Could not remove %s: %s" % (function.__name__, path, excinfo()[1]))
 
 # == COMMAND INTERFACE METHODS == 
 
@@ -1111,7 +1107,7 @@ def zip_project(project_path):
     return ZIP.zip_path(project_path)
 
 def remove_project(project_path):
-    shutil.rmtree(project_path)
+    shutil.rmtree(project_path, onerror=rmtree_warn)
 
 if __name__=='__main__':
     from bkgen import config
