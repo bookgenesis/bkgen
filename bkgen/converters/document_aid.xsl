@@ -32,13 +32,17 @@
         </html>
     </xsl:template>
 
+    <xsl:template match="pub:include">
+        <xsl:apply-templates/>
+    </xsl:template>
+
 	<xsl:template match="html:p[@class] | html:h1[@class] | html:h2[@class] | html:h3[@class] | html:h4[@class] | html:h5[@class] | html:h6[@class] | html:h7[@class] | html:h8[@class] | html:h9[@class] ">
 		<xsl:copy>
 			<xsl:attribute name="aid:pstyle">
-                <xsl:if test="ancestor::html:section[last()][@class]">
+                <!-- <xsl:if test="ancestor::html:section[last()][@class]">
                     <xsl:value-of select="ancestor::html:section[last()]/@class"/>
                     <xsl:text> </xsl:text>
-                </xsl:if>
+                </xsl:if> -->
 			    <xsl:value-of select="@class"/>
 			</xsl:attribute>
 			<xsl:apply-templates select="@*|node()"/>
@@ -54,10 +58,10 @@
     <xsl:template match="html:span[@class] | html:a[@class]">
         <xsl:copy>
         	<xsl:attribute name="aid:cstyle">
-                <xsl:if test="ancestor::html:section[last()][@class]">
+                <!-- <xsl:if test="ancestor::html:section[last()][@class]">
                     <xsl:value-of select="ancestor::html:section[last()]/@class"/>
                     <xsl:text> </xsl:text>
-                </xsl:if>
+                </xsl:if> -->
                 <xsl:value-of select="@class"/>
             </xsl:attribute>
         	<xsl:apply-templates select="@*|node()"/>
