@@ -55,6 +55,7 @@ class HTML(XML, Source):
         return css
 
     def audit_links(self):
+        documents = {}  # document cache for the current HTML file, to avoid repeatedly parsing the same document.
         for a in self.xpath(self.root, "//html:a[@href]"):
             url = URL(a.get('href'))
             if url.scheme in ['', 'file']:
@@ -65,7 +66,9 @@ class HTML(XML, Source):
                     if os.path.splitext(fn)[-1].lower() not in ['.htm', '.html', '.xhtml', '.xml']:
                         log.warn('%s: link target id in non-HTML/-XML file: %s %r' % (self.fn, fn, {**url}))
                     else:
-                        h = HTML(fn=fn)
+                        if fn not in documents.keys():
+                            documents[fn] = HTML(fn=fn)
+                        h = documents[fn]
                         elem = h.find(h.root, "//*[@id='%s']" % url.fragment)
                         if elem is None:
                             log.warn('%s: link target id="%s" not found in target file: %s %r' % (self.fn, url.fragment, fn, {**url}))
