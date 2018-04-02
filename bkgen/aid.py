@@ -17,3 +17,4 @@ class AID(XML, Source):
 
     def documents(self, fn=None, **params):
         return [self.document(fn=fn, **params)]
+
