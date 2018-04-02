@@ -3,6 +3,7 @@ import os, logging, re, subprocess
 from bl.dict import Dict
 from bl.url import URL
 from bf.image import Image
+from bf.css import CSS
 from bxml.xml import XML, etree
 from bkgen.html import HTML
 from bkgen import NS, config
@@ -88,22 +89,43 @@ class MOBI(Dict):
                 in opf.root.xpath("//opf:manifest/opf:item", namespaces=self.NS) 
                 if item.get('href')[-4:].lower()=='html']:
             x = XML(os.path.join(os.path.dirname(opffn), str(URL(item.get('href')))))
-            for img in x.root.xpath("//html:img[@width or @height]", namespaces=self.NS):
+            for img in x.root.xpath("//html:img[@width or @height or @style]", namespaces=self.NS):
                 srcfn = os.path.join(os.path.dirname(x.fn), str(URL(img.get('src'))))
                 if os.path.splitext(srcfn)[-1] in ['.svg']: continue
                 w, h = [int(i) for i in Image(fn=srcfn).identify(format="%w,%h").split(',')]
                 width, height = w, h
+                styles = {k:v for k,v in [s.strip().split(':') for s in (img.get('style') or '').split(';') if s.strip()!='']}
+                log.debug(img.attrib)
+                log.debug(styles)
                 if img.get('width') is not None:
                     width = int(re.sub(r'\D', '', img.attrib.pop('width')))     # treat as pixels
                     if img.get('height') is None:
                         height = int(h * (width/w))
+                elif styles.get('width') is not None:
+                    vv = [i for i in re.split(r'([a-z%]+)', styles.get('width')) if i != '']
+                    if len(vv)==2:
+                        width, unit = vv
+                        if unit in CSS.units.keys():
+                            width = int((float(width) * CSS.units[unit]).asUnit(CSS.px) / CSS.px)
+                            height = int(height * width / w)
+                            styles.pop('width')
                 if img.get('height') is not None:
                     height = int(re.sub(r'\D', '', img.attrib.pop('height')))   # treat as pixels
                     if img.get('width') is None:
                         width = int(w * (height/h))
-                if width != w or height != h:
-                    Image(fn=srcfn).convert(outfn=srcfn, resize="%dx%d" % (width, height))
+                elif styles.get('height') is not None:
+                    vv = [i for i in re.split(r'([a-z%]+)', styles.get('height')) if i != '']
+                    if len(vv)==2:
+                        height, unit = vv
+                        if unit in CSS.units.keys():
+                            height = int((float(height) * CSS.units[unit]).asUnit(CSS.px) / CSS.px)
+                            width = int(width * height / h)
+                            styles.pop('height')
+                log.debug("%d x %d\t%d x %d" % (w,h,width,height))
+                if width < w and height < h:
+                    Image(fn=srcfn).convert(outfn=srcfn, resize="%dx%d>" % (width, height), sharpen="1")
                     log.debug("%dx%d\t%dx%d\t%s" % (w, h, width, height, os.path.relpath(srcfn, os.path.dirname(opffn))))
+                img.set('style', ';'.join('%s:%s' % (k,v) for k,v in styles.items()))
             x.write(canonicalized=False)
 
     def compile_mobi(self, build_path, opffn, mobifn=None, config=config):
