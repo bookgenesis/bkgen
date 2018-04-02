@@ -67,6 +67,7 @@ class HTML(XML, Source):
                         log.warn('%s: link target id in non-HTML/-XML file: %s %r' % (self.fn, fn, {**url}))
                     else:
                         if fn not in documents.keys():
+                            log.debug('cacheing document fn=%r' % fn)
                             documents[fn] = HTML(fn=fn)
                         h = documents[fn]
                         elem = h.find(h.root, "//*[@id='%s']" % url.fragment)
