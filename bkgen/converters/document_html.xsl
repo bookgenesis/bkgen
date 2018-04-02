@@ -147,5 +147,9 @@
     	<xsl:copy><xsl:apply-templates select="@*|node()"/></xsl:copy>
 	</xsl:template>
 
+	<!-- pub:x* special characters: make sure they are represented -->
+	<xsl:template match="pub:x202F"><xsl:text>&#x202F;</xsl:text></xsl:template>
+	<xsl:template match="pub:x00A0"><xsl:text>&#x00A0;</xsl:text></xsl:template>
+	<xsl:template match="pub:x2002"><xsl:text>&#x2002;</xsl:text></xsl:template>
 
 </xsl:stylesheet>
