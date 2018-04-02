@@ -1,9 +1,12 @@
 
-import os
+import os, logging
 from bl.dict import Dict
+from bl.url import URL
 from bxml import XML
 from bkgen import NS
 from bkgen.source import Source
+
+log = logging.getLogger(__name__)
 
 class HTML(XML, Source):
     ROOT_TAG = "{%(html)s}html" % NS
@@ -51,3 +54,18 @@ class HTML(XML, Source):
         css = CSS(fn=os.path.splitext(self.fn)[0]+'.css', styles=styles)
         return css
 
+    def audit_links(self):
+        for a in self.xpath(self.root, "//html:a[@href]"):
+            url = URL(a.get('href'))
+            if url.scheme in ['', 'file']:
+                fn = os.path.abspath(os.path.join(self.path, url.path))
+                if not os.path.exists(fn):
+                    log.warn('%s: link target file not found: %s %r' % (self.fn, fn, a.attrib))
+                elif url.fragment not in [None, '']: 
+                    if os.path.splitext(fn)[-1].lower() not in ['.htm', '.html', '.xhtml', '.xml']:
+                        log.warn('%s: link target id in non-HTML/-XML file: %s %r' % (self.fn, fn, {**url}))
+                    else:
+                        h = HTML(fn=fn)
+                        elem = h.find(h.root, "//*[@id='%s']" % url.fragment)
+                        if elem is None:
+                            log.warn('%s: link target id="%s" not found in target file: %s %r' % (self.fn, url.fragment, fn, {**url}))
