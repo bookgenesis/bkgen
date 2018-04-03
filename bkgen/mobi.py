@@ -42,6 +42,7 @@ class MOBI(Dict):
         self.strip_header_elements(build_path, opffn)
         self.direct_styles(opffn)
         self.size_images(opffn)
+        self.list_style_type_none_divs(opffn)
         if before_compile is not None:
             before_compile(build_path)
         if progress is not None: progress.report()
@@ -132,7 +133,6 @@ class MOBI(Dict):
     def direct_styles(self, opffn):
         """create direct styles for stylesheet elements that some Kindle readers don't support:
         * floats: Kindle iOS
-        * list-style-type="none": Kindle iOS
         """
         opf = XML(fn=opffn)
         for item in [item for item in opf.root.xpath(
@@ -144,17 +144,6 @@ class MOBI(Dict):
                 os.path.join(h.path, ss.get('href'))
                 for ss in h.xpath(h.root, "html:head/html:link[@rel='stylesheet' and @type='text/css']")])
             for sel, style in [[sel, style] for sel,style in css.styles.items() if sel[0]!='@']:
-                # list-style-type: none
-                if style.get('list-style-type:')=='none':
-                    xpath = '//' + CSS.selector_to_xpath(sel, xmlns={'html':h.NS.html})
-                    log.debug("%s %r" % (sel, style))
-                    log.debug(xpath)
-                    for elem in h.xpath(h.root, xpath):
-                        styles = {k:v for k,v in [s.strip().split(':') for s in (elem.get('style') or '').split(';') if s.strip()!='']}
-                        if 'list-style-type' not in styles.keys():
-                            styles['list-style-type'] = style.get('list-style-type:')
-                        elem.set('style', ';'.join('%s:%s' % (k,v) for k,v in styles.items()))
-                        log.debug(elem.attrib)
                 # floats
                 if style.get('float:') in ['left', 'right']:
                     xpath = '//' + CSS.selector_to_xpath(sel, xmlns={'html':h.NS.html})
@@ -164,10 +153,38 @@ class MOBI(Dict):
                         styles = {k:v for k,v in [s.strip().split(':') for s in (elem.get('style') or '').split(';') if s.strip()!='']}
                         if 'float' not in styles.keys():
                             styles['float'] = style.get('float:')
-                        elem.set('style', ';'.join('%s:%s' % (k,v) for k,v in styles.items()))
-                        log.info(elem.attrib)
+                        elem.set('style', ';'.join('%s:%s' % (k,v) for k,v in styles.items())+';')
+                        log.debug(elem.attrib)
             h.write()
 
+    def list_style_type_none_divs(self, opffn):
+        """convert lists with "list-style-type: none" to nested divs."""
+        opf = XML(fn=opffn)
+        for item in [item for item in opf.root.xpath(
+            "//opf:manifest/opf:item[not(@properties='nav') and @media-type='text/html']", namespaces=self.NS
+        )]:
+            h = HTML(fn=os.path.join(os.path.dirname(opffn), str(URL(item.get('href')))))
+            css = CSS.merge_stylesheets(*[
+                os.path.join(h.path, ss.get('href'))
+                for ss in h.xpath(h.root, "html:head/html:link[@rel='stylesheet' and @type='text/css']")])
+            for sel, style in [
+                [sel, style] for sel,style in css.styles.items() 
+                if sel[0]!='@' and style.get('list-style-type:')=='none'
+            ]:
+                xpath = '//' + CSS.selector_to_xpath(sel, xmlns={'html':h.NS.html})
+                log.debug("%s %r" % (sel, style))
+                log.debug(xpath)
+                for elem in h.xpath(h.root, xpath):
+                    tag = h.tag_name(elem)
+                    elem.tag = "{%(html)s}div" % h.NS
+                    elem.set('class', ((elem.get('class') or '') + ' ' + tag).strip())
+                    # also convert <li> direct children to <div>
+                    for li in h.xpath(elem, "html:li"):
+                        tag = h.tag_name(li)
+                        li.tag = "{%(html)s}div" % h.NS
+                        li.set('class', ((li.get('class') or '') + ' ' + tag).strip())
+            h.write()        
+        
     def compile_mobi(self, build_path, opffn, mobifn=None, config=config):
         """generate .mobi file using kindlegen"""
         if mobifn is None: 
