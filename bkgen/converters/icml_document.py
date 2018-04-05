@@ -31,7 +31,7 @@ class IcmlDocument(Converter):
 
 # == Document ==
 @transformer.match("elem.tag in ['Document', '{%(idPkg)s}Story']" % ICML.NS)
-def Document(elem, **params):
+def TheDocument(elem, **params):
     if params.get('document_path') is None:
         params['document_path'] = os.path.dirname(params.get('fn'))
     if params.get('fns') is not None:
@@ -43,22 +43,19 @@ def Document(elem, **params):
     params['footnotes'] = []
 
     elem = pre_process(elem, **params)
-    doc = B.pub.document('\n\t', B.html.body(transformer(elem.getchildren(), **params)))
+    doc = B.pub.document('\n\t', B.html.body('\n', transformer(elem.getchildren(), **params)))
     doc = post_process(doc, **params)
     return [doc]
 
 # == Story ==
 @transformer.match("elem.tag=='Story'")
 def Story(elem, **params):
-    section = B.html.section('\n',
-                transformer(elem.getchildren(), **params),
-                '\n',
-                id=elem.get('Self'))
-    body = B.html.body('\n', section)
-    body = process_para_breaks(body)
-    body = nest_span_hyperlinks(body)
-    body = split_sections(body)
-    return body.getchildren()
+    section = B.html.section({'class': 'Story', 'id':elem.get('Self')}, 
+        '\n', transformer(elem.getchildren(), **params))
+    section = process_para_breaks(section)
+    section = nest_span_hyperlinks(section)
+    section = split_sections(section)
+    return [section]
 
 # == ParagraphStyleRange ==
 @transformer.match("elem.tag=='ParagraphStyleRange'")
@@ -71,8 +68,8 @@ def ParagraphStyleRange(elem, **params):
     p = B.html.p({'class': p_class}, 
         '', transformer(elem.getchildren(), **params))
     result = [p, '\n']
-    # if there is a section_start in the paragraph, move it out.
-    section_start = XML.find(p, ".//pub:section_start", namespaces=NS) 
+    # if there is a pub:section_start or pub:include in the paragraph, move it out.
+    section_start = XML.find(p, ".//pub:section_start | .//pub:include", namespaces=NS) 
     if section_start is not None:
         XML.remove(section_start, leave_tail=True)
         result = [section_start, '\n'] + result
@@ -420,7 +417,7 @@ def XMLElement(elem, **params):
 # == TextFrame == 
 @transformer.match("elem.tag=='TextFrame'")
 def TextFrame(elem, **params):
-    return [B.pub.include(id=elem.get('ParentStory'))]
+    return [B.pub.include(idref=elem.get('ParentStory'))]
 
 # == Processing Instructions == 
 @transformer.match("type(elem)==etree._ProcessingInstruction")
@@ -491,8 +488,14 @@ def post_process(doc, **params):
     doc = p_tails(doc)
     doc = remove_empty_paras(doc)
     doc = remove_container_sections(doc)
-    for section in doc.xpath("//html:section", namespaces=NS): section.tail='\n\n'
-    # doc = includes_before_paras(doc)
+    for section in doc.xpath("//html:section", namespaces=NS): 
+        chs = section.getchildren()
+        if len(chs)==1 and chs[0].tag=='{%(pub)s}include' % bkgen.NS:
+            Document.replace_with_contents(section)
+        else:
+            section.tail='\n\n'
+    for incl in doc.xpath("//html:p/pub:include", namespaces=NS):
+        XML.unnest(incl)
     return doc
 
 def embed_textframes(doc):
@@ -568,6 +571,11 @@ def unpack_nested_paras(doc):
         XML.unnest(p)
     return doc
 
+def sections_outside_paras(doc):
+    for section in doc.xpath("//html:p/html:section", namespaces=NS):
+        XML.unnest(section)
+    return doc
+
 def remove_empty_paras(doc):
     """empty paras are meaningless and removed."""
     for p in doc.xpath(".//html:p", namespaces=NS):
@@ -578,15 +586,6 @@ def p_tails(doc):
     for p in doc.xpath(".//html:p", namespaces=NS):
         p.tail = '\n'
     return doc  
-
-def includes_before_paras(doc):
-    for include in doc.xpath(".//pub:include", namespaces=NS):
-        p = XML.find(include, "ancestor::html:p", namespaces=NS)
-        if p is not None:
-            parent = p.getparent()
-            parent.insert(parent.index(p), include)
-            include.tail = '\n'
-    return doc
 
 def anchors_shift_paras(doc):
     # a monstrosity
