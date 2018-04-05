@@ -38,11 +38,12 @@ class MOBI(Dict):
                     nav_toc=nav_toc, nav_landmarks=nav_landmarks, nav_page_list=nav_page_list, 
                     nav_href=nav_href, nav_title=nav_title, show_nav=True, zip=False)
         opffn = EPUB.get_opf_fn(build_path)
-        # self.move_anchors_before_paragraphs(build_path, opffn)
         self.strip_header_elements(build_path, opffn)
-        self.direct_styles(opffn)
-        self.size_images(opffn)
-        self.list_style_type_none_divs(opffn)
+        # # == MOBI 7 adjustments (for Amazon.com page previewer, primarily) ==
+        # self.move_anchors_before_paragraphs(build_path, opffn)
+        # self.direct_styles(opffn)
+        # self.size_images(opffn)
+        # self.list_style_type_none_divs(opffn)
         if before_compile is not None:
             before_compile(build_path)
         if progress is not None: progress.report()
