@@ -2,6 +2,7 @@
 import os, logging, re, subprocess
 from bl.dict import Dict
 from bl.url import URL
+from bl.text import Text
 from bf.image import Image
 from bf.css import CSS
 from bxml.xml import XML, etree
@@ -44,6 +45,7 @@ class MOBI(Dict):
         # self.direct_styles(opffn)
         # self.size_images(opffn)
         # self.list_style_type_none_divs(opffn)
+        self.remove_display_none(opffn)
         if before_compile is not None:
             before_compile(build_path)
         if progress is not None: progress.report()
@@ -184,7 +186,37 @@ class MOBI(Dict):
                         tag = h.tag_name(li)
                         li.tag = "{%(html)s}div" % h.NS
                         li.set('class', ((li.get('class') or '') + ' ' + tag).strip())
-            h.write()        
+            h.write()    
+
+    def remove_display_none(self, opffn):
+        """Kindle doesn't like too much display:none; so just remove those elements, and remove the instruction from the stylesheets."""
+        opf = XML(fn=opffn)
+        html_items = [item for item in opf.root.xpath(
+            "//opf:manifest/opf:item[not(@properties='nav') and @media-type='text/html']", namespaces=self.NS
+        )]
+        for item in html_items:
+            h = HTML(fn=os.path.join(os.path.dirname(opffn), str(URL(item.get('href')))))
+            for link in h.xpath(h.root, "html:head/html:link[@rel='stylesheet' and @type='text/css']"):
+                css = CSS(fn=os.path.join(h.path, link.get('href')))
+                for sel, style in [
+                    [sel, style] for sel,style in css.styles.items() 
+                    if sel[0]!='@' and style.get('display:')=='none'
+                ]:
+                    xpath = '//' + CSS.selector_to_xpath(sel, xmlns={'html':h.NS.html})
+                    log.debug("%s %r" % (sel, style))
+                    log.debug(xpath)
+                    for elem in h.xpath(h.root, xpath):
+                        h.remove(elem, leave_tail=True)
+                        log.debug(etree.tounicode(elem, with_tail=False))
+            h.write()
+
+        for css_item in [item for item in opf.root.xpath(
+            "//opf:manifest/opf:item[not(@properties='nav') and @media-type='text/css']", namespaces=self.NS
+        )]:
+            # do string replace -- easiest
+            css = Text(fn=os.path.join(opf.path, css_item.get('href')))
+            css.text = css.text.resub("display:\s*none;?\n?", "")
+            css.write()
         
     def compile_mobi(self, build_path, opffn, mobifn=None, config=config):
         """generate .mobi file using kindlegen"""
