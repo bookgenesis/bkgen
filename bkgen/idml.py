@@ -80,7 +80,7 @@ class IDML(ZIP, Source):
             for story in self.designmap.root.xpath("idPkg:Story", namespaces=self.NS):
                 outfn = os.path.join(path, self.clean_filename(self.basename), os.path.basename(str(URL(story.get('src')))))
                 icml = ICML(fn=outfn, root=self.read(str(URL(story.get('src')))))
-                document = icml.document(srcfn=self.fn, sources=sources)
+                document = icml.document(srcfn=self.fn, sources=sources, styles=self.styles())
                 for incl in document.xpath(document.root, "//pub:include[@idref]", namespaces=NS):
                     incl_story = self.designmap.root.find("idPkg:Story[@src='Stories/Story_%s.xml']" % incl.get('idref'), namespaces=self.NS)
                     if incl_story is not None:
@@ -127,12 +127,12 @@ class IDML(ZIP, Source):
                     story_icml = ICML(root=self.read(str(URL(pkg_story.get('src')))))
                     for story in story_icml.root.xpath("//Story"): 
                         article_icml.root.append(story)
-            document = article_icml.document(srcfn=self.fn, sources=sources)
+            document = article_icml.document(srcfn=self.fn, sources=sources, styles=self.styles())
             for incl in document.xpath(document.root, "//pub:include[@idref]", namespaces=NS):
                 parent = incl.getparent()
                 incl_pkg = self.designmap.root.find("idPkg:Story[@src='Stories/Story_%s.xml']" % incl.get('idref'), namespaces=self.NS)
                 if incl_pkg is not None:
-                    incl_doc = ICML(root=self.read(str(URL(incl_pkg.get('src'))))).document(fn=self.fn, srcfn=self.fn, sources=sources)
+                    incl_doc = ICML(root=self.read(str(URL(incl_pkg.get('src'))))).document(fn=self.fn, srcfn=self.fn, sources=sources, styles=self.styles())
                     for ch in incl_doc.find(incl_doc.root, "html:body", namespaces=NS).getchildren():
                         parent.insert(parent.index(incl), ch)
                     parent.remove(incl)
@@ -142,6 +142,9 @@ class IDML(ZIP, Source):
             document.write()
             documents.append(document)
         return documents
+
+    def styles(self):
+        return ICML(root=self.read('Resources/Styles.xml')).styles()
 
     def stylesheet(self, fn=None):
         """return a stylesheet from the .idml file's style definitions"""

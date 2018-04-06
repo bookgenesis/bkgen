@@ -28,7 +28,7 @@ class ICML(XML, Source):
                 os.path.basename(os.path.splitext(self.fn)[0]+'.xml'))
         return [self.document(fn=fn, **params)]
 
-    def document(self, fn=None, **params):
+    def document(self, fn=None, styles=None, **params):
         """produce and return XML output from this ICML document.
         fn = the output filename; default os.path.splitext(ICML.fn)[0] + '.xml'
         """
@@ -36,13 +36,22 @@ class ICML(XML, Source):
         from .document import Document
         x = self.transform(bkgen.converters.icml_document.transformer, 
                 fn=fn or self.clean_filename(os.path.splitext(self.fn)[0]+'.xml'), 
-                DocClass=Document, **params)
+                DocClass=Document, styles=styles or self.styles(), **params)
         return x
 
     def metadata(self):
         """return an opf:metadata element with the metadata in the document"""
         # nothing for now
         return etree.Element("{%(pub)s}metadata" % bkgen.NS)
+
+    def styles(self):
+        return {
+            s.get('Self'):s for s 
+            in self.xpath(self.root, """//*[
+                name()='ParagraphStyle' or name()='CharacterStyle'
+                or name()='TableStyle' or name()='CellStyle'
+                or name()='ObjectStyle' or name()='TOCStyle'
+                ]""")}
 
     def stylesheet(self, fn=None, pts_per_em=None):
         """create a CSS stylesheet, using the style definitions in the ICML file."""
