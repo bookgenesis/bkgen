@@ -61,12 +61,20 @@ def Story(elem, **params):
 @transformer.match("elem.tag=='ParagraphStyleRange'")
 def ParagraphStyleRange(elem, **params):
     # create the p class attribute
+    styles = params.get('styles')
     ps = elem.get('AppliedParagraphStyle')\
             .replace('ParagraphStyle/', '').replace('%3a', ':').replace(": ", ":")
     p_class = ICML.classname(ps)
     if 'p_class' not in params: params['p_class'] = p_class
     p = B.html.p({'class': p_class}, 
         '', transformer(elem.getchildren(), **params))
+    list_type = (
+        elem.get('BulletsAndNumberingListType') 
+        or styles is not None and styles.get(elem.get('AppliedParagraphStyle')) is not None
+        and styles.get(elem.get('AppliedParagraphStyle')).get('BulletsAndNumberingListType')
+        or None)
+    if list_type is not None:
+        p.set('BulletsAndNumberingListType', list_type)
     result = [p, '\n']
     # if there is a pub:section_start or pub:include in the paragraph, move it out.
     section_start = XML.find(p, ".//pub:section_start | .//pub:include", namespaces=NS) 
@@ -487,6 +495,7 @@ def post_process(doc, **params):
     doc = fix_endnote_refs(doc)
     doc = p_tails(doc)
     doc = remove_empty_paras(doc)
+    doc = convert_lists(doc)
     doc = remove_container_sections(doc)
     for section in doc.xpath("//html:section", namespaces=NS): 
         chs = section.getchildren()
@@ -581,6 +590,33 @@ def remove_empty_paras(doc):
     for p in doc.xpath(".//html:p", namespaces=NS):
         XML.remove_if_empty(p, leave_tail=False, ignore_whitespace=True)
     return doc  
+
+def convert_lists(doc):
+    """paragraphs with automatic numbering / bullets are converted to lists"""
+    p = XML.find(doc, ".//html:p[@BulletsAndNumberingListType]", namespaces=bkgen.NS)
+    while p is not None:
+        list_type = p.get('BulletsAndNumberingListType')
+        if 'Numbered' in list_type:
+            tag = 'ol'
+        elif 'Bullet' in list_type:
+            tag = 'ul'
+        else:
+            p = XML.find(p, "following::html:p[@BulletsAndNumberingListType]", namespaces=bkgen.NS)
+            continue
+        list_elem = B.html(tag, '\n'); list_elem.tail='\n'
+        parent = p.getparent()
+        parent.insert(parent.index(p), list_elem)
+        nxt = list_elem.getnext()
+        while (
+            nxt is not None 
+            and nxt.tag=='{%(html)s}p' % bkgen.NS 
+            and nxt.get('BulletsAndNumberingListType')==list_type
+        ):
+            list_elem.append(B.html.li(nxt))
+            nxt.attrib.pop('BulletsAndNumberingListType')
+            nxt = list_elem.getnext()
+        p = XML.find(list_elem, "following::html:p[@BulletsAndNumberingListType]", namespaces=bkgen.NS)
+    return doc
 
 def p_tails(doc):
     for p in doc.xpath(".//html:p", namespaces=NS):
