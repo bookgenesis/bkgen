@@ -38,9 +38,10 @@ class EPUB(ZIP, Source):
 
     def check(self, xml=False):
         """use epubcheck to validate the epub"""
+        java = os.environ.get('java') or 'java'
         checkfn = self.fn + '.epubcheck.txt'
         checkf = open(checkfn, 'wb')
-        cmd = ['java', '-jar', config.Resources.epubcheck]
+        cmd = [java, '-jar', config.Resources.epubcheck]
         if xml==True:
             cmd += ['-out', os.path.splitext(checkfn)[0]+'.xml']
         cmd += [self.fn]
