@@ -250,6 +250,7 @@ class EPUB(ZIP, Source):
             nav_toc=None, nav_landmarks=None, nav_page_list=None):
         # If the spine includes a toc landmark, then use it as the base nav document,
         # and add to it spine items that have titles
+        H = Builder(default=C.NS.html, **{'html':C.NS.html, 'epub':C.NS.epub})._
         landmarks = [spineitem.get('landmark') for spineitem in spine_items]
         if nav_toc is None and 'toc' in landmarks:
             toc_item = spine_items[landmarks.index('toc')]
@@ -259,6 +260,8 @@ class EPUB(ZIP, Source):
                 log.error("No '<nav>' element found in the 'toc' landmark document. There should be one.")
             else:
                 nav_toc = deepcopy(nav_elem)
+                h1 = H.h1('Contents'); h1.tail = '\n'
+                nav_toc.insert(0, h1)
                 nav_toc.set('{%(epub)s}type'%NS, 'toc')
                 if show_nav != True: 
                     nav_toc.set('hidden', "")
@@ -301,6 +304,9 @@ class EPUB(ZIP, Source):
         navfn = C.make_nav_file(output_path, 
             *[e for e in [nav_toc, nav_landmarks, nav_page_list] if e is not None], 
             nav_href=nav_href, title=nav_title)
+
+        if show_nav==True:
+            C.unhide_toc(navfn)
 
         return navfn
 
@@ -760,7 +766,7 @@ class EPUB(ZIP, Source):
     def unhide_toc(C, navfn):
         """the toc in the nav_toc.xhtml file should NOT be hidden"""
         toc = XML(fn=navfn)
-        nav = XML.find(toc.root, "html:body/html:nav[@epub:type='toc']", namespaces=C.NS)
+        nav = XML.find(toc.root, "html:body//html:nav[@epub:type='toc']", namespaces=C.NS)
         if nav is not None and 'hidden' in nav.attrib:
             _ = nav.attrib.pop('hidden')
         toc.write(canonicalized=False)
