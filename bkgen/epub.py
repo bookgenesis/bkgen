@@ -191,7 +191,7 @@ class EPUB(ZIP, Source):
             cover_html_relpath = None
 
         # nav file
-        navfn = C.make_nav(output_path, spine_items=spine_items, nav_href=nav_href, show_nav=show_nav, 
+        navfn = C.make_nav(output_path, spine_items, nav_href=nav_href, show_nav=show_nav, 
             nav_toc=nav_toc, nav_landmarks=nav_landmarks, nav_page_list=nav_page_list)
 
         # ncx file
@@ -246,7 +246,7 @@ class EPUB(ZIP, Source):
         return result
 
     @classmethod
-    def make_nav(C, output_path, spine_items=[], nav_href='nav.xhtml', nav_title="Navigation", show_nav=False,
+    def make_nav(C, output_path, spine_items, nav_href='nav.xhtml', nav_title="Navigation", show_nav=False,
             nav_toc=None, nav_landmarks=None, nav_page_list=None):
         # If the spine includes a toc landmark, then use it as the base nav document,
         # and add to it spine items that have titles

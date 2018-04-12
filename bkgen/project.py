@@ -627,7 +627,7 @@ class Project(XML, Source):
                 lang = 'en'
         spine_items = self.output_spineitems(output_path=html_path, resources=resources, 
             ext=ext, singlepage=singlepage, doc_stylesheets=doc_stylesheets, lang=lang, **image_args)
-        EPUB.make_nav(html_path, spine_items=spine_items, show_nav=True, nav_href="index.xhtml")
+        EPUB.make_nav(html_path, spine_items, show_nav=True, nav_href="index.xhtml")
         if before_compile is not None:
             before_compile(html_path)
         if zip==True:
