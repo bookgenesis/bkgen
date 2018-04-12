@@ -355,17 +355,19 @@ class Project(XML, Source):
         # import the documents, metadata, images, and stylesheet from this source
         fns = []
         if documents==True: 
-            fns += self.import_documents(source.documents(path=self.content_path, **params), source_path=source.path, document_before_update_project=document_before_update_project)
+            docfns = self.import_documents(source.documents(path=self.content_path, **params), source_path=source.path, document_before_update_project=document_before_update_project)
+            fns += docfns
         if metadata==True: 
             self.import_metadata(source.metadata())
         if images==True: 
-            fns += self.import_images(source.images())
+            imgfns = self.import_images(source.images())
+            fns += imgfns
         if stylesheet==True:
             ss = source.stylesheet()
             if ss is not None:
-                ss.fn = os.path.join(self.path, self.content_folder, self.make_basename(source.fn, ext='.css'))
-                ss.write()
-                fns += [ss.fn]
+                # write a stylesheet for each document created from the source - necessary duplication at present
+                for docfn in docfns:
+                    ss.write(fn=os.path.splitext(docfn)[0] + '.css')
 
         self.write()
         return fns
