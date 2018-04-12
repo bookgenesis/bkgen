@@ -140,9 +140,10 @@ class EPUB(ZIP, Source):
 
     @classmethod
     def build(C, output_path, metadata, epub_name=None, progress=None, manifest=None, spine_items=None, lang='en',
-                cover_src=None, cover_html=True, nav_toc=None, nav_landmarks=None, 
-                nav_page_list=None, nav_href='nav.xhtml', nav_title="Navigation", 
-                show_nav=False, before_compile=None, zip=True, check=True):
+                cover_src=None, cover_html=True, 
+                nav_href='nav.xhtml', nav_title="Navigation", show_nav=False, 
+                nav_toc=None, nav_landmarks=None, nav_page_list=None, 
+                before_compile=None, zip=True, check=True):
         """build EPUB file output; returns EPUB object
         
         REQUIRED parameters:
@@ -190,72 +191,8 @@ class EPUB(ZIP, Source):
             cover_html_relpath = None
 
         # nav file
-
-        # If the spine includes a toc landmark, then use it as the base nav document,
-        # and add to it spine items that have titles
-        landmarks = [spineitem.get('landmark') for spineitem in spine_items]
-        if 'toc' in landmarks:
-            toc_item = spine_items[landmarks.index('toc')]
-            nav = XML(fn=os.path.join(output_path, str(URL(toc_item.get('href')))))
-            nav_elem = nav.find(nav.root, "//html:nav", namespaces=NS)
-            if nav_elem is None:
-                log.error("No '<nav>' element found in the 'toc' landmark document. There should be one.")
-            else:
-                nav_elem.set('{%(epub)s}type'%NS, 'toc')
-                if show_nav != True: 
-                    nav_elem.set('hidden', "")
-                
-                # make the nav element the only child of the body
-                body = nav.find(nav.root, "html:body", namespaces=NS)
-                for ch in body.getchildren():
-                    XML.remove(ch)
-                body.append(nav_elem)
-
-                # remove any p and span elements in the nav -- replace with content
-                # (this also removes empty spans such as pagebreaks and index entries)
-                for e in nav.xpath(nav_elem, ".//html:p", namespaces=NS):
-                    XML.replace_with_contents(e)
-                for e in nav.xpath(nav_elem, ".//html:span[not(parent::html:li)]", namespaces=NS):
-                    XML.replace_with_contents(e)
-            
-            # must update hrefs and srcs to the nav_href location.
-            for element in nav.xpath(nav.root, "//*[@href or @src]"):
-                href = element.get('href')
-                if href is not None:
-                    element.set('href', str(URL(
-                        os.path.relpath(
-                            os.path.abspath(os.path.join(os.path.dirname(nav.fn), href)), 
-                            os.path.dirname(os.path.join(output_path, nav_href))))))
-                src = element.get('src')
-                if src is not None:
-                    element.set('src', str(URL(
-                        os.path.relpath(
-                            os.path.abspath(os.path.join(os.path.dirname(nav.fn), src)), 
-                            os.path.dirname(os.path.join(output_path, nav_href))))))
-
-            nav.fn = os.path.join(output_path, nav_href)
-            nav.write(doctype="<!DOCTYPE html>", canonicalized=False)
-            navfn = nav.fn
-        
-        else:
-            if nav_toc is None:
-                nav_toc = C.nav_toc_from_spine_items(output_path, spine_items)
-            navfn = C.make_nav_file(output_path, nav_toc, nav_href=nav_href, title=nav_title)
-
-        nav = XML(fn=navfn)
-        body = nav.find(nav.root, "//html:body", namespaces=NS)
-
-        if nav_landmarks is None:
-            nav_landmarks = C.nav_landmarks_from_spine_items(output_path, spine_items)
-        if nav_landmarks is not None and body is not None:
-            body.append(nav_landmarks)
-
-        if nav_page_list is None:
-            nav_page_list = C.nav_page_list_from_spine_items(output_path, spine_items)
-        if nav_page_list is not None and body is not None:
-            body.append(nav_page_list)
-
-        nav.write(doctype="<!DOCTYPE html>", canonicalized=False)
+        navfn = C.make_nav(output_path, spine_items=spine_items, nav_href=nav_href, show_nav=show_nav, 
+            nav_toc=nav_toc, nav_landmarks=nav_landmarks, nav_page_list=nav_page_list)
 
         # ncx file
         ncx_fn = C.make_ncx_file(output_path, navfn, opf_metadata)
@@ -307,6 +244,65 @@ class EPUB(ZIP, Source):
             result.fn = output_path
         if progress is not None: progress.report()
         return result
+
+    @classmethod
+    def make_nav(C, output_path, spine_items=[], nav_href='nav.xhtml', nav_title="Navigation", show_nav=False,
+            nav_toc=None, nav_landmarks=None, nav_page_list=None):
+        # If the spine includes a toc landmark, then use it as the base nav document,
+        # and add to it spine items that have titles
+        landmarks = [spineitem.get('landmark') for spineitem in spine_items]
+        if nav_toc is None and 'toc' in landmarks:
+            toc_item = spine_items[landmarks.index('toc')]
+            nav = XML(fn=os.path.join(output_path, str(URL(toc_item.get('href')))))
+            nav_elem = nav.find(nav.root, "//html:nav", namespaces=NS)
+            if nav_elem is None:
+                log.error("No '<nav>' element found in the 'toc' landmark document. There should be one.")
+            else:
+                nav_toc = deepcopy(nav_elem)
+                nav_toc.set('{%(epub)s}type'%NS, 'toc')
+                if show_nav != True: 
+                    nav_toc.set('hidden', "")
+                
+                # remove any p and span elements in the nav -- replace with content
+                # (this also removes empty spans such as pagebreaks and index entries)
+                for e in XML.xpath(nav_toc, ".//html:p", namespaces=NS):
+                    XML.replace_with_contents(e)
+                for e in XML.xpath(nav_toc, ".//html:span[not(parent::html:li)]", namespaces=NS):
+                    XML.replace_with_contents(e)
+            
+                # must update hrefs and srcs to the nav_href location.
+                for element in XML.xpath(nav_toc, ".//*[@href or @src]"):
+                    href = element.get('href')
+                    if href is not None:
+                        element.set('href', str(URL(
+                            os.path.relpath(
+                                os.path.abspath(os.path.join(os.path.dirname(nav.fn), href)), 
+                                os.path.dirname(os.path.join(output_path, nav_href))))))
+                    src = element.get('src')
+                    if src is not None:
+                        element.set('src', str(URL(
+                            os.path.relpath(
+                                os.path.abspath(os.path.join(os.path.dirname(nav.fn), src)), 
+                                os.path.dirname(os.path.join(output_path, nav_href))))))
+
+            nav.fn = os.path.join(output_path, nav_href)
+            nav.write(doctype="<!DOCTYPE html>", canonicalized=False)
+            navfn = nav.fn        
+
+        if nav_toc is None:
+            nav_toc = C.nav_toc_from_spine_items(output_path, spine_items)
+
+        if nav_landmarks is None:
+            nav_landmarks = C.nav_landmarks_from_spine_items(output_path, spine_items)
+
+        if nav_page_list is None:
+            nav_page_list = C.nav_page_list_from_spine_items(output_path, spine_items)
+
+        navfn = C.make_nav_file(output_path, 
+            *[e for e in [nav_toc, nav_landmarks, nav_page_list] if e is not None], 
+            nav_href=nav_href, title=nav_title)
+
+        return navfn
 
     @classmethod
     def make_cover_html(C, output_path, cover_src, lang=None):
