@@ -561,7 +561,7 @@ class Project(XML, Source):
         result = Dict(fn=zipfn)
         return result
 
-    def build_epub(self, clean=True, show_nav=False, doc_stylesheets=True, progress=None,
+    def build_epub(self, clean=True, show_nav=False, doc_stylesheets=True, progress=None, name_kind=True,
             zip=True, check=True, cleanup=False, before_compile=None, lang=None, **image_args):
         from .epub import EPUB
         epub_isbn = self.metadata().identifier(id_patterns=['epub', 'ebook', 'isbn'])
@@ -572,8 +572,9 @@ class Project(XML, Source):
                 .resub('[\s\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', ''))
         else:
             epub_name = self.name
-        epub_name += '_EPUB'
-        epub_path = os.path.join(self.path, self.output_folder, epub_name)
+        epub_path = os.path.join(self.path, self.output_folder, epub_name+'_EPUB')
+        if name_kind==True:
+            epub_name += '_EPUB'
         
         if clean==True: 
             if os.path.isdir(epub_path):
@@ -639,7 +640,7 @@ class Project(XML, Source):
         if progress is not None: progress.report()
         return result
 
-    def build_mobi(self, clean=True, cleanup=False, before_compile=None, progress=None,
+    def build_mobi(self, clean=True, cleanup=False, before_compile=None, progress=None, name_kind=True,
             doc_stylesheets=True, lang=None, **image_args):
         from .mobi import MOBI
         mobi_isbn = self.metadata().identifier(id_patterns=['mobi', 'ebook', 'isbn'])
@@ -649,9 +650,10 @@ class Project(XML, Source):
                 .resub('[\s\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', ''))
         else:
             mobi_name = self.name
-        mobi_name += '_Kindle'
-        mobi_path = os.path.join(self.path, self.output_folder, mobi_name)
-        
+        mobi_path = os.path.join(self.path, self.output_folder, mobi_name+'_Kindle')
+        if name_kind==True:
+            mobi_name += '_Kindle'
+
         if clean==True and os.path.isdir(mobi_path): 
             shutil.rmtree(mobi_path, onerror=rmtree_warn)
 
