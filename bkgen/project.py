@@ -605,6 +605,7 @@ class Project(XML, Source):
         * zip=True          : whether to zip the output
         * cleanup=False     : whether to cleanup the output folder (only if zip=True)
         """
+        from .epub import EPUB
         log.debug("build_html: %r" % dict(clean=clean, singlepage=singlepage, ext=ext, doc_stylesheets=doc_stylesheets, zip=zip, cleanup=cleanup, **image_args))
         html_path = os.path.join(self.output_path, self.name+'_HTML')
         log.info(html_path)
@@ -621,8 +622,9 @@ class Project(XML, Source):
                 lang = dclang.text
             else:
                 lang = 'en'
-        self.output_spineitems(output_path=html_path, resources=resources, 
+        spine_items = self.output_spineitems(output_path=html_path, resources=resources, 
             ext=ext, singlepage=singlepage, doc_stylesheets=doc_stylesheets, lang=lang, **image_args)
+        EPUB.make_nav(html_path, spine_items=spine_items, show_nav=True, nav_href="index.xhtml")
         if before_compile is not None:
             before_compile(html_path)
         if zip==True:
