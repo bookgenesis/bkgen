@@ -475,7 +475,7 @@ class EPUB(ZIP, Source):
             fn=os.path.join(output_path, href)
             if os.path.splitext(fn)[1] not in ['.html', '.xhtml']: 
                 continue
-            for pagebreak in XML(fn=fn).root.xpath("//*[@epub:type='pagebreak' and @title]", namespaces=C.NS):
+            for pagebreak in XML(fn=fn).root.xpath("//*[(@epub:type='pagebreak' or @role='doc-pagebreak') and @title]", namespaces=C.NS):
                 if pagebreak.get('id') is None:
                     log.warn('pagebreak without id: %r' % pagebreak.attrib)
                     continue
