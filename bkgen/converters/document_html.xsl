@@ -2,6 +2,7 @@
 <xsl:stylesheet version="1.1" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     xmlns="http://www.w3.org/1999/xhtml"
     xmlns:pub="http://publishingxml.org/ns"
+    xmlns:epub="http://www.idpf.org/2007/ops"
     xmlns:m="http://www.w3.org/1998/Math/MathML"
     exclude-result-prefixes="m pub">
 
@@ -55,6 +56,18 @@
 		<!-- four spaces are a good substitute for a tab in HTML -->
 	    <!-- <xsl:text> &#x00a0;&#x00a0; </xsl:text> -->
 	    <xsl:text> </xsl:text>
+	</xsl:template>
+
+	<xsl:template match="pub:page[@n]">
+		<span epub:type="pagebreak" role="doc-pagebreak">
+			<xsl:attribute name="title">
+				<xsl:value-of select="@n"></xsl:value-of>
+			</xsl:attribute>
+			<xsl:attribute name="id">
+				<xsl:text>page-</xsl:text>
+				<xsl:value-of select="@n"></xsl:value-of>
+			</xsl:attribute>
+		</span>
 	</xsl:template>
 
 	<xsl:template match="pub:colbreak"/>
