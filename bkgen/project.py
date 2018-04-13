@@ -28,6 +28,7 @@ from bxml.builder import Builder
 
 from bkgen import NS, config, mimetypes, PATH
 from bkgen.document import Document
+from bkgen.html import HTML
 from .source import Source
 from .css import CSS
 
@@ -968,6 +969,17 @@ class Project(XML, Source):
                 # for e in x.root.xpath("//html:img[@src]", namespaces=NS):
                 #     e.set('src', os.path.splitext(str(URL(e.get('src'))))[0]+'.jpg')
                 x.write(canonicalized=False)
+
+        # only keep the first instance of a given pagebreak in the outputs
+        pagebreak_ids = []
+        for outfn in outfns:
+            x = XML(fn=outfn)
+            for pagebreak in x.xpath(x.root, "//html:span[@id and (@epub:type='pagebreak' or @role='doc-pagebreak')]", namespaces=NS):
+                if pagebreak.get('id') in pagebreak_ids:
+                    x.remove(pagebreak, leave_tail=True)
+                else:
+                    pagebreak_ids.append(pagebreak.get('id'))
+            x.write(canonicalized=False)
 
         return spineitems
 
