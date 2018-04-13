@@ -483,7 +483,7 @@ def pre_process(doc, **params):
     return doc
 
 def post_process(doc, **params):
-    doc = convert_line_breaks(doc)
+    doc = convert_line_page_breaks(doc)
     doc = remove_empty_spans(doc)
     doc = process_t_codes(doc)
     doc = process_endnotes(doc)
@@ -494,7 +494,8 @@ def post_process(doc, **params):
     doc = anchors_inside_paras(doc)
     doc = fix_endnote_refs(doc)
     doc = p_tails(doc)
-    doc = remove_empty_paras(doc)
+    if params.get('preserve_paragraphs') != True:
+        doc = remove_empty_paras(doc)
     doc = convert_lists(doc)
     doc = remove_container_sections(doc)
     for section in doc.xpath("//html:section", namespaces=NS): 
@@ -545,10 +546,11 @@ def process_t_codes(doc):
         XML.replace_with_contents(t)
     return doc
 
-def convert_line_breaks(doc):
+def convert_line_page_breaks(doc):
     txt = etree.tounicode(doc)
     txt = txt.replace('\u2028', '<br/>')        # forced line break
     txt = txt.replace('\u200b', '')             # discretionary line break / zero-width space
+    txt = txt.replace("<page ", "<pub:page xmlns:pub='%(pub)s' " % NS) # page codes
     return etree.fromstring(txt.encode('utf-8'))
 
 def process_endnotes(doc):
