@@ -197,7 +197,9 @@ def Cell(elem, **params):
 
 def make_anchor_id(name):
     """make sure the anchor id will be valid. Use this for all anchor names."""
-    return String(name).identifier(ascii=True)
+    id = String(name).identifier(ascii=True)
+    log.debug("make_anchor_id(%r) => %r" % (name, id))
+    return id
 
 # == HyperlinkTextDestination ==
 @transformer.match("elem.tag=='HyperlinkTextDestination'")
@@ -269,7 +271,9 @@ def hyperlink_attribs(elem, source=None, **params):
         for source in params.get('sources'):
             h = XML.find(source.designmap.root, h_xpath)
             if h is not None: break
-    if h is not None:
+    if h is None:
+        log.warn("hyperlink_attribs(): No hyperlink found for Source=%r" % source)
+    else:
         log.debug("Hyperlink: %r" % h.attrib)
         if h.get('DestinationUniqueKey') is not None:
             attribs = attribs_from_destkey(elem, h.get('DestinationUniqueKey'), **params)
@@ -277,7 +281,7 @@ def hyperlink_attribs(elem, source=None, **params):
             # use the hyperlink properties to create the link    
             d = h.find("Properties/Destination[@type='object']")
             if d is not None:
-                # if DEBUG==True: print("property dest:", d.attrib)
+                log.debug("property dest:", d.attrib)
                 if 'HyperlinkTextDestination/' in d.text:
                     td_xpath = "//HyperlinkTextDestination[@Self='%s']" % d.text
                     td = XML.find(elem, td_xpath)
@@ -314,7 +318,8 @@ def hyperlink_attribs(elem, source=None, **params):
 def attribs_from_destkey(elem, destkey, **params):
     attribs = Dict()
     doc = None
-    dest_xpath = """//*[contains(name(), 'Hyperlink') and contains(name(), 'Destination') 
+    dest_xpath = """//*[
+        contains(name(), 'Destination')
         and @DestinationUniqueKey='%s']""" % destkey
     # first look in the current document
     dest = XML.find(elem, dest_xpath)
@@ -328,7 +333,9 @@ def attribs_from_destkey(elem, destkey, **params):
             if dest is not None:
                 doc = source; break
     log.debug("destkey: %r %r" % (destkey, dest.attrib if dest is not None else None))
-    if dest is not None:
+    if dest is None:
+        log.warn("Destination not found for DestinationUniqueKey=%r" % destkey)
+    else:
         if dest.tag=='HyperlinkURLDestination':
             attribs.filename = dest.get('DestinationURL')
         elif dest.tag=='HyperlinkTextDestination':
@@ -343,7 +350,7 @@ def attribs_from_destkey(elem, destkey, **params):
 @transformer.match("elem.tag in ['HyperlinkTextSource', 'CrossReferenceSource']")
 def HyperlinkTextOrCrossReferenceSource(elem, **params):
     log.debug("%r %r" % (elem.tag, elem.attrib))
-    anchor_id = String(elem.get('Name')).identifier()
+    anchor_id = String("%s %s" % (elem.get('Name'), elem.get('Self'))).strip().identifier()
     anchor = B.pub.anchor(id=anchor_id)
     anchor_end = B.pub.anchor(id=anchor_id+'_end')
     attribs = hyperlink_attribs(elem, source=elem.get('Self'), **params)
