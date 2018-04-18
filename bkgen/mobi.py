@@ -51,6 +51,9 @@ class MOBI(Dict):
         # and remove those elements from the interior.
         self.remove_display_none(opffn)
 
+        # .mobi doesn't support CSS ::before or ::after
+        self.remove_css_before_after(opffn)
+
         if before_compile is not None:
             before_compile(build_path)
 
@@ -223,6 +226,17 @@ class MOBI(Dict):
             # do string replace -- easiest
             css = Text(fn=os.path.join(opf.path, css_item.get('href')))
             css.text = css.text.resub("display:\s*none;?\n?", "")
+            css.write()
+
+    def remove_css_before_after(self, opffn):
+        """remove ::before and ::after selectors from the stylesheets, because they cause problems on the Kindle."""
+        opf = XML(fn=opffn)
+        for css_item in [item for item in opf.root.xpath(
+            "//opf:manifest/opf:item[not(@properties='nav') and @media-type='text/css']", namespaces=self.NS
+        )]:
+            css = CSS(fn=os.path.join(opf.path, css_item.get('href')))
+            for sel in [sel for sel in css.styles.keys() if "::before" in sel or "::after" in sel]:
+                css.styles.pop(sel)
             css.write()
         
     def compile_mobi(self, build_path, opffn, mobifn=None, config=config):
