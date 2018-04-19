@@ -137,7 +137,7 @@ class MOBI(Dict):
                             width = int(width * height / h)
                             styles.pop('height')
                 log.debug("%d x %d\t%d x %d" % (w,h,width,height))
-                if width < w and height < h:
+                if (width > 0 and width < w) and (height > 0 and height < h):
                     Image(fn=srcfn).convert(outfn=srcfn, resize="%dx%d>" % (width, height), sharpen="1")
                     log.debug("%dx%d\t%dx%d\t%s" % (w, h, width, height, os.path.relpath(srcfn, os.path.dirname(opffn))))
                 img.set('style', ';'.join('%s:%s' % (k,v) for k,v in styles.items()))
