@@ -1165,6 +1165,12 @@ if __name__=='__main__':
             project = Project(fn=project_fn)
             for fn in fns:
                 project.import_source_file(fn, fns=fns)
+
+        if 'merge-stylesheet' in sys.argv[1]:
+            css = project.stylesheet()
+            css.write()
+            css = CSS.merge_stylesheets(css.fn, *fns)
+            css.write()
         
         if 'build' in sys.argv[1]:
             if sys.argv[1]=='build': 
