@@ -1135,12 +1135,23 @@ if __name__=='__main__':
     if len(sys.argv) < 2:
         log.warn("Usage: python -m bkgen.project command project_path [project_path] ...")
     else:
-        project_path = os.path.abspath(sys.argv[2])
+        project_path = File(os.path.abspath(sys.argv[2])).fn    # normalize by all means!
+        fns = [File(fn=fn).fn for fn in sys.argv[3:]]
         if os.path.isdir(project_path):
             project_fn = os.path.join(project_path, 'project.xml')
-        else:
+        elif project_path[-len('project.xml'):]=='project.xml':
             project_fn = project_path
             project_path = os.path.dirname(project_path)
+        else:
+            # in this case, we probably have a file under the project path.
+            fns = [project_path] + fns
+            path_elems = project_path.split('/')
+            while len(path_elems) > 0:
+                project_fn = '/'.join(path_elems + ['project.xml'])
+                if os.path.exists(project_fn):
+                    log.info(project_fn)
+                    break
+                path_elems.pop(-1)
         project = Project(fn=project_fn)
 
         if 'create' in sys.argv[1]:
@@ -1149,11 +1160,11 @@ if __name__=='__main__':
         if 'import-all' in sys.argv[1]:
             import_all(project_path)
         elif 'import-cover' in sys.argv[1]:
-            project.import_image(sys.argv[3], **{'class':'cover'})
+            project.import_image(fns[0], **{'class':'cover'})
         elif 'import' in sys.argv[1]:
             project = Project(fn=project_fn)
-            for fn in sys.argv[3:]:
-                project.import_source_file(fn, fns=sys.argv[3:])
+            for fn in fns:
+                project.import_source_file(fn, fns=fns)
         
         if 'build' in sys.argv[1]:
             if sys.argv[1]=='build': 
