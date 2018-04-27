@@ -1166,7 +1166,7 @@ if __name__=='__main__':
             for fn in fns:
                 project.import_source_file(fn, fns=fns)
 
-        if 'merge-stylesheet' in sys.argv[1]:
+        if 'stylesheet' in sys.argv[1]:
             css = project.stylesheet()
             css.write()
             css = CSS.merge_stylesheets(css.fn, *fns)
