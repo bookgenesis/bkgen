@@ -29,11 +29,9 @@ from bxml.builder import Builder
 from bkgen import NS, config, mimetypes, PATH
 from bkgen.document import Document
 from bkgen.html import HTML
-from .source import Source
-from .css import CSS
+from bkgen.source import Source
+from bkgen.css import CSS
 
-FILENAME = os.path.abspath(__file__)
-PATH = os.path.dirname(FILENAME)
 PUB = Builder.single(NS.pub)
 H = Builder.single(NS.html)
 
