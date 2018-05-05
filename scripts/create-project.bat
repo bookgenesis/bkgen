@@ -1,3 +1,1 @@
-@echo off
-%~dp0\..\_bkgen\Scripts\activate.bat
-python -m bkgen.project create "%1"
+%~dp0..\_bkgen\Scripts\python.exe -m bkgen.project create "%1"
