@@ -29,11 +29,9 @@ from bxml.builder import Builder
 from bkgen import NS, config, mimetypes, PATH
 from bkgen.document import Document
 from bkgen.html import HTML
-from .source import Source
-from .css import CSS
+from bkgen.source import Source
+from bkgen.css import CSS
 
-FILENAME = os.path.abspath(__file__)
-PATH = os.path.dirname(FILENAME)
 PUB = Builder.single(NS.pub)
 H = Builder.single(NS.html)
 
@@ -1166,7 +1164,7 @@ if __name__=='__main__':
             for fn in fns:
                 project.import_source_file(fn, fns=fns)
 
-        if 'merge-stylesheet' in sys.argv[1]:
+        if 'stylesheet' in sys.argv[1]:
             css = project.stylesheet()
             css.write()
             css = CSS.merge_stylesheets(css.fn, *fns)
