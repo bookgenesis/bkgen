@@ -319,7 +319,7 @@ class Project(XML, Source):
         # Images
         elif (content_type in ['image/jpeg', 'image/png', 'image/bmp', 'image/tiff', 'application/pdf']
                 or ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff', '.pdf']):
-            result.fns += self.import_image(fn)
+            result.fns += self.import_image(fn, gs=config.Lib and config.Lib.gs or None)
 
         # not a matching file type
         else:
@@ -462,7 +462,7 @@ class Project(XML, Source):
         if images is None: return
         fns = []
         for image in images:
-            fns += [self.import_image(image.fn)]
+            fns += [self.import_image(image.fn, gs=config.Lib and config.Lib.gs or None)]
         return fns
 
     def import_image(self, fn, gs=None, **params):
@@ -692,7 +692,7 @@ class Project(XML, Source):
             if resource.get('class')=='stylesheet':
                 outfn = self.output_stylesheet(f.fn, output_path)
             elif resource.get('class') in ['cover', 'cover-digital', 'image']:
-                outfn = self.output_image(f.fn, output_path=output_path, **image_args)
+                outfn = self.output_image(f.fn, output_path=output_path, gs=config.Lib and config.Lib.gs or None, **image_args)
             else:                                                               # other resource as-is
                 outfn = os.path.join(output_path, f.relpath(os.path.dirname(self.fn)))
                 f.write(fn=outfn)
@@ -856,7 +856,7 @@ class Project(XML, Source):
                     srcfn = os.path.join(d.path, str(URL(img.get('src'))))
                     if os.path.exists(srcfn):
                         args = dict(**image_args)
-                        outfn = self.output_image(srcfn, output_path=output_path, **args)
+                        outfn = self.output_image(srcfn, output_path=output_path, gs=config.Lib and config.Lib.gs or None, **args)
                         img.set('src', os.path.relpath(outfn, h.path).replace('\\','/'))
                     else:
                         log.error("IMAGE NOT FOUND: %s" % srcfn)
@@ -1084,12 +1084,12 @@ def import_all(project_path):
         if os.path.splitext(fn)[-1].lower() in ['.pdf', '.jpg', '.png', '.tif', '.tiff', '.eps']]
     log.info('-- %d image files' % len(fns))
     for fn in fns:
-        project.import_image(fn)
+        project.import_image(fn, gs=config.Lib and config.Lib.gs or None)
     
     # cover
     fns = rglob(cover_path, "*.jpg")
     for fn in fns:
-        project.import_image(fn, **{'class':'cover', 'kind':'digital'})
+        project.import_image(fn, gs=config.Lib and config.Lib.gs or None, **{'class':'cover', 'kind':'digital'})
 
 def build_project(project_path, format=None, check=None, doc_stylesheets=True, singlepage=False, before_compile=None):
     if os.path.isfile(project_path):
@@ -1160,7 +1160,7 @@ if __name__=='__main__':
         if 'import-all' in sys.argv[1]:
             import_all(project_path)
         elif 'import-cover' in sys.argv[1]:
-            project.import_image(fns[0], **{'class':'cover'})
+            project.import_image(fns[0], gs=config.Lib and config.Lib.gs or None, **{'class':'cover'})
         elif 'import' in sys.argv[1]:
             project = Project(fn=project_fn)
             for fn in fns:
