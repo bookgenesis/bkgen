@@ -1,1 +1,1 @@
-%~dp0..\_bkgen\Scripts\python.exe -m bkgen.project build "%1"
+%~dp0..\_bkgen\Scripts\python.exe -m bkgen.project build "%1" >%~dp0\output-all.log 2>&1

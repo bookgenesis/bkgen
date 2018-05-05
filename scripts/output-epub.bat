@@ -1,1 +1,1 @@
-%~dp0..\_bkgen\Scripts\python.exe -m bkgen.project build-epub "%1"
+%~dp0..\_bkgen\Scripts\python.exe -m bkgen.project build-epub "%1" >%~dp0\output-epub.log 2>&1

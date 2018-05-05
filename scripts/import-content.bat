@@ -1,1 +1,1 @@
-%~dp0..\_bkgen\Scripts\python.exe -m bkgen.project import "%1"
+%~dp0..\_bkgen\Scripts\python.exe -m bkgen.project import "%1" >%~dp0\import-content.log 2>&1 

@@ -1,1 +1,1 @@
-%~dp0..\_bkgen\Scripts\python.exe -m bkgen.project import-cover "%1"
+%~dp0..\_bkgen\Scripts\python.exe -m bkgen.project import-cover "%1" >%~dp0\import-cover.log 2>&1

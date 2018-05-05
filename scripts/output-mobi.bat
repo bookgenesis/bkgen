@@ -1,1 +1,1 @@
-%~dp0..\_bkgen\Scripts\python.exe -m bkgen.project build-mobi "%1"
+%~dp0..\_bkgen\Scripts\python.exe -m bkgen.project build-mobi "%1" >%~dp0\output-mobi.log 2>&1 

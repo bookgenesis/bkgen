@@ -1,1 +1,1 @@
-%~dp0..\_bkgen\Scripts\python.exe -m bkgen.project create "%1"
+%~dp0..\_bkgen\Scripts\python.exe -m bkgen.project create "%1" >%~dp0\create-project.log 2>&1
