@@ -381,7 +381,7 @@ class Project(XML, Source):
         (3) importing referenced images, if available
         """
         with open(os.path.join(PATH, 'resources', 'epubtypes.json'), 'rb') as f:
-            epubtypes = json.load(f)
+            epubtypes = json.loads(f.read().decode('utf-8'))
         if documents is None: return
         spine_elem = self.find(self.root, "pub:spine")
         if spine_elem is None:
