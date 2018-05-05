@@ -11,7 +11,7 @@ Now all of the methods of the project can be called.
 import logging
 log = logging.getLogger(__name__)
 
-import json, os, re, shutil, subprocess, sys, time, traceback
+import json, os, re, shutil, subprocess, sys, tempfile, time, traceback
 from copy import deepcopy
 from glob import glob
 from bl.dict import Dict
@@ -364,10 +364,13 @@ class Project(XML, Source):
         if stylesheet==True:
             ss = source.stylesheet()
             if ss is not None:
-                # write a stylesheet for each document created from the source - necessary duplication at present
-                for docfn in docfns:
-                    ss.write(fn=os.path.splitext(docfn)[0] + '.css')
-
+                # merge the stylesheet into the project.css
+                css = self.stylesheet()
+                with tempfile.NamedTemporaryFile() as tf:
+                    ss.fn = tf.name
+                    tf.close()
+                    ss.write()
+                    CSS.merge_stylesheets(css.fn, ss.fn).write()
         self.write()
         return fns
 
