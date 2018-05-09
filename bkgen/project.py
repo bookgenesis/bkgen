@@ -1036,6 +1036,43 @@ class Project(XML, Source):
                 for fn in fns:
                     os.remove(fn)
 
+    def delete_file(self, filepath):
+        log.info("project.delete_file(%r)" % filepath)
+        if os.path.exists(filepath):
+            fn = filepath
+        elif os.path.exists(os.path.join(self.path, filepath)):
+            fn = os.path.abspath(os.path.join(self.path, filepath))
+        if os.path.isdir(fn):
+            shutil.rmtree(fn)
+            log.info("removed directory: %s" % fn)
+        elif os.path.isfile(fn):
+            os.remove(fn)
+            log.info("removed file: %s" % fn)
+        href = File.normpath(os.path.relpath(fn, self.path))
+        for e in self.xpath(self.root, "//*[@href]"):
+            if e.get('href').startswith(href):
+                self.remove(e)
+        self.write()
+
+    def delete_content_item(self, fn, id=None):
+        log.info("fn   = %s (%r)" % (fn, os.path.exists(fn)))
+        href = os.path.relpath(fn, self.path)
+        if id is not None:
+            href += '#' + id
+        if os.path.exists(fn):
+            if id is None:
+                os.remove(fn)
+            else:
+                doc = Document(fn=fn)
+                section = doc.find(doc.root, "//*[@id='%s']" % id)
+                if section is not None:
+                    doc.remove(section, leave_tail=True)
+                    doc.write()
+            for spineitem in self.xpath(self.root, "//pub:spineitem[contains(@href,'%s')]" % href):
+                self.remove(spineitem)
+            self.write()
+
+
 def rmtree_warn(function, path, excinfo):
     log.warn("%s: Could not remove %s: %s" % (function.__name__, path, excinfo()[1]))
 
