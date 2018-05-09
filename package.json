@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@daisy/ace": "^1.0.0"
+  }
+}

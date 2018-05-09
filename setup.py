@@ -4,7 +4,7 @@ config = {
     "description": "Core functionality for bookgenesis",
     "url": "https://gitlab.com/bookgenesis/bkgen",
     "author": "Sean Harrison",
-    "author_email": "sah@blackearth.us",
+    "author_email": "sah@bookgenesis.com",
     "license": "All rights reserved.",
     "classifiers": [
         "Development Status :: 4 - Beta",

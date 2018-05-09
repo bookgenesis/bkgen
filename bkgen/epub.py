@@ -14,7 +14,7 @@ from bl.text import Text
 from bl.file import File
 from bl.url import URL
 from bxml.builder import Builder
-from bkgen import NS, config
+from bkgen import NS, config, PATH
 from bkgen.source import Source
 
 log = logging.getLogger(__name__)
@@ -49,6 +49,21 @@ class EPUB(ZIP, Source):
         checkf.close()
         log.info("epubcheck log: %s" % checkfn)
         return checkfn
+
+    def ace(self, zip=True):
+        """use DAISY Ace to validate the epub for accessibility"""
+        node = os.environ.get('node') or 'node'
+        daisy_ace = File.normpath(os.path.join(os.path.dirname(PATH), 'node_modules', '@daisy', 'ace', 'bin', 'ace.js'))
+        report_path = self.fn + '.ACE'
+        cmd = [node, daisy_ace, '-s', '-f', '-o', report_path, self.fn]
+        subprocess.call(cmd)
+        if zip==True:
+            report_zip_fn = ZIP.zip_path(report_path)
+            log.info('DAISY Ace report .zip: %s' % report_zip_fn)
+            return report_zip_fn
+        else:
+            log.info('DAISY Ace report folder: %s' % report_path)
+            return report_path
 
     def write(self, fn=None):
         f = File(fn=self.fn)
@@ -139,11 +154,10 @@ class EPUB(ZIP, Source):
         return opf.find(opf.root, "opf:metadata", namespaces=NS)
 
     @classmethod
-    def build(C, output_path, metadata, epub_name=None, progress=None, manifest=None, spine_items=None, lang='en',
-                cover_src=None, cover_html=True, 
-                nav_href='nav.xhtml', nav_title="Navigation", show_nav=False, 
-                nav_toc=None, nav_landmarks=None, nav_page_list=None, 
-                before_compile=None, zip=True, check=True):
+    def build(C, output_path, metadata, epub_name=None, manifest=None, spine_items=None, lang='en',
+                cover_src=None, cover_html=True, nav_href='nav.xhtml', nav_title="Navigation", 
+                show_nav=False, nav_toc=None, nav_landmarks=None, nav_page_list=None, 
+                before_compile=None, zip=True, check=True, ace=True, progress=None):
         """build EPUB file output; returns EPUB object
         
         REQUIRED parameters:
@@ -234,12 +248,12 @@ class EPUB(ZIP, Source):
                 mimetype_fn=mimetype_fn,
                 container_fn=container_fn,
                 opf_fn=opffn)
+            result.fn = the_epub.fn
             if progress is not None: progress.report()
             if check==True:
-                epubcheckfn = the_epub.check()
-                log.debug(epubcheckfn)
-                result.log = epubcheckfn
-            result.fn = the_epub.fn
+                result.log = the_epub.check()
+            if ace==True:
+                result.ace = the_epub.ace()
         else:
             result.fn = output_path
         if progress is not None: progress.report()
@@ -855,6 +869,9 @@ if __name__=='__main__':
         if 'check' in sys.argv[1]:
             for fn in sys.argv[2:]:
                 EPUB(fn=fn).check()
+        if 'ace' in sys.argv[1]:
+            for fn in sys.argv[2:]:
+                EPUB(fn=fn).ace()
         if 'unzip' in sys.argv[1]:
             for fn in sys.argv[2:]:
                 EPUB(fn=fn).unzip()
