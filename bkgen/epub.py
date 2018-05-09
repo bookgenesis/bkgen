@@ -54,7 +54,7 @@ class EPUB(ZIP, Source):
         """use DAISY Ace to validate the epub for accessibility"""
         node = os.environ.get('node') or 'node'
         daisy_ace = File.normpath(os.path.join(os.path.dirname(PATH), 'node_modules', '@daisy', 'ace', 'bin', 'ace.js'))
-        report_path = self.fn + '.ACE'
+        report_path = os.path.splitext(self.fn)[0] + '_ACE'
         cmd = [node, daisy_ace, '-s', '-f', '-o', report_path, self.fn]
         subprocess.call(cmd)
         if zip==True:
