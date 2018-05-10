@@ -401,6 +401,7 @@ class Project(XML, Source):
             spine_elem = PUB.spine('\n\t\t')
             spine_elem.tail='\n\n\t'
             self.root.append(spine_elem)
+        spine_elem.text = '\n\t\t'
         spine_hrefs = [
             str(URL(spineitem.get('href')))
             for spineitem in self.xpath(spine_elem, "pub:spineitem", namespaces=NS)
@@ -431,10 +432,22 @@ class Project(XML, Source):
             if document_before_update_project is not None:
                 document_before_update_project(doc)
 
-            # update the project spine element: append anything that is new.
+            doc_href = doc.relpath(self.path)
+
+            # remove missing content from spine
+            doc_spine_hrefs = [href for href in spine_hrefs if '#' in href and href.split('#')[0]==doc_href]
+            for href in doc_spine_hrefs:
+                id = href.split('#')[-1]
+                section = doc.find(doc.root, "//html:section[@id='%s']" % id)
+                if section is None:
+                    spineitem = self.find(spine_elem, "pub:spineitem[@href='%s']" % href)
+                    log.info('Removing non-existent content from spine: %r' % spineitem.attrib)
+                    spine_elem.remove(spineitem)
+
+            # update the project spine: append anything that is new.
             sections = doc.root.xpath("html:body/html:section[@id]", namespaces=NS)
             for section in sections:
-                section_href = os.path.relpath(doc.fn, self.path).replace('\\','/') + '#' + section.get('id')
+                section_href = doc_href + '#' + section.get('id')
                 if section_href not in spine_hrefs:
                     spineitem = PUB.spineitem(href=section_href); spineitem.tail = '\n\t\t'
                     if section.get('title') is not None:
@@ -445,6 +458,7 @@ class Project(XML, Source):
                                 spineitem.set('landmark', epubtype['type'])
                                 break
                     spine_elem.append(spineitem)
+
         return fns
 
     def import_metadata(self, metadata):
