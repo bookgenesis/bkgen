@@ -157,7 +157,7 @@ class EPUB(ZIP, Source):
     def build(C, output_path, metadata, epub_name=None, manifest=None, spine_items=None, lang='en',
                 cover_src=None, cover_html=True, nav_href='nav.xhtml', nav_title="Navigation", 
                 show_nav=False, nav_toc=None, nav_landmarks=None, nav_page_list=None, 
-                before_compile=None, zip=True, check=True, ace=True, progress=None):
+                before_compile=None, zip=True, check=True, ace=False, progress=None):
         """build EPUB file output; returns EPUB object
         
         REQUIRED parameters:
