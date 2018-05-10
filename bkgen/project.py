@@ -67,27 +67,39 @@ class Project(XML, Source):
 
     @property
     def content_path(self):
-        return os.path.join(self.path, self.content_folder)
+        path = os.path.join(self.path, self.content_folder)
+        if not os.path.exists(path): os.makedirs(path)
+        return path
 
     @property
     def image_path(self):
-        return os.path.join(self.path, self.image_folder)
+        path = os.path.join(self.path, self.image_folder)
+        if not os.path.exists(path): os.makedirs(path)
+        return path
 
     @property
     def cover_path(self):
-        return os.path.join(self.path, self.cover_folder)
+        path = os.path.join(self.path, self.cover_folder)
+        if not os.path.exists(path): os.makedirs(path)
+        return path
 
     @property
     def output_path(self):
-        return os.path.join(self.path, self.output_folder)
+        path = os.path.join(self.path, self.output_folder)
+        if not os.path.exists(path): os.makedirs(path)
+        return path
 
     @property
     def interior_path(self):
-        return os.path.join(self.path, self.interior_folder)
+        path = os.path.join(self.path, self.interior_folder)
+        if not os.path.exists(path): os.makedirs(path)
+        return path
 
     @property
     def source_path(self):
-        return os.path.join(self.path, self.source_folder)
+        path = os.path.join(self.path, self.source_folder)
+        if not os.path.exists(path): os.makedirs(path)
+        return path
 
     @property
     def output_kinds(self):
@@ -105,7 +117,7 @@ class Project(XML, Source):
     def documents(self):
         """all of pub:document files in the content subfolder."""
         from .document import Document
-        return [Document(fn=fn) for fn in rglob(self.path, 'content/*.xml')]
+        return [Document(fn=fn) for fn in rglob(self.content_path, '*.xml')]
 
     def images(self):
         """all of the image files in the content subfolder."""
@@ -397,7 +409,7 @@ class Project(XML, Source):
         for doc in documents:
             # save the document, overwriting any existing document in that location
             if doc.fn is None or self.content_path not in os.path.commonprefix([self.content_path, doc.fn]):
-                doc.fn = os.path.join(self.path, self.content_folder, self.make_basename(doc.fn))
+                doc.fn = os.path.join(self.content_path, self.make_basename(doc.fn))
 
             # import referenced images, and update the image locations.
             if source_path is not None:
@@ -812,7 +824,7 @@ class Project(XML, Source):
         spineitems = [deepcopy(spineitem) for spineitem in 
                     self.root.xpath("pub:spine/pub:spineitem[not(@include='False')]", namespaces=NS)]
         outfns = []
-        css_fns = glob(os.path.join(self.path, self.content_folder, '*.css'))
+        css_fns = glob(os.path.join(self.content_path, '*.css'))
         endnotes = []                   # collect endnotes and pass into and out of Document.html()
         for spineitem in spineitems:
             split_href = str(URL(spineitem.get('href'))).split('#')
