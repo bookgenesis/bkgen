@@ -50,9 +50,9 @@ def document(elem, **params):
     root = map_table_styles(root, **params)
     root = font_attributes(root, **params)
     # -- sections -- 
-    root = split_level_sections(root, **params)
+    root = nest_level_sections(root, **params)
     root = wrap_sections(root, **params)
-    root = sections_title_id(root, **params)
+    root = set_section_ids(root, **params)
     root = section_note_numbering(root, **params)
     # -- images and links -- 
     root = get_images(root, **params)
@@ -124,32 +124,62 @@ def remove_empty_paras(root, **params):
             XML.remove(p, leave_tail=True)
     return root
 
-def wrap_sections(root, **params):
-    """wrap sections divided by section breaks"""
-    fn = params['fn']
-    body = root.find('{%(html)s}body' % NS)
-    section_ids = []
-    section = B.html.section('\n'); section.tail='\n'
-    body.insert(0, section)
-    nxt = section.getnext()
-    while nxt is not None:
-        if nxt.tag == "{%(pub)s}section_end" % NS:
-            # put the section_end attribs in the section
-            for a in nxt.attrib:
-                section.set(a, nxt.get(a))
-
-            # start a new section
-            if nxt.getnext() is not None:
-                section = B.html.section('\n'); section.tail='\n'
-                nxt.getparent().replace(nxt, section)
-            else:
-                XML.remove(nxt)
-        else:
-            section.append(nxt)
-        nxt = section.getnext()
-
+def nest_level_sections(root, **params):
+    """h1...h9 paragraphs indicate the beginning of a nested section;
+        each level creates a new nested section.
+        the section title attribute is the heading text.
+    """
+    body = XML.find(root, "html:body", namespaces=NS)
+    level_section_xpath = """.//html:*[not(ancestor::html:table) and 
+        (name()='h1' or name()='h2' or name()='h3' or name()='h4' or name()='h5' 
+        or name()='h6' or name()='h7' or name()='h8' or name()='h9')]"""
+    for elem in body.xpath(level_section_xpath, namespaces=NS):
+        parent = elem.getparent()
+        # if this is the only element at this level in this section, 
+        # and it's at the beginning of the section,
+        # then don't make a nested section for this element -- it's already done.
+        if parent.tag!='{%(html)s}section' % NS or parent.index(elem) > 0:
+            # start a section, go until another element like this one or no more available
+            level_tag = elem.tag
+            level = int(level_tag[-1])
+            section = etree.Element("{%(html)s}section" % NS)
+            section.text = section.tail = '\n'
+            parent.insert(parent.index(elem), section)
+            nxt = elem.getnext()
+            section.append(elem)
+            while nxt is not None and nxt.tag != "{%(pub)s}section_end" % NS and nxt.tag != level_tag and nxt.tag[-1] != str(level):
+                elem = nxt
+                nxt = elem.getnext()
+                section.append(elem)
+            if nxt is not None and nxt.tag == "{%(pub)s}section_end" % NS:
+                for k in nxt.attrib.keys():
+                    section.set(k, nxt.get(k))
+                parent.remove(nxt)
+            if section.get('title') is None:
+                section.set('title', make_section_title(section))
     return root
 
+def wrap_sections(root, **params): 
+    """wrap sections divided by section breaks (<pub:section_end> elements)"""
+    fn = params['fn']
+    body = root.find('{%(html)s}body' % NS)
+    section = Document.find(body, "pub:section_end")
+    while section is not None:
+        prev = section.getprevious()
+        while prev is not None and prev.tag != "{%(pub)s}section_end" % NS:
+            section.insert(0, prev)
+            prev = section.getprevious()
+        if section.get('title') is None:
+            section.set('title', make_section_title(section))
+        section = Document.find(body, "pub:section_end")
+    return root
+
+def set_section_ids(root, **params):
+    for section in Document.xpath(root, "//html:section"):
+        section.set('id', make_section_id(section))
+    return root
+
+# *** OBSOLETE ***
 def split_level_sections(root, levels=1, **params):
     """hN paragraphs (for levels in 1..9) indicate the beginning of a section;
         each creates a new section.
@@ -166,72 +196,35 @@ def split_level_sections(root, levels=1, **params):
                 section_end.set(key, next_section_end.get(key))
     return root
 
-def nest_level_sections(root, **params):
-    """h1...h9 paragraphs indicate the beginning of a nested section;
-        each level creates a new nested section.
-    """
-    body = XML.find(root, "html:body", namespaces=NS)
-    level_section_xpath = """.//html:*[not(ancestor::html:table) and 
-        (name()='h1' or name()='h2' or name()='h3' or name()='h4' or name()='h5' 
-        or name()='h6' or name()='h7' or name()='h8' or name()='h9')]"""
-    for elem in body.xpath(level_section_xpath, namespaces=NS):
-        parent = elem.getparent()
-        # if this is the only element at this level in this section, 
-        # and it's at the beginning of the section,
-        # then don't make a nested section for this element -- it's already done.
-        if parent.index(elem) > 0 and len(parent.xpath(level_section_xpath, namespaces=NS)) > 1:
-            # start a section, go until another element like this one or no more available
-            level_tag = elem.tag
-            level = int(level_tag[-1])
-            title = etree.tounicode(elem, method='text', with_tail=False).strip()
-            num_sections = len(elem.xpath("//html:section", namespaces=NS))
-            section = etree.Element("{%(html)s}section" % NS)
-            section.text = section.tail = '\n'
-            parent.insert(parent.index(elem), section)
-            nxt = elem.getnext()
-            section.append(elem)
-            while nxt is not None and (nxt.tag != level_tag or nxt.tag[-1] != str(level)):
-                elem = nxt
-                nxt = elem.getnext()
-                section.append(elem)
-    return root
+def make_section_title(section):
+    title = ''
+    xpath = """html:*[
+        (name()='p' and (contains(@class,'title') or contains(@class, 'head')))
+        or name()='h1' or name()='h2' or name()='h3' or name()='h4' 
+        or name()='h5' or name()='h6' or name()='h7' or name()='h8' or name()='h9'][1]"""
+    p = Document.find(section, xpath, namespaces=NS)
+    if p is not None:
+        # turn the first paragraph into the title, but omit comments and notes
+        xslt = etree.XSLT(
+            XSLT.stylesheet(
+                XSLT.copy_all(), 
+                XSLT.template_match("html:br", XSLT.text(' ')),
+                XSLT.template_match_omission("pub:footnote"),
+                XSLT.template_match_omission("pub:endnote"),
+                XSLT.template_match_omission("pub:comment"),
+                namespaces=NS))        
+        title = String(etree.tounicode(xslt(p).getroot(), method='text').strip()).resub('\s+', ' ')
+    return title
 
-def sections_title_id(root, **params):
-    """assign a section title and id, if possible to each section in the document"""
-    section_ids = []
-    for section in root.xpath(".//html:section", namespaces=NS):
-        xp = """html:*[name()='p' or name()='h1' or name()='h2' or name()='h3' or name()='h4' 
-                        or name()='h5' or name()='h6' or name()='h7' or name()='h8' or name()='h9'][1]"""
-        pp = section.xpath(xp, namespaces=NS)
-        if len(pp) > 0:
-            c = pp[0].get('class')
-            if c is not None:
-                if 'title' in c.lower() or 'heading' in c.lower():
-                    # turn the first paragraph into the title, but omit comments and notes
-                    xslt = etree.XSLT(
-                            XSLT.stylesheet(
-                                XSLT.copy_all(), 
-                                XSLT.template_match("html:br", XSLT.text(' ')),
-                                XSLT.template_match_omission("pub:footnote"),
-                                XSLT.template_match_omission("pub:endnote"),
-                                XSLT.template_match_omission("pub:comment"),
-                                namespaces=NS))
-                    p = xslt(pp[0]).getroot()
-                    title = String(etree.tounicode(p, method='text').strip()).resub('\s+', ' ')
-                elif c[-len('-head'):].lower()=='-head':
-                    title = String(c[:-len('-head')]).titleify()
-                elif c[-len('-first'):].lower()=='-first':
-                    title = String(c[:-len('-first')]).titleify()
-                elif len(section_ids)==0:
-                    title = String(os.path.splitext(os.path.basename(params.get('fn') or ''))[0].replace('-',' ')).titleify()
-                else:
-                    title = String(c.replace('-', ' ')).titleify()
-                section.set('title', title)
-
-        id = ('s%d_%s' % (len(section_ids)+1, String(section.get('title') or '').nameify(ascii=True))).strip('_')
-        section.set('id', id)
-        section_ids.append(id)
-    return root
+def make_section_id(section):
+    sections = Document.xpath(section, "//html:section")
+    if section in sections:
+        n = sections.index(section) + 1
+    else:
+        n = 0
+    t = String(section.get('title') or '').nameify(ascii=True).strip('_')
+    id = 's%d_%s' % (n, t)
+    return id
 
 # Numbered Elements: Notes and Lists
 
