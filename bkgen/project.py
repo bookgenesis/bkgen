@@ -43,17 +43,17 @@ class Project(XML, Source):
     NS = NS
     ROOT_TAG = "{%(pub)s}project" % NS                                          #: The tag for the root element of a project.
     DEFAULT_NS = NS.pub
-    OUTPUT_KINDS = Dict(**{'EPUB':'.epub', 'Kindle':'.mobi', 'HTML':'.zip'})    #: The kinds of outputs that are currently supported.
 
-    ACCEPTED_EXTENSIONS = [
-        '.docx', '.htm', '.html', '.xhtml', '.md', '.txt',
-        '.icml', '.idml', '.epub',
-        '.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff']
+    # the kinds of outputs that are currently supported
+    OUTPUT_KIND_EXTS = Dict(**{
+        'EPUB': '.epub', 
+        'Kindle': '.mobi', 
+        'HTML': '.zip'
+    })
 
-    ACCEPTED_MIMETYPES = [
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'text/html', 'application/xhtml+xml', 'text/x-markdown', 'text/plain'
-        'image/jpeg', 'image/png', 'image/bmp', 'image/tiff']
+    @property
+    def OUTPUT_EXT_KINDS(self): 
+        return Dict(**{v:k for k,v in self.OUTPUT_KIND_EXTS.items()})
 
     def __init__(self, **args):
         XML.__init__(self, **args)
@@ -113,7 +113,7 @@ class Project(XML, Source):
 
     @property
     def output_kinds(self):
-        return self.get('output_kinds') or self.OUTPUT_KINDS
+        return self.get('output_kinds') or self.OUTPUT_KIND_EXTS
 
     @property
     def title_text(self):
@@ -127,7 +127,7 @@ class Project(XML, Source):
         """Returns a list of items in the spine"""
         return self.root.xpath("pub:spine/pub:spineitem", namespaces=NS)
 
-    def content_sections(self):
+    def content_sections(self, include_content=True):
         """Returns a list of content sections that are available in this project.
         Potentially time-consuming to go through all the content.
         """
@@ -139,8 +139,9 @@ class Project(XML, Source):
             for elem in x.root.xpath("//html:body/html:section[@id]", namespaces=NS):
                 sd = Dict(
                     href=os.path.relpath(fn, self.path)+'#'+elem.get('id'),
-                    title=elem.get('title'),
-                    element=elem)
+                    title=elem.get('title'))
+                if include_content==True:
+                    sd.element = elem
                 data.append(sd)
         return data
 
@@ -590,12 +591,12 @@ class Project(XML, Source):
         if kind is not None:
             output_kinds = [kind]
         elif output_kinds==[]:
-            output_kinds = self.OUTPUT_KINDS.keys()
+            output_kinds = self.OUTPUT_KIND_EXTS.keys()
         results = []
         for output_kind in output_kinds:
             try:
                 log.info("output kind=%r" % output_kind)
-                assert output_kind in self.OUTPUT_KINDS.keys()
+                assert output_kind in self.OUTPUT_KIND_EXTS.keys()
                 if output_kind=='EPUB':
                     result = self.build_epub(cleanup=cleanup, doc_stylesheets=doc_stylesheets, 
                         before_compile=before_compile)
