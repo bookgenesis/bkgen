@@ -45,6 +45,16 @@ class Project(XML, Source):
     DEFAULT_NS = NS.pub
     OUTPUT_KINDS = Dict(**{'EPUB':'.epub', 'Kindle':'.mobi', 'HTML':'.zip'})    #: The kinds of outputs that are currently supported.
 
+    ACCEPTED_EXTENSIONS = [
+        '.docx', '.htm', '.html', '.xhtml', '.md', '.txt',
+        '.icml', '.idml', '.epub',
+        '.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff']
+
+    ACCEPTED_MIMETYPES = [
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/html', 'application/xhtml+xml', 'text/x-markdown', 'text/plain'
+        'image/jpeg', 'image/png', 'image/bmp', 'image/tiff']
+
     def __init__(self, **args):
         XML.__init__(self, **args)
         if self.content_folder is None: self.content_folder = 'content'
@@ -104,6 +114,35 @@ class Project(XML, Source):
     @property
     def output_kinds(self):
         return self.get('output_kinds') or self.OUTPUT_KINDS
+
+    @property
+    def title_text(self):
+        return self.metadata().title.text or ''
+
+    @property
+    def cover_href(self):
+        return self.find(self.root, "pub:resources/pub:resource[contains(@class,'cover') and @href]/@href")
+
+    def spine_items(self):
+        """Returns a list of items in the spine"""
+        return self.root.xpath("pub:spine/pub:spineitem", namespaces=NS)
+
+    def content_sections(self):
+        """Returns a list of content sections that are available in this project.
+        Potentially time-consuming to go through all the content.
+        """
+        data = []
+        fns = rglob(os.path.join(self.path, self.content_folder), '*.xml')
+        for fn in fns:
+            x = XML(fn=fn)
+            if x.root.tag != "{%(pub)s}document" % NS: continue
+            for elem in x.root.xpath("//html:body/html:section[@id]", namespaces=NS):
+                sd = Dict(
+                    href=os.path.relpath(fn, self.path)+'#'+elem.get('id'),
+                    title=elem.get('title'),
+                    element=elem)
+                data.append(sd)
+        return data
 
     # SOURCE METHODS
     def metadata(self):
