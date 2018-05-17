@@ -625,21 +625,23 @@ class Project(XML, Source):
 
             if result.fn is not None and os.path.exists(result.fn):
                 f = File(fn=result.fn)
-                output_elem.set('href', f.relpath(p.path))
+                output_elem.set('href', f.relpath(self.path))
                 output_elem.set('size', str(f.size))
-                output_elem.set('modified', str(f.last_modified))
+                output_elem.set('updated', str(f.last_modified))
             
             for report_kind in ['log', 'report', 'ace']:
                 if result.get(report_kind) is not None and os.path.exists(result.get(report_kind)):
+                    output_elem.text = '\n\t\t\t'
                     f = File(fn=result[report_kind])
-                    href = f.relpath(p.path)
-                    report_elem = p.find(output_elem, "pub:report[@href='%s']" % href)
+                    href = f.relpath(self.path)
+                    report_elem = self.find(output_elem, "pub:report[@href='%s']" % href)
                     if report_elem is None:
                         report_elem = PUB.report(href=href)
                         output_elem.append(report_elem)
                     report_elem.set('kind', report_kind)
-                    report_elem.set('modified', modified=str(f.last_modified))
+                    report_elem.set('updated', str(f.last_modified))
                     report_elem.set('size', str(f.size))
+                    report_elem.tail = '\n\t\t\t'
 
             results.append(result)
 
@@ -648,7 +650,7 @@ class Project(XML, Source):
                 outputs_elem = p.find(p.root, "pub:outputs")
                 if outputs_elem is None:
                     outputs_elem = PUB.outputs('\n\t\t'); outputs_elem.tail = '\n\n'
-                    p.root.getchildren()[-1].tail = '\n\t\t'
+                    p.root.getchildren()[-1].tail = '\n\n\t'
                     p.root.append(outputs_elem)                
                 existing_output = p.find(outputs_elem, "pub:output[@kind='%s']" % output_kind)
                 if existing_output is not None:
@@ -1326,9 +1328,9 @@ if __name__=='__main__':
             if sys.argv[1]=='build': 
                 project.build_outputs()
             if '-epub' in sys.argv[1]: 
-                project.build_epub()
+                project.build_outputs(kind='EPUB')
             if '-mobi' in sys.argv[1]: 
-                project.build_mobi()
+                project.build_outputs(kind='Kindle')
             if '-html' in sys.argv[1]:
                 project.build_outputs(kind='HTML', singlepage='-single' in sys.argv[1])
             if '-archive' in sys.argv[1]: 
