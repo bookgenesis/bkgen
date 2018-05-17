@@ -1102,6 +1102,12 @@ class Project(XML, Source):
                 for fn in fns:
                     os.remove(fn)
 
+    def delete(self):
+        """delete the project and all it contains"""
+        log.info("project.delete(): %r" % self.path)
+        if os.path.isdir(self.path):
+            shutil.rmtree(self.path)
+
     def delete_file(self, filepath):
         log.info("project.delete_file(%r)" % filepath)
         if os.path.exists(filepath):
