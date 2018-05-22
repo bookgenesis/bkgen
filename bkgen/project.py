@@ -44,6 +44,12 @@ class Project(XML, Source):
     ROOT_TAG = "{%(pub)s}project" % NS                                          #: The tag for the root element of a project.
     DEFAULT_NS = NS.pub
 
+    # the kinds of inputs that are currently supported
+    ACCEPTED_EXTENSIONS = [
+        '.docx', '.htm', '.html', '.xhtml', '.md', '.txt',
+        '.icml', '.idml', '.epub',
+        '.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff']
+
     # the kinds of outputs that are currently supported
     OUTPUT_KIND_EXTS = Dict(**{
         'EPUB': '.epub', 
