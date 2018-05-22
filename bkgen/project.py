@@ -40,8 +40,14 @@ class Project(XML, Source):
     The root element is pub:project, where ``pub:`` is the Publishing XML namespace 
     (see `publishingxml.org <http://publishingxml.org>`_).
     """
-    NS = NS
-    ROOT_TAG = "{%(pub)s}project" % NS                                          #: The tag for the root element of a project.
+    NS = Dict(**{
+        k:v for k,v in NS.items() 
+        if k not in [                       # omit several sets of namespaces:
+            'aid', 'aid5',                  # InDesign AID
+            'cp', 'm', 'db',                # Microsoft, MathML, Docbook
+        ]
+    })
+    ROOT_TAG = "{%(pub)s}project" % NS                                      #: The tag for the root element of a project.
     DEFAULT_NS = NS.pub
 
     # the kinds of inputs that are currently supported
