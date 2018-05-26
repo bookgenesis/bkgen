@@ -657,6 +657,7 @@ class Project(XML, Source):
 
             results.append(result)
 
+            # re-open the project file to write the pub:output element data
             try:
                 p = Project(fn=self.fn)
                 outputs_elem = p.find(p.root, "pub:outputs")
@@ -672,6 +673,15 @@ class Project(XML, Source):
                 p.write()
             except:
                 log.warn("Could not update output record for kind=%r" % output_kind)
+
+        # re-open the project file to write the pub:outputs element data
+        p = Project(fn=self.fn)
+        outputs_elem = p.find(p.root, "pub:outputs")
+        if outputs_elem is None:
+            outputs_elem = PUB.outputs('\n\t\t'); outputs_elem.tail = '\n\n'
+            p.root.append(outputs_elem)
+        outputs_elem.set('completed', time.strftime("%Y-%m-%dT%H:%M:%S"))
+        p.write()
 
         return results
 
