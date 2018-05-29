@@ -64,7 +64,7 @@ def fill_head(root, **params):
             head.append(H.meta({'http-equiv':'Content-Type', 'content':'text/html; charset=utf-8'}))
         for resource in params.get('resources') or []:
             srcfn = os.path.join(output_path, str(URL(resource.get('href'))))
-            mimetype = File(fn=srcfn).mimetype()
+            mimetype = File(fn=srcfn).mimetype
             href = File(srcfn).relpath(os.path.dirname(params.get('fn')))
             if resource.get('class')=='stylesheet':
                 head.append(H.link(rel='stylesheet', type=mimetype, href=href))
