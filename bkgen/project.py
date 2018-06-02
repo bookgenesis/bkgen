@@ -378,6 +378,14 @@ class Project(XML, Source):
             from .icml import ICML
             result.fns += self.import_source(ICML(fn=fn), **args)
 
+        elif (content_type=='application/xml'
+                and ext == '.xml'): 
+            from .document import Document
+            with open(fn, 'rb') as f:
+                t = f.read()
+                log.debug("importing Document: %r" % t)
+            result.fns += self.import_source(Document(fn=fn), **args)
+
         # Images
         elif (content_type in ['image/jpeg', 'image/png', 'image/bmp', 'image/tiff', 'application/pdf']
                 or ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff', '.pdf']):

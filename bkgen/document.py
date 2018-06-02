@@ -45,7 +45,7 @@ class Document(XML, Source):
         from .metadata import Metadata
         return Metadata(root=self.find(self.root, "opf:metadata", namespaces=Metadata.NS))
 
-    def documents(self):
+    def documents(self, **args):
         return [self]
 
     def images(self):
