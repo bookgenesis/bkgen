@@ -426,7 +426,8 @@ class Project(XML, Source):
         # import the documents, metadata, images, and stylesheet from this source
         fns = []
         if documents==True: 
-            docfns = self.import_documents(source.documents(path=self.content_path, **params), source_path=source.path, document_before_update_project=document_before_update_project)
+            docs = source.documents(path=self.content_path, **params)
+            docfns = self.import_documents(docs, source_path=source.path, document_before_update_project=document_before_update_project)
             fns += docfns
         if metadata==True: 
             self.import_metadata(source.metadata())
@@ -498,7 +499,7 @@ class Project(XML, Source):
             doc_spine_hrefs = [href for href in spine_hrefs if '#' in href and href.split('#')[0]==doc_href]
             for href in doc_spine_hrefs:
                 id = href.split('#')[-1]
-                section = doc.find(doc.root, "//html:section[@id='%s']" % id)
+                section = doc.find(doc.root, "//html:section[@id='%s']" % id, namespaces=NS)
                 if section is None:
                     spineitem = self.find(spine_elem, "pub:spineitem[@href='%s']" % href)
                     log.info('Removing non-existent content from spine: %r' % spineitem.attrib)
