@@ -157,7 +157,8 @@ class ICML(XML, Source):
         if elem.get('FillColor') is not None:
             color = elem.get('FillColor').split('/')[-1]
             cmyk = re.match(r'^C=(\d+) M=(\d+) Y=(\d+) K=(\d+)$', color)
-            rgb = re.match(r'^R=(\d+) G=(\d+) B=(\d+)$', color)
+            rgb = re.match(r'^R=(\d+) G=(\d+) B=(\d+)$', color) \
+                or re.match(r"Word_R(\d+)_G(\d+)_B(\d+)$", color)
             if cmyk is not None:
                 rgb = CSS.cmyk_to_rgb(cmyk.group(1), cmyk.group(2), cmyk.group(3), cmyk.group(4))
                 style['color:'] = 'rgb(%(r)d, %(g)d, %(b)d)' % rgb
@@ -217,11 +218,13 @@ class ICML(XML, Source):
                 style['font-weight:'] = '100'
             elif 'Light' in fs:
                 style['font-weight:'] = '200'
-            elif re.match('^\d+$', fs):
+            elif re.match(r'^\d+$', fs):
                 style['font-weight'] = fs
             elif fs in ['Italic', 'Oblique']:
                 style['font-weight:'] = 'normal'
                 style['font-style:'] = 'italic'
+            elif fs in ['Nothing',]:
+                pass
             else:
                 log.warn("FontStyle=%r" % fs)
             
