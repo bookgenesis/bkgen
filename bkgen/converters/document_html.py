@@ -34,7 +34,7 @@ def default(elem, **params):
     root = transformer_XSLT(elem).getroot()
     root = html_lang(root, **params)
     root = fill_head(root, **params)
-    root = omit_print_conditions(root, **params)
+    root = filter_conditions(root, **params)
     root = omit_unsupported_font_formatting(root, **params)
     root = render_footnotes(root, **params)
     root = process_endnotes(root, **params)
@@ -73,19 +73,41 @@ def fill_head(root, **params):
         title = XML.find(head, "//html:title", namespaces=NS)     # matches an existing <title>
         if title is None:
             title_elem = XML.find(root, "//*[@title]", namespaces=NS)
-            if title_elem is not None:
+            if title_elem is not None: 
                 title = H.title(title_elem.get('title'))
         if title is not None:                                           # new or existing title in <head>
             head.insert(0, title)
     return root
 
-def omit_print_conditions(root, **params):
+def filter_conditions(root, **params):
+    """include a set of conditions: 
+    @pub:cond indicates element inclusion, 
+    @pub:condlink indicates inclusion of the link (element ancestor-or-self with @href)
+    * either those specified in params['conditions'], 
+    * or default to 'digital epub mobi html'.
+    """
+    include = (params.get('conditions') or 'digital html epub mobi').lower().split(' ')
+    # element with @pub:cond that doesn't match current context is removed
     for conditional_elem in XML.xpath(root, "//html:*[@pub:cond]", namespaces=NS):
-        condition = conditional_elem.attrib.pop("{%(pub)s}cond" % NS).lower()
-        if 'print' in condition:
-            # display: none keeps the content in the file -- perhaps usable by assistive technologies?
-            # conditional_elem.set('style', 'display:none;'+(conditional_elem.get('style') or ''))
+        remove = True
+        conditions = conditional_elem.attrib.pop("{%(pub)s}cond" % NS).lower().split(' ')
+        for condition in conditions:
+            if condition in include:
+                remove = False
+                break
+        if remove == True:
             XML.remove(conditional_elem)
+    # element with @pub:condlink that doesn't match current context has the link element removed
+    # (the link element is either the element itself, or an ancestor)
+    for conditional_elem in XML.xpath(root, "//html:*[@pub:condlink]/ancestor-or-self::html:*[@href]", namespaces=NS):
+        remove = True
+        conditions = conditional_elem.attrib.pop("{%(pub)s}condlink" % NS).lower().split(' ')
+        for condition in conditions:
+            if condition in include:
+                remove = False
+                break
+        if remove == True:
+            XML.replace_with_contents(conditional_elem)
     return root
 
 def omit_unsupported_font_formatting(root, **params):
