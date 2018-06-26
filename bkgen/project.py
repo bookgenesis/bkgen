@@ -289,6 +289,7 @@ class Project(XML, Source):
             if not os.path.exists(path): os.makedirs(path)
 
         # make sure there is a global content stylesheet for this project
+        stylesheet_fn = None
         stylesheet_elem = project.find(project.root, 
             "pub:resources/pub:resource[@class='stylesheet']", namespaces=NS)
         if stylesheet_elem is not None:
@@ -524,19 +525,19 @@ class Project(XML, Source):
 
     def import_metadata(self, metadata):
         """import the metadata found in the Metadata XML object"""
-        project_metadata = self.metadata().root
+        project_metadata = self.metadata()
         if metadata is None: return
-        for elem in metadata.root.getchildren():
+        for elem in metadata.getchildren():
             # replace old_elem if it exists
-            old_elem = self.find(project_metadata, "*[@id='%s' or @property='%s']" % (elem.get('id'), elem.get('property')))
+            old_elem = self.find(project_metadata.root, "*[@id='%s' or @property='%s']" % (elem.get('id'), elem.get('property')))
             if old_elem is not None:
-                project_metadata.replace(old_elem, elem)
+                project_metadata.root.replace(old_elem, elem)
             else:
-                project_metadata.append(elem)
+                project_metadata.root.append(elem)
 
             # make sure the element has an id
             if elem.get('id') is None:
-                ns = metadata.tag_namespace(elem.tag)
+                ns = project_metadata.tag_namespace(elem.tag)
                 if ns in NS.values():
                     prefix = NS.keys()[NS.values().index(ns)]
                     tag = elem.tag.replace("{%s}" % ns, prefix+':')
@@ -733,7 +734,8 @@ class Project(XML, Source):
             else:
                 lang = 'en'
         spine_items = self.output_spineitems(output_path=epub_path, resources=resources, 
-            ext='.xhtml', doc_stylesheets=doc_stylesheets, lang=lang, **image_args)
+            ext='.xhtml', doc_stylesheets=doc_stylesheets, lang=lang, 
+            conditions='digital epub', **image_args)
         if progress is not None: progress.report()
         result = EPUB().build(epub_path, metadata, progress=progress, lang=lang,
             epub_name=epub_name, spine_items=spine_items, cover_src=cover_src, 
@@ -767,7 +769,8 @@ class Project(XML, Source):
             else:
                 lang = 'en'
         spine_items = self.output_spineitems(output_path=html_path, resources=resources, 
-            ext=ext, singlepage=singlepage, doc_stylesheets=doc_stylesheets, lang=lang, **image_args)
+            ext=ext, singlepage=singlepage, doc_stylesheets=doc_stylesheets, lang=lang, 
+            conditions='digital html', **image_args)
         if singlepage != True:
             EPUB.make_nav(html_path, spine_items, show_nav=True, nav_href="index.xhtml")
         if before_compile is not None:
@@ -811,7 +814,8 @@ class Project(XML, Source):
             else:
                 lang = 'en'
         spine_items = self.output_spineitems(output_path=mobi_path, resources=resources, 
-            ext='.html', http_equiv_content_type=True, doc_stylesheets=doc_stylesheets, lang=lang, **image_args)
+            ext='.html', http_equiv_content_type=True, doc_stylesheets=doc_stylesheets, lang=lang, 
+            conditions='digital mobi', **image_args)
         if progress is not None: progress.report()
         result = MOBI().build(mobi_path, metadata, lang=lang,
                 mobi_name=mobi_name, spine_items=spine_items, cover_src=cover_src, before_compile=before_compile)
@@ -941,7 +945,8 @@ class Project(XML, Source):
         return outfn
 
     def output_spineitems(self, output_path=None, ext='.xhtml', resources=None, singlepage=False,
-                http_equiv_content_type=False, doc_stylesheets=True, lang='en', **image_args):
+            http_equiv_content_type=False, doc_stylesheets=True, lang='en', 
+            conditions='digital', **image_args):
         from bf.image import Image
         from .document import Document
         log.debug("project.output_spineitems()")
@@ -969,7 +974,7 @@ class Project(XML, Source):
             if 'html' in ext:
                 # create the output html for this document
                 h = d.html(fn=outfn, ext=ext, output_path=output_path, http_equiv_content_type=http_equiv_content_type,
-                        resources=resources, endnotes=endnotes, lang=lang)
+                    resources=resources, endnotes=endnotes, lang=lang, conditions=conditions)
                 # add the document-specific CSS, if it exists
                 if len(doc_css_fns) > 0 and doc_stylesheets==True:
                     css_fns = []
@@ -1338,7 +1343,7 @@ if __name__=='__main__':
         project = Project(fn=project_fn)
 
         if 'create' in sys.argv[1]:
-            Project.create(os.path.dirname(project_path), os.path.basename(project_path))
+            Project.create(os.path.dirname(project_path), os.path.basename(project_path), path=project_path)
         
         if 'import-all' in sys.argv[1]:
             import_all(project_path)

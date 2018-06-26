@@ -99,7 +99,7 @@ def filter_conditions(root, **params):
             XML.remove(conditional_elem)
     # element with @pub:condlink that doesn't match current context has the link element removed
     # (the link element is either the element itself, or an ancestor)
-    for conditional_elem in XML.xpath(root, "//html:*[@pub:condlink]/ancestor-or-self::html:*[@href]", namespaces=NS):
+    for conditional_elem in XML.xpath(root, "//html:*[@pub:condlink][ancestor-or-self::html:*[@href]]", namespaces=NS):
         remove = True
         conditions = conditional_elem.attrib.pop("{%(pub)s}condlink" % NS).lower().split(' ')
         for condition in conditions:
@@ -107,7 +107,8 @@ def filter_conditions(root, **params):
                 remove = False
                 break
         if remove == True:
-            XML.replace_with_contents(conditional_elem)
+            link_elem = XML.find(conditional_elem, "ancestor-or-self::html:*[@href]", namespaces=NS)
+            XML.replace_with_contents(link_elem)
     return root
 
 def omit_unsupported_font_formatting(root, **params):
