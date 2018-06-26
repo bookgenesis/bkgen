@@ -150,8 +150,10 @@ class EPUB(ZIP, Source):
 
     def metadata(self, opf=None):
         """return an opf:metadata element with the metadata in the EPUB"""
-        if opf is None: opf = self.get_opf()
-        return opf.find(opf.root, "opf:metadata", namespaces=NS)
+        if opf is None: 
+            opf = self.get_opf()
+        if opf is not None:
+            return opf.find(opf.root, "opf:metadata", namespaces=NS)
 
     @classmethod
     def build(C, output_path, metadata, epub_name=None, manifest=None, spine_items=None, lang='en',
