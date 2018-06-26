@@ -123,9 +123,12 @@ def HiddenText(elem, **params):
 # == Note ==
 @transformer.match("elem.tag=='Note'")
 def Note(elem, **params):
+    namespaces = 'xmlns:pub="http://publishingxml.org/ns" xmlns:epub="http://www.idpf.org/2007/ops"'
     texts = XML.xpath(elem, ".//Content/text()")
     content = ''.join(texts)
     if content[0:1]=='<' and content[-1:]=='>':
+        # add namespaces: pub, epub
+        content = re.sub(r"^<(\w+)\b(.*)$", r"<\1 %s\2" % namespaces, content)
         e = etree.fromstring(content)
         return [e]
     else:
