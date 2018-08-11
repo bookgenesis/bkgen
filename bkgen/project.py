@@ -95,7 +95,7 @@ class Project(XML, Source):
 
     @property
     def image_path(self):
-        path = os.path.join(self.path, self.image_folder)
+        path = os.path.join(self.path, str(self.image_folder))
         if not os.path.exists(path): os.makedirs(path)
         return path
 
@@ -107,7 +107,7 @@ class Project(XML, Source):
 
     @property
     def output_path(self):
-        path = os.path.join(self.path, self.output_folder)
+        path = os.path.join(self.path, str(self.output_folder))
         if not os.path.exists(path): os.makedirs(path)
         return path
 
@@ -562,9 +562,9 @@ class Project(XML, Source):
             gs = params.pop('gs')
         basename = self.make_basename(fn, ext='.jpg')
         if params.get('class') is not None and 'cover' in params.get('class'):
-            outfn = os.path.join(self.path, self.cover_folder, basename)
+            outfn = os.path.join(self.path, str(self.cover_folder), basename)
         else:
-            outfn = os.path.join(self.path, self.image_folder, basename)
+            outfn = os.path.join(self.path, str(self.image_folder), basename)
         log.debug('image: %s' % os.path.relpath(fn, self.path).replace('\\','/'))
         ext = os.path.splitext(fn)[-1].lower()
         if ext == '.pdf':
@@ -697,7 +697,7 @@ class Project(XML, Source):
 
     def build_archive(self):
         """create a zip archive of the project folder itself"""
-        outfn = os.path.join(self.path, self.output_folder, self.name+'.zip')
+        outfn = os.path.join(self.path, str(self.output_folder), self.name+'.zip')
         zipfn = ZIP.zip_path(self.path, fn=outfn, mode='w',
             exclude=[os.path.relpath(outfn, self.path).replace('\\','/')])            # avoid recursive self-inclusion
         result = Dict(fn=zipfn)
@@ -714,7 +714,7 @@ class Project(XML, Source):
                 .resub('[\s\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', ''))
         else:
             epub_name = self.name
-        epub_path = os.path.join(self.path, self.output_folder, epub_name+'_EPUB')
+        epub_path = os.path.join(self.path, str(self.output_folder), epub_name+'_EPUB')
         if name_kind==True:
             epub_name += '_EPUB'
         
@@ -795,7 +795,7 @@ class Project(XML, Source):
                 .resub('[\s\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', ''))
         else:
             mobi_name = self.name
-        mobi_path = os.path.join(self.path, self.output_folder, mobi_name+'_Kindle')
+        mobi_path = os.path.join(self.path, str(self.output_folder), mobi_name+'_Kindle')
         if name_kind==True:
             mobi_name += '_Kindle'
 
@@ -826,7 +826,7 @@ class Project(XML, Source):
 
     def output_resources(self, output_path=None, **image_args):
         log.debug("project.output_resources()")
-        output_path = output_path or os.path.join(self.path, self.output_folder)
+        output_path = output_path or os.path.join(self.path, str(self.output_folder))
         resources = [deepcopy(resource) 
                     for resource 
                     in self.root.xpath("pub:resources/pub:resource[not(@include='False')]", namespaces=NS)]
@@ -844,7 +844,7 @@ class Project(XML, Source):
         return resources
 
     def output_stylesheet(self, fn, output_path=None):
-        output_path = output_path or os.path.join(self.path, self.output_folder)
+        output_path = output_path or os.path.join(self.path, str(self.output_folder))
         outfn = os.path.join(output_path, os.path.relpath(fn, self.path).replace('\\','/'))
         log.debug("project.output_stylesheet(): %r" % outfn)
         if os.path.splitext(fn)[-1] == '.scss':
@@ -863,7 +863,7 @@ class Project(XML, Source):
         log.debug("srcfn: %s %r %r" % (fn, mimetype, os.path.exists(fn)))
         if 'gs' in img_args:
             gs = img_args.pop('gs')
-        output_path = output_path or os.path.join(self.path, self.output_folder)
+        output_path = output_path or os.path.join(self.path, str(self.output_folder))
         outfn = outfn or os.path.splitext(os.path.join(output_path, f.relpath(self.path)))[0] + ext
         log.debug("outfn: %s" % outfn)
 
@@ -950,7 +950,7 @@ class Project(XML, Source):
         from bf.image import Image
         from .document import Document
         log.debug("project.output_spineitems()")
-        output_path = output_path or os.path.join(self.path, self.output_folder)
+        output_path = output_path or os.path.join(self.path, str(self.output_folder))
         if resources is None: 
             resources = self.output_resources(output_path=output_path, **image_args)
         spineitems = [deepcopy(spineitem) for spineitem in 
