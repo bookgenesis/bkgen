@@ -36,6 +36,10 @@
         <xsl:apply-templates/>
     </xsl:template>
 
+    <xsl:template match="html:div | html:section">
+        <xsl:apply-templates></xsl:apply-templates>
+    </xsl:template>
+
 	<xsl:template match="html:p[@class] | html:h1[@class] | html:h2[@class] | html:h3[@class] | html:h4[@class] | html:h5[@class] | html:h6[@class] | html:h7[@class] | html:h8[@class] | html:h9[@class] ">
 		<xsl:copy>
 			<xsl:attribute name="aid:pstyle">
