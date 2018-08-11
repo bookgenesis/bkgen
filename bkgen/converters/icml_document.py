@@ -73,7 +73,7 @@ def ParagraphStyleRange(elem, **params):
         or styles is not None and styles.get(elem.get('AppliedParagraphStyle')) is not None
         and styles.get(elem.get('AppliedParagraphStyle')).get('BulletsAndNumberingListType')
         or None)
-    if list_type is not None:
+    if list_type not in [None, "NoList"]:
         p.set('BulletsAndNumberingListType', list_type)
     result = [p, '\n']
     # if there is a pub:section_start or pub:include in the paragraph, move it out.
