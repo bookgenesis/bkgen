@@ -16,6 +16,7 @@ from bl.url import URL
 from bxml.builder import Builder
 from bkgen import NS, config, PATH
 from bkgen.source import Source
+from bkgen.css import CSS
 
 log = logging.getLogger(__name__)
 FILENAME = os.path.abspath(__file__)
@@ -101,7 +102,13 @@ class EPUB(ZIP, Source):
         return docs
 
     def images(self):
-        return []
+        opf = self.get_opf()
+        images = []
+        for item in opf.xpath(opf.root, "opf:manifest/opf:item[contains(@media-type,'image')]", namespaces=NS):
+            zf_path = os.path.relpath(os.path.join(os.path.dirname(opf.fn), item.get('href')), self.fn).replace('\\','/')
+            image = File(fn=zf_path, data=self.zipfile.read(zf_path))
+            images.append(image)
+        return images
 
     def resources(self, path=None, opf=None):
         """return a list of files containing project resources in the EPUB
@@ -154,6 +161,16 @@ class EPUB(ZIP, Source):
             opf = self.get_opf()
         if opf is not None:
             return opf.find(opf.root, "opf:metadata", namespaces=NS)
+
+    def stylesheet(self):
+        opf = self.get_opf()
+        css_texts = []
+        for css_item in opf.xpath(opf.root, "//opf:item[@media-type='text/css']", namespaces=NS):
+            zf_path = os.path.relpath(
+                os.path.join(os.path.dirname(opf.fn), css_item.get('href')), self.fn).replace('\\','/')
+            fd = self.zipfile.read(zf_path)
+            css_texts.append(fd.decode('UTF-8'))
+        return CSS(text='\n'.join(css_texts))
 
     @classmethod
     def build(C, output_path, metadata, epub_name=None, manifest=None, spine_items=None, lang='en',
