@@ -86,7 +86,7 @@ def special_characters(root, **params):
             .replace('\u2011', '[pub:x2011]\u2011[/pub:x2011]')
             .replace('\u202F', '[pub:x202F]\u202F[/pub:x202F]')
         )
-    root = etree.fromstring(re.sub("\[(/?pub:[^\]]*?)\]", r"<\1>", etree.tounicode(root)))
+    root = etree.fromstring(re.sub(r"\[(/?pub:[^\]]*?)\]", r"<\1>", etree.tounicode(root)))
     return root
 
 def image_hrefs(root, **params):
@@ -100,7 +100,7 @@ def paragraph_returns(root, **params):
     at the end of the paragraph (which would cause InDesign to ignore the paragraph return if it were after that element).
     """
     t = etree.tounicode(root).strip()
-    t = re.sub('\s*\n\s*', '', t)
+    t = re.sub(r'\s*\n\s*', '', t)
     root = etree.fromstring(t)
     xpath = """//html:*[
         (name()='p' or name()='li' or name()='dd' 
