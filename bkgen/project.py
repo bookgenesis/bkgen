@@ -184,15 +184,19 @@ class Project(XML, Source):
 
     def stylesheet(self):
         """the master .css for this project is the resource class="stylesheet"."""
-        csshref = self.find(self.root, "pub:resources/pub:resource[@class='stylesheet']/@href", namespaces=NS)
+        csshref = self.find(self.root, "pub:resources/pub:resource[@class='stylesheet']/@href", 
+            namespaces=NS)
         if csshref is None:
-            cssfn = os.path.join(PATH, 'templates', 'project.css')            
+            css = CSS(fn=os.path.join(PATH, 'templates', 'project.css'))
+            css.fn = str(self.folder / 'project.css')
+            css.write()
+            csshref = css.relpath(self.path)
+            resources = self.find(self.root, "pub:resources", namespaces=NS)
+            css_resource = PUB.resource({'class': 'stylesheet', 'href': csshref})
+            css_resource.tail = '\n\t\t'
+            resources.append(css_resource)
         else:
-            cssfn = os.path.join(self.path, csshref)
-            if not os.path.exists(cssfn):
-                cssfn = os.path.join(PATH, 'templates', 'project.css')
-        css = CSS(fn=cssfn)
-        css.fn = os.path.join(self.path, 'project.css')
+            css = CSS(fn=str(self.folder / csshref))
         return css
 
     def content_stylesheet(self, href=None, fn=None):
@@ -404,7 +408,8 @@ class Project(XML, Source):
 
         return result
     
-    def import_source(self, source, documents=True, images=True, stylesheet=True, metadata=False, document_before_update_project=None, **params):
+    def import_source(self, source, documents=True, images=True, stylesheet=True, metadata=False, 
+        document_before_update_project=None, **params):
         """import a source into the project.
             source = a Source object that contains the content source [REQUIRED]
             documents = whether to import documents from the source (default=True)
@@ -426,15 +431,16 @@ class Project(XML, Source):
 
         # import the documents, metadata, images, and stylesheet from this source
         fns = []
-        if documents==True: 
-            docs = source.documents(path=self.content_path, **params)
-            docfns = self.import_documents(docs, source_path=source.path, document_before_update_project=document_before_update_project)
-            fns += docfns
-        if metadata==True: 
-            self.import_metadata(source.metadata())
         if images==True: 
             imgfns = self.import_images(source.images())
             fns += imgfns
+        if documents==True: 
+            docs = source.documents(path=self.content_path, **params)
+            docfns = self.import_documents(docs, source_path=source.path, 
+                document_before_update_project=document_before_update_project)
+            fns += docfns
+        if metadata==True: 
+            self.import_metadata(source.metadata())
         if stylesheet==True:
             ss = source.stylesheet()
             if ss is not None:
@@ -471,7 +477,10 @@ class Project(XML, Source):
         fns = []
         for doc in documents:
             # save the document, overwriting any existing document in that location
-            if doc.fn is None or self.content_path not in os.path.commonprefix([self.content_path, doc.fn]):
+            if (
+                doc.fn is None 
+                or self.content_path not in os.path.commonprefix([self.content_path, doc.fn])
+            ):
                 doc.fn = os.path.join(self.content_path, self.make_basename(doc.fn))
 
             # import referenced images, and update the image locations.
@@ -479,15 +488,14 @@ class Project(XML, Source):
                 for img in doc.root.xpath("//html:img[@src]", namespaces=NS):
                     srcfn = os.path.join(source_path, str(URL(img.get('src'))))
                     log.debug("img srcfn=%r exists? %r" % (srcfn, os.path.exists(srcfn)))
-                    if os.path.exists(srcfn):
-                        imgfn = os.path.join(self.image_path, self.make_basename(srcfn))
-                        if imgfn != srcfn:
-                            if not os.path.exists(os.path.dirname(imgfn)):
-                                os.makedirs(os.path.dirname(imgfn))
-                            if os.path.exists(imgfn):
-                                os.remove(imgfn)
-                            shutil.copy(srcfn, imgfn)
-                        img.set('src', os.path.relpath(imgfn, doc.path).replace('\\','/'))
+                    imgfn = os.path.join(self.image_path, self.make_basename(srcfn))
+                    if os.path.exists(srcfn) and imgfn != srcfn:
+                        if not os.path.exists(os.path.dirname(imgfn)):
+                            os.makedirs(os.path.dirname(imgfn))
+                        if os.path.exists(imgfn):
+                            os.remove(imgfn)
+                        shutil.copy(srcfn, imgfn)
+                    img.set('src', File(imgfn).relpath(doc.path))
             doc.write(canonicalized=True)
             fns.append(doc.fn)
 
@@ -523,13 +531,14 @@ class Project(XML, Source):
 
         return fns
 
-    def import_metadata(self, metadata):
+    def import_metadata(self, new_metadata):
         """import the metadata found in the Metadata XML object"""
         project_metadata = self.metadata()
-        if metadata is None: return
-        for elem in metadata.getchildren():
+        if new_metadata is None: return
+        for elem in new_metadata.getchildren():
             # replace old_elem if it exists
-            old_elem = self.find(project_metadata.root, "*[@id='%s' or @property='%s']" % (elem.get('id'), elem.get('property')))
+            old_elem = self.find(project_metadata.root, 
+                "*[@id='%s' or @property='%s']" % (elem.get('id'), elem.get('property')))
             if old_elem is not None:
                 project_metadata.root.replace(old_elem, elem)
             else:
@@ -543,7 +552,7 @@ class Project(XML, Source):
                     tag = elem.tag.replace("{%s}" % ns, prefix+':')
                 else:
                     tag = elem.tag
-                elems = self.xpath(metadata, tag, namespaces=NS)
+                elems = self.xpath(new_metadata, tag, namespaces=NS)
                 id = tag.split(':')[-1]+str(len(elems)+1)
                 elem.set('id', id)
 
