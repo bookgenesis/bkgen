@@ -177,7 +177,8 @@ class ICML(XML, Source):
         direction = elem.get('CharacterDirection')
         if direction is not None:
             if direction == 'LeftToRightDirection':
-                style['direction:'] = 'ltr'
+                pass
+                # style['direction:'] = 'ltr'
             elif direction == 'RightToLeftDirection':
                 style['direction:'] = 'rtl'
             elif direction != 'DefaultDirection':
