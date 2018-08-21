@@ -1,8 +1,8 @@
 altgraph==0.15
 -e git+https://github.com/BlackEarth/bf.git@a49a4f9d4b9d54bfbd7e6cc579d96f9a62b47b73#egg=bf
--e git+git@github.com:BlackEarth/bgs.git@7d8acc22b69320ca5ffd5c5a95dd0940a588005e#egg=bgs
+-e git+https://github.com/BlackEarth/bgs.git@7d8acc22b69320ca5ffd5c5a95dd0940a588005e#egg=bgs
 -e git+https://github.com/BlackEarth/bl.git@f97198f13046256b90caa8daacf3d25a35cf9543#egg=bl
--e git+git@github.com:BlackEarth/bmagick.git@2a53c1e1d6b99ec02c349c231d79e3c1f9534de9#egg=bmagick
+-e git+https://github.com/BlackEarth/bmagick.git@2a53c1e1d6b99ec02c349c231d79e3c1f9534de9#egg=bmagick
 -e git+https://github.com/BlackEarth/bxml.git@3b6355482cc608c8f03e02236dd1b3ba9823f4f4#egg=bxml
 cssselect==1.0.3
 cssutils==1.0.2
