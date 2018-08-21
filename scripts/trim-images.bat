@@ -1,0 +1,1 @@
+%~dp0..\_bkgen\Scripts\python.exe -m bkgen.scripts.images trim "%1" >%~dp0\trim-images.log 2>&1
