@@ -11,9 +11,9 @@ gs = GS(magick=magick.cmd)
 
 def trim(fn):
     """trim the file and return the output filename"""
-    ext = os.path.splitext(fn)[-1].lower
+    ext = os.path.splitext(fn)[-1].lower()
     if ext in ['.pdf', '.eps']:
-        outfiles = gs.render(mogrify={'trim': ''})
+        outfiles = gs.render(fn, outfn=os.path.splitext(fn)[0] + '.jpg', mogrify={'trim': ''})
         return '\n'.join(outfiles)
     else:
         magick.mogrify(fn, trim="")
@@ -26,8 +26,10 @@ if __name__ == '__main__':
     for path in sys.argv[2:]:
         if os.path.isdir(path):
             fns += rglob(path, "*.*")
-        else:
+        elif os.path.exists(path):
             fns += [path]
+        else:
+            raise ValueError("File not found: %s" % path)
     if cmd == 'trim':
         for fn in fns:
             print("trim:", trim(fn))
