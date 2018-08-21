@@ -75,7 +75,7 @@ class ICML(XML, Source):
                 else:
                     selector = 'p.' + clsname
                     if len(self.root.xpath(
-                            "//ParagraphStyleRange[@AppliedParagraphStyle='%s' and .//Table]" 
+                            """//ParagraphStyleRange[@AppliedParagraphStyle="%s" and .//Table]""" 
                             % style.get('Self'))) > 0:
                         selector += ', div.' + clsname
 
