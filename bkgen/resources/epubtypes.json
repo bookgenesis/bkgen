@@ -1,10 +1,13 @@
 [
-    {"pattern":"Half-?Title", "type": "halftitlepage"},
+    {"pattern":"Half(-|\\s)?Title", "type": "halftitlepage"},
     {"pattern":"Title ?Page", "type": "titlepage"},
     {"pattern":"Copyright", "type": "copyright-page"},
     {"pattern":"Dedication", "type": "dedication"},
     {"pattern":"Map", "type": "frontmatter"},
     {"pattern":"Acknowledge?ments", "type": "acknowledgments"},
     {"pattern":"About the Author", "type": "backmatter"},
-    {"pattern":"Coming Soon", "type": "seriespage"}
+    {"pattern":"Coming Soon", "type": "seriespage"},
+    {"pattern":"Glossary", "type": "glossary"},
+    {"pattern":"(Quotations|Epigraph)", "type": "epigraph"},
+    {"pattern":"(Promo|Series|Other Titles)", "type": "seriespage"}
 ]
