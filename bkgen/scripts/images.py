@@ -6,7 +6,7 @@ from bmagick import Magick
 from bkgen import config
 
 magick = Magick(cmd=config.Images and config.Images.magick or 'gm')
-gs = GS(magic=magick.cmd)
+gs = GS(magick=magick.cmd)
 
 
 def trim(fn):
