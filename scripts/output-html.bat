@@ -1,0 +1,1 @@
+%~dp0..\_bkgen\Scripts\python.exe -m bkgen.project build-html "%1" >%~dp0\output-html.log 2>&1
