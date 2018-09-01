@@ -720,7 +720,7 @@ class Project(XML, Source):
         if epub_isbn is not None and epub_isbn.text is not None:
             epub_name = str(String(epub_isbn.text)
                 # remove any dashes or whitespace
-                .resub('[\s\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', ''))
+                .resub(r'[\s\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', ''))
         else:
             epub_name = self.name
         epub_path = os.path.join(self.path, str(self.output_folder), epub_name+'_EPUB')
@@ -801,7 +801,7 @@ class Project(XML, Source):
         if mobi_isbn is not None and mobi_isbn.text is not None:
             mobi_name = str(String(mobi_isbn.text)
                 # remove any dashes or whitespace
-                .resub('[\s\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', ''))
+                .resub(r'[\s\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', ''))
         else:
             mobi_name = self.name
         mobi_path = os.path.join(self.path, str(self.output_folder), mobi_name+'_Kindle')
@@ -1093,6 +1093,8 @@ class Project(XML, Source):
             for outfn in outfns:
                 for elem in XML(fn=outfn).root.xpath("//*[@id]"):
                     ids[elem.get('id')] = outfn
+
+            # relink to the correct items
             for outfn in outfns:
                 log.debug(outfn)
                 x = XML(fn=outfn)
@@ -1120,9 +1122,7 @@ class Project(XML, Source):
                                 e.set('href', os.path.relpath(hfn, os.path.dirname(outfn)).replace('\\','/'))
                                 break
                     e.set('href', URL(e.get('href')).quoted())      # urls need to be quoted.
-                # images will be jpegs
-                # for e in x.root.xpath("//html:img[@src]", namespaces=NS):
-                #     e.set('src', os.path.splitext(str(URL(e.get('src'))))[0]+'.jpg')
+
                 x.write(canonicalized=False)
 
         # only keep the first instance of a given pagebreak in the outputs
