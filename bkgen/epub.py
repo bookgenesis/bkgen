@@ -552,16 +552,17 @@ class EPUB(ZIP, Source):
         nav_elem = H.nav('\n\t', h1, '\n\t', H.ol(), '\n'); nav_elem.tail = '\n\n'
         if epub_type is not None: 
             nav_elem.set('{%(epub)s}type' % C.NS, epub_type)
-            nav_elem.set('class', epub_type)
+        nav_elem.set('class', epub_type or 'nav')
         if hidden is not None: 
             nav_elem.set('hidden', hidden)
         ol_elem = nav_elem.find("{%(html)s}ol" % C.NS)
+        ol_elem.set('class', nav_elem.get('class'))
         for nav_item in nav_items:
             a_elem = H.a({'href': str(URL(nav_item.get('href')))}, 
                 nav_item.get('title') or String(nav_item.get('epub_type')).titleify())
             if nav_item.get('epub_type') is not None: 
                 a_elem.set("{%(epub)s}type" % C.NS, nav_item.get('epub_type'))
-            li = H.li(a_elem); li.tail = '\n\t\t'
+            li = H.li({'class': nav_elem.get('class')}, a_elem); li.tail = '\n\t\t'
             ol_elem.append(li)
         return nav_elem
 
