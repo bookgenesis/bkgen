@@ -446,6 +446,7 @@ class EPUB(ZIP, Source):
                         nav_href='_nav.xhtml', title="Navigation", lang='en'):
         """create a nav.xhtml file in output_path, return the filename to it"""
         H = Builder(default=C.NS.html, **{'html':C.NS.html, 'epub':C.NS.epub})._
+        sections = [H.section(nav_elem, {'id': nav_elem.get('class'), 'class': nav_elem.get('class')}) for nav_elem in nav_elems]
         nav = XML(
                 root=H.html(
                         {'lang': lang, '{%(xml)s}lang'%NS: lang},
@@ -460,8 +461,8 @@ class EPUB(ZIP, Source):
                             '\n\t'),
                         '\n\t', 
                         H.body('\n', 
-                            H.section('\n', *nav_elems),
-                            '\n')))
+                            *sections),
+                        '\n'))
         nav.fn=os.path.join(output_path,nav_href)
         nav.write(doctype="<!DOCTYPE html>", canonicalized=False)
         return nav.fn
