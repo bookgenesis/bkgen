@@ -225,7 +225,7 @@ class EPUB(ZIP, Source):
 
         # nav file
         navfn = C.make_nav(output_path, spine_items, nav_href=nav_href, show_nav=show_nav, 
-            nav_toc=nav_toc, nav_landmarks=nav_landmarks, nav_page_list=nav_page_list)
+            nav_toc=nav_toc, nav_landmarks=nav_landmarks, nav_page_list=nav_page_list, lang=lang)
 
         # ncx file
         ncx_fn = C.make_ncx_file(output_path, navfn, opf_metadata)
@@ -280,7 +280,7 @@ class EPUB(ZIP, Source):
 
     @classmethod
     def make_nav(C, output_path, spine_items, nav_href='nav.xhtml', nav_title="Navigation", show_nav=False,
-            nav_toc=None, nav_landmarks=None, nav_page_list=None):
+            nav_toc=None, nav_landmarks=None, nav_page_list=None, lang='en'):
         # If the spine includes a toc landmark, then use it as the base nav document,
         # and add to it spine items that have titles
         H = Builder(default=C.NS.html, **{'html':C.NS.html, 'epub':C.NS.epub})._
@@ -288,6 +288,9 @@ class EPUB(ZIP, Source):
         if nav_toc is None and 'toc' in landmarks:
             toc_item = spine_items[landmarks.index('toc')]
             nav = XML(fn=os.path.join(output_path, str(URL(toc_item.get('href')))))
+            if lang is not None:
+                nav.root.set('lang', lang)
+                nav.root.set('{%(xml)s}lang'%NS, lang)
             nav_elem = nav.find(nav.root, "//html:nav", namespaces=NS)
             if nav_elem is None:
                 log.error("No '<nav>' element found in the 'toc' landmark document; creating one from links in %s." % nav.fn)
@@ -342,7 +345,7 @@ class EPUB(ZIP, Source):
 
         navfn = C.make_nav_file(output_path, 
             *[e for e in [nav_toc, nav_landmarks, nav_page_list] if e is not None], 
-            nav_href=nav_href, title=nav_title)
+            nav_href=nav_href, title=nav_title, lang=lang)
 
         if show_nav==True:
             C.unhide_toc(navfn)
@@ -350,7 +353,7 @@ class EPUB(ZIP, Source):
         return navfn
 
     @classmethod
-    def make_cover_html(C, output_path, cover_src, lang=None):
+    def make_cover_html(C, output_path, cover_src, lang='en'):
         cover_html = XML(fn=os.path.join(os.path.dirname(FILENAME), 'templates', 'cover.xhtml'))
         if lang is not None:
             cover_html.root.set('lang', lang)
@@ -440,11 +443,12 @@ class EPUB(ZIP, Source):
 
     @classmethod
     def make_nav_file(C, output_path, *nav_elems, 
-                        nav_href='_nav.xhtml', title="Navigation"):
+                        nav_href='_nav.xhtml', title="Navigation", lang='en'):
         """create a nav.xhtml file in output_path, return the filename to it"""
         H = Builder(default=C.NS.html, **{'html':C.NS.html, 'epub':C.NS.epub})._
         nav = XML(
                 root=H.html(
+                        {'lang': lang, '{%(xml)s}lang'%NS: lang},
                         '\n\t',
                         H.head('\n\t\t', 
                             H.title(title), 
