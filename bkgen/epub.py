@@ -453,6 +453,8 @@ class EPUB(ZIP, Source):
                         H.head('\n\t\t', 
                             H.title(title), 
                             '\n\t\t',
+                            H.meta(charset="UTF-8"),
+                            '\n\t\t',
                             H.style("""li {list-style-type: none;}""", 
                                 type="text/css"),
                             '\n\t'),
