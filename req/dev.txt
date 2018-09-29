@@ -1,3 +1,2 @@
 -r install.txt
-pip-tools
-twine
+pip-tools==3.0.0
