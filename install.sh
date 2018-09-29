@@ -16,15 +16,7 @@ rm -f $SYMLINK
 ln -s $VENV/bin/activate $SYMLINK
 
 # install this package and its dependencies in the virtual environment
-while read -r line; do 
-	name=`echo $line | sed -E -e 's|==.*||g;s|^.*github.com/[^/]+/||g;s|(\.git)?\@.*$||g'`
-	echo $name
-	if [ -d "$PACKAGE_PATH/../$name" ]; then
-		$PYTHON -m pip -q install -e $PACKAGE_PATH/../$name
-	else
-		$PYTHON -m pip -q install $name
-	fi
-done < "$PACKAGE_PATH/requirements.txt" 
+$PYTHON -m pip -q install -r $PACKAGE_PATH/requirements.txt
 $PYTHON -m pip -q install -e $PACKAGE_PATH
 
 echo "Installation complete. 
