@@ -325,7 +325,7 @@ class EPUB(ZIP, Source):
         mimetype_fn = C.make_mimetype_file(output_path)
         container_fn = C.make_container_file(output_path, opffn)
 
-        result = Dict(fn=C.epub_fn(output_path, epub_name=epub_name), format='epub')
+        result = Dict(fn=C.epub_fn(output_path, epub_name=epub_name), format='epub', reports=[])
         if before_compile is not None:
             before_compile(output_path)
 
@@ -341,9 +341,9 @@ class EPUB(ZIP, Source):
             if progress is not None:
                 progress.report()
             if check == True:
-                result.log = the_epub.check()
+                result.reports.append({'epubcheck': the_epub.check()})
             if ace == True:
-                result.ace = the_epub.ace()
+                result.reports.append({'ace': the_epub.ace()})
         else:
             result.fn = output_path
         if progress is not None:

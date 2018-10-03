@@ -632,6 +632,7 @@ class Project(XML, Source):
                 output_elem = PUB.output(kind=output_kind); output_elem.tail = '\n\t\t'
 
             try:
+                start_time = time.time()
                 assert output_kind in self.OUTPUT_KIND_EXTS.keys()
                 if output_kind=='EPUB':
                     result = self.build_epub(cleanup=cleanup, doc_stylesheets=doc_stylesheets, 
@@ -647,9 +648,11 @@ class Project(XML, Source):
 
                 output_elem.set('status', 'completed')
                 output_elem.set('updated', str(datetime.datetime.now()))
+                result.size = File(fn=result.fn).size
+                result.status = 'completed'
             except:
                 msg = (str(String(sys.exc_info()[0].__name__).camelsplit()) + ' ' + str(sys.exc_info()[1])).strip()
-                result = Dict(kind=output_kind, message=msg, traceback=traceback.format_exc())
+                result = Dict(kind=output_kind, status='error', message=msg, traceback=traceback.format_exc())
                 log.error(result.traceback)
                 output_elem.set('status', 'error')
                 output_elem.set('updated', str(datetime.datetime.now()))
@@ -673,7 +676,10 @@ class Project(XML, Source):
                     report_elem.set('updated', str(f.last_modified))
                     report_elem.set('size', str(f.size))
                     report_elem.tail = '\n\t\t\t'
-
+            finally:
+                result.time = time.time() - start_time
+                result.kind = output_kind
+            
             results.append(result)
 
             # re-open the project file to write the pub:output element data
@@ -709,7 +715,7 @@ class Project(XML, Source):
         outfn = os.path.join(self.path, str(self.output_folder), self.name+'.zip')
         zipfn = ZIP.zip_path(self.path, fn=outfn, mode='w',
             exclude=[os.path.relpath(outfn, self.path).replace('\\','/')])            # avoid recursive self-inclusion
-        result = Dict(fn=zipfn)
+        result = Dict(fn=zipfn, format="pub")
         return result
 
     def build_epub(self, clean=True, show_nav=False, doc_stylesheets=True, progress=None, name_kind=True,
@@ -768,7 +774,7 @@ class Project(XML, Source):
             shutil.rmtree(html_path, onerror=rmtree_warn)
         if not os.path.isdir(html_path): 
             os.makedirs(html_path)
-        result = Dict(format="html")
+        result = Dict(format="html", reports=[])
         resources = self.output_resources(output_path=html_path, **image_args)
         if progress is not None: progress.report()
         if lang is None: 

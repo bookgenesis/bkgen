@@ -60,7 +60,8 @@ class MOBI(Dict):
         if progress is not None: progress.report()
 
         self.compile_mobi(build_path, opffn, mobifn=mobifn)
-        result.update(fn=mobifn, log=mobifn+'.kindlegen.txt', format='mobi')
+        result.update(fn=mobifn, format='mobi')
+        result.reports.append({'kindlegen': mobifn+'.kindlegen.txt'})
         if progress is not None: progress.report()
         return result
 
