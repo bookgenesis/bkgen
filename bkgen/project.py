@@ -627,10 +627,6 @@ class Project(XML, Source):
 
         for output_kind in output_kinds:
             log.info("output kind=%r" % output_kind)
-            output_elem = self.find(self.root, "pub:outputs/pub:output[@kind='%s']" % output_kind)
-            if output_elem is None:
-                output_elem = PUB.output(kind=output_kind); output_elem.tail = '\n\t\t'
-
             try:
                 start_time = time.time()
                 assert output_kind in self.OUTPUT_KIND_EXTS.keys()
@@ -645,68 +641,17 @@ class Project(XML, Source):
                         singlepage=singlepage)
                 elif output_kind=='Archive':
                     result = self.build_archive()
-
-                output_elem.set('status', 'completed')
-                output_elem.set('updated', str(datetime.datetime.now()))
                 result.size = File(fn=result.fn).size
                 result.status = 'completed'
             except:
                 msg = (str(String(sys.exc_info()[0].__name__).camelsplit()) + ' ' + str(sys.exc_info()[1])).strip()
                 result = Dict(kind=output_kind, status='error', message=msg, traceback=traceback.format_exc())
                 log.error(result.traceback)
-                output_elem.set('status', 'error')
-                output_elem.set('updated', str(datetime.datetime.now()))
-
-            if result.fn is not None and os.path.exists(result.fn):
-                f = File(fn=result.fn)
-                output_elem.set('href', f.relpath(self.path))
-                output_elem.set('size', str(f.size))
-                output_elem.set('updated', str(f.last_modified))
-            
-            for report_kind in ['log', 'report', 'ace']:
-                if result.get(report_kind) is not None and os.path.exists(result.get(report_kind)):
-                    output_elem.text = '\n\t\t\t'
-                    f = File(fn=result[report_kind])
-                    href = f.relpath(self.path)
-                    report_elem = self.find(output_elem, "pub:report[@href='%s']" % href)
-                    if report_elem is None:
-                        report_elem = PUB.report(href=href)
-                        output_elem.append(report_elem)
-                    report_elem.set('kind', report_kind)
-                    report_elem.set('updated', str(f.last_modified))
-                    report_elem.set('size', str(f.size))
-                    report_elem.tail = '\n\t\t\t'
             finally:
                 result.time = time.time() - start_time
                 result.kind = output_kind
             
             results.append(result)
-
-            # re-open the project file to write the pub:output element data
-            try:
-                p = Project(fn=self.fn)
-                outputs_elem = p.find(p.root, "pub:outputs")
-                if outputs_elem is None:
-                    outputs_elem = PUB.outputs('\n\t\t'); outputs_elem.tail = '\n\n'
-                    p.root.getchildren()[-1].tail = '\n\n\t'
-                    p.root.append(outputs_elem)                
-                existing_output = p.find(outputs_elem, "pub:output[@kind='%s']" % output_kind)
-                if existing_output is not None:
-                    outputs_elem.replace(existing_output, output_elem)
-                else:
-                    outputs_elem.append(output_elem)
-                p.write()
-            except:
-                log.warn("Could not update output record for kind=%r" % output_kind)
-
-        # re-open the project file to write the pub:outputs element data
-        p = Project(fn=self.fn)
-        outputs_elem = p.find(p.root, "pub:outputs")
-        if outputs_elem is None:
-            outputs_elem = PUB.outputs('\n\t\t'); outputs_elem.tail = '\n\n'
-            p.root.append(outputs_elem)
-        outputs_elem.set('completed', time.strftime("%Y-%m-%dT%H:%M:%S"))
-        p.write()
 
         return results
 
