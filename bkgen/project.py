@@ -22,6 +22,7 @@ from bl.text import Text
 from bl.dict import Dict
 from bl.url import URL
 from bl.zip import ZIP
+from bgs.gs import GS
 from bxml.xml import XML, etree
 from bxml.xslt import XSLT # side-effect: registers lowercase and uppercase xpath functions
 from bxml.builder import Builder
@@ -563,7 +564,7 @@ class Project(XML, Source):
             fns += [self.import_image(image.fn, gs=config.Lib and config.Lib.gs or None)]
         return fns
 
-    def import_image(self, fn, gs=None, **params):
+    def import_image(self, fn, gs=None, allpages=True, **params):
         """import the image from a local file. Process through GraphicsMagick to ensure clean."""
         # import the image to the project image folder
         from bf.image import Image
@@ -576,9 +577,9 @@ class Project(XML, Source):
             outfn = os.path.join(self.path, str(self.image_folder), basename)
         log.debug('image: %s' % os.path.relpath(fn, self.path).replace('\\','/'))
         ext = os.path.splitext(fn)[-1].lower()
-        if ext == '.pdf':
-            from bf.pdf import PDF
-            PDF(fn=fn).gswrite(fn=outfn, device='jpeg', res=600, gs=gs)
+        if ext in ['.pdf', '.eps']:
+            gso = GS(gs=gs)
+            gso.render(fn, outfn, device='jpeg', res=600, allpages=allpages)
         else:
             Image(fn=fn).convert(outfn, format='jpg', quality=100)
 
