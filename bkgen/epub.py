@@ -684,7 +684,7 @@ class EPUB(ZIP, Source):
         """
         H = Builder(default=C.NS.html, **{'html': C.NS.html, 'epub': C.NS.epub})._
         if title is not None:
-            h1 = H.h1(title)
+            h1 = H.h1(title, {'class':'title'})
         else:
             h1 = ''
         nav_elem = H.nav('\n\t', h1, '\n\t', H.ol(), '\n')
@@ -849,9 +849,10 @@ class EPUB(ZIP, Source):
 
         # make sure there are dc:rights
         if metadata.find("{%(dc)s}rights" % C.NS) is None:
-            rights = etree.Element("{%(dc)s}rights" % C.NS)
-            rights.text = "All rights reserved."
-            metadata.append(rights)
+            rights_elem = etree.Element("{%(dc)s}rights" % C.NS)
+            rights_elem.text = "All rights reserved."
+            rights_elem.tail = '\n\t\t'
+            metadata.append(rights_elem)
 
         if guide is not None:
             opfdoc.root.append(guide)
@@ -867,14 +868,16 @@ class EPUB(ZIP, Source):
 
         # dc:identifier is required; create UUID if not given
         if metadata_elem.find("{%(dc)s}identifier" % C.NS) is None:
-            from uuid import uuid4
-
             uuid = str(uuid4())
-            metadata_elem.append(DC.identifier(uuid, id='uuid'))
+            id_elem = DC.identifier(uuid, id='uuid')
+            id_elem.tail = '\n\t\t'
+            metadata_elem.append(id_elem)
 
         # dc:language is required
         if metadata_elem.find("{%(dc)s}language" % C.NS) is None:
-            metadata_elem.append(DC.language(xml_lang))
+            lang_elem = DC.language(xml_lang)
+            lang_elem.tail = '\n\t\t'
+            metadata_elem.append(lang_elem)
 
         # dc:date cannot have certain attribs: xsi:type
         for date_elem in metadata_elem.xpath("dc:date", namespaces=C.NS):
@@ -897,22 +900,26 @@ class EPUB(ZIP, Source):
                 #     % (meta_elem.get('property'), meta_elem.text or ''))
 
         # opf:meta @property="dcterms:modified" is required; set to the current time UTC
-        modified = metadata_elem.find("{%(opf)s}meta[@property='dcterms:modified']" % C.NS)
-        if modified is None:
-            modified = C.OPF.meta({'property': 'dcterms:modified'})
-            metadata_elem.append(modified)
-        modified.text = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        modified_elem = metadata_elem.find("{%(opf)s}meta[@property='dcterms:modified']" % C.NS)
+        if modified_elem is None:
+            modified_elem = C.OPF.meta({'property': 'dcterms:modified'})
+            modified_elem.tail = '\n\t\t'
+            metadata_elem.append(modified_elem)
+        modified_elem.text = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 
         # include a <meta name="cover"...> element if cover_src is given
         if cover_src is not None and metadata_elem.find("meta[@name='cover']") is None:
-            cover = C.OPF.meta(
+            cover_elem = C.OPF.meta(
                 {'name': 'cover', 'content': C.href_to_id(os.path.splitext(cover_src)[0] + '.jpg')}
             )
-            metadata_elem.append(cover)
+            cover_elem.tail = '\n\t\t'
+            metadata_elem.append(cover_elem)
 
         # add the ibooks specified fonts instruction to the end of the metadata section if not present
         if metadata_elem.find("meta[@property='ibooks:specified-fonts']") is None:
-            metadata_elem.append(C.OPF.meta({'property': 'ibooks:specified-fonts'}, 'true'))
+            ibook_fonts_elem = C.OPF.meta({'property': 'ibooks:specified-fonts'}, 'true')
+            ibook_fonts_elem.tail = '\n\t\t'
+            metadata_elem.append(ibook_fonts_elem)
 
         return metadata_elem
 
