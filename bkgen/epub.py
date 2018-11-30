@@ -4,6 +4,7 @@ DEBUG = False
 import os, logging, mimetypes, shutil, subprocess, traceback, zipfile
 from datetime import datetime
 from copy import deepcopy
+from uuid import uuid4
 from lxml import etree
 from bl.dict import Dict
 from bl.string import String
@@ -577,6 +578,20 @@ class EPUB(ZIP, Source):
             )
             for nav_elem in nav_elems
         ]
+        # pull h1 titles out of nav, put in section header with h1 id and section aria-labelledby
+        for section in sections:
+            h1 = XML.find(section, ".//html:h1", namespaces=NS)
+            if h1 is not None:
+                if h1.get('class') is None:
+                    h1.set('class', 'title')
+                h1.set('{%s}type' % NS['epub'], 'title')
+                if h1.get('id') is None:
+                    h1.set('id', String(f"{nav_href} {etree.tounicode(h1)}").digest(alg='md5'))
+                header = H.header('\n\t\t', h1)
+                h1.tail = '\n\t'
+                section.insert(0, header)
+                section.set('aria-labelledby', h1.get('id'))
+                section.text = header.tail = '\n\t'
         nav = XML(
             root=H.html(
                 {'lang': lang, '{%(xml)s}lang' % NS: lang},
