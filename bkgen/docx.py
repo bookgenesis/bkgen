@@ -1,5 +1,5 @@
 
-import os
+import os, sys
 from lxml import etree
 from bl.dict import Dict
 from bl.url import URL
@@ -78,4 +78,19 @@ class DOCX(bxml.docx.DOCX, Source):
                         else:
                             params['ol'] = True
         return params
+
+if __name__ == '__main__':
+    for fn in sys.argv[2:]:
+        docx =  DOCX(fn=fn)
+        if 'css' in sys.argv[1]:
+            docx.stylesheet().write()
+        if 'xml' in sys.argv[1] or 'aid' in sys.argv[1] or 'html' in sys.argv[1]:
+            xml = docx.document()
+            if 'xml' in sys.argv[1]:
+                xml.write()
+            if 'aid' in sys.argv[1]:
+                xml.aid(fn=os.path.splitext(docx.fn)[0]+'.aid.xml').write()
+            if 'html' in sys.argv[1]:
+                xml.html().write()
+
 
