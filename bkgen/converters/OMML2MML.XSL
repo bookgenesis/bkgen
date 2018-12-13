@@ -154,13 +154,13 @@
 
   <!-- Templates -->
   
-  <xsl:template match="m:oMath" mode="mathml">
+  <xsl:template match="m:oMath">
     <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
-      <xsl:apply-templates select="*" mode="mathml"/>
+      <xsl:apply-templates select="*"/>
     </math>
   </xsl:template>
 
-  <xsl:template match="m:borderBox" mode="mathml">
+  <xsl:template match="m:borderBox">
 
     <!-- Get Lowercase versions of properties -->
     <xsl:variable name="sLowerCaseHideTop"
@@ -254,14 +254,14 @@
             <xsl:with-param name="fStrikeBLTR" select="$fStrikeBLTR"/>
             <xsl:with-param name="fStrikeTLBR" select="$fStrikeTLBR"/>
           </xsl:call-template>
-          <xsl:apply-templates select="m:e[1]" mode="mathml"/>
+          <xsl:apply-templates select="m:e[1]"/>
         </menclose>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template match="*" mode="mathml">
-    <xsl:apply-templates select="*" mode="mathml"/>
+  <xsl:template match="*">
+    <xsl:apply-templates select="*"/>
   </xsl:template>
 
   <!--
@@ -333,11 +333,11 @@
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template match="m:acc" mode="mathml">
+  <xsl:template match="m:acc">
     <mover>
       <xsl:attribute name="accent">true</xsl:attribute>
       <mrow>
-        <xsl:apply-templates select="m:e[1]" mode="mathml"/>
+        <xsl:apply-templates select="m:e[1]"/>
       </mrow>
       <xsl:variable name="chAcc">
         <xsl:choose>
@@ -390,7 +390,7 @@
            and $ndCur has children -->
       <xsl:when test="count($ndCur/*) &gt; 0">
         <mrow>
-          <xsl:apply-templates select="$ndCur" mode="mathml"/>
+          <xsl:apply-templates select="$ndCur"/>
         </mrow>
       </xsl:when>
       <xsl:otherwise>
@@ -399,10 +399,10 @@
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template match="m:sPre" mode="mathml">
+  <xsl:template match="m:sPre">
     <mmultiscripts>
       <mrow>
-        <xsl:apply-templates select="m:e[1]" mode="mathml"/>
+        <xsl:apply-templates select="m:e[1]"/>
       </mrow>
       <mprescripts/>
       <xsl:call-template name="OutputScript">
@@ -414,7 +414,7 @@
     </mmultiscripts>
   </xsl:template>
 
-  <xsl:template match="m:m" mode="mathml">
+  <xsl:template match="m:m">
     <mtable>
       <xsl:call-template name="CreateMathMLMatrixAttr">
         <xsl:with-param name="mcJc" select="m:mPr[last()]/m:mcs/m:mc/m:mcPr[last()]/m:mcJc/@m:val"/>
@@ -423,7 +423,7 @@
         <mtr>
           <xsl:for-each select="m:e">
             <mtd>
-              <xsl:apply-templates select="." mode="mathml"/>
+              <xsl:apply-templates select="."/>
             </mtd>
           </xsl:for-each>
         </mtr>
@@ -446,7 +446,7 @@
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template match="m:phant" mode="mathml">
+  <xsl:template match="m:phant">
     <xsl:variable name="sLowerCaseZeroWidVal"
       select="translate(m:phantPr[last()]/m:zeroWid[last()]/@m:val, 
 		                                                       'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 
@@ -517,7 +517,7 @@
             <xsl:with-param name="fZeroDesc" select="$fZeroDesc"/>
           </xsl:call-template>
           <mrow>
-            <xsl:apply-templates select="m:e" mode="mathml"/>
+            <xsl:apply-templates select="m:e"/>
           </mrow>
         </xsl:element>
       </xsl:when>
@@ -526,7 +526,7 @@
       <xsl:when test="$fZeroWid=0 and $fZeroAsc=0 and $fZeroDesc=0">
         <xsl:element name="mphantom">
           <mrow>
-            <xsl:apply-templates select="m:e" mode="mathml"/>
+            <xsl:apply-templates select="m:e"/>
           </mrow>
         </xsl:element>
       </xsl:when>
@@ -540,7 +540,7 @@
               <xsl:with-param name="fZeroDesc" select="$fZeroDesc"/>
             </xsl:call-template>
             <mrow>
-              <xsl:apply-templates select="m:e" mode="mathml"/>
+              <xsl:apply-templates select="m:e"/>
             </mrow>
           </xsl:element>
         </xsl:element>
@@ -566,7 +566,7 @@
 
 
 
-  <xsl:template match="m:rad" mode="mathml">
+  <xsl:template match="m:rad">
     <xsl:variable name="fDegHide">
       <xsl:choose>
         <xsl:when test="count(m:radPr[last()]/m:degHide)=0">0</xsl:when>
@@ -584,13 +584,13 @@
     <xsl:choose>
       <xsl:when test="$fDegHide=1">
         <msqrt>
-          <xsl:apply-templates select="m:e[1]" mode="mathml"/>
+          <xsl:apply-templates select="m:e[1]"/>
         </msqrt>
       </xsl:when>
       <xsl:otherwise>
         <mroot>
           <mrow>
-            <xsl:apply-templates select="m:e[1]" mode="mathml"/>
+            <xsl:apply-templates select="m:e[1]"/>
           </mrow>
           <mrow>
             <xsl:apply-templates select="m:deg[1]"/>
@@ -631,7 +631,7 @@
 		Decides, based on which arguments are supplied, between
 		using an mo, msup, msub, or msubsup for the n-ary operator		
 	-->
-  <xsl:template match="m:nary" mode="mathml">
+  <xsl:template match="m:nary">
     <xsl:variable name="sLowerCaseSubHide">
       <xsl:choose>
         <xsl:when test="count(m:naryPr[last()]/m:subHide) = 0">
@@ -726,7 +726,7 @@
                   <xsl:with-param name="fGrow" select="$fGrow"/>
                 </xsl:call-template>
                 <mrow>
-                  <xsl:apply-templates select="m:sup[1]" mode="mathml"/>
+                  <xsl:apply-templates select="m:sup[1]"/>
                 </mrow>
               </msup>
             </xsl:when>
@@ -737,7 +737,7 @@
                   <xsl:with-param name="fGrow" select="$fGrow"/>
                 </xsl:call-template>
                 <mrow>
-                  <xsl:apply-templates select="m:sup[1]" mode="mathml"/>
+                  <xsl:apply-templates select="m:sup[1]"/>
                 </mrow>
               </mover>
             </xsl:otherwise>
@@ -752,7 +752,7 @@
                   <xsl:with-param name="fGrow" select="$fGrow"/>
                 </xsl:call-template>
                 <mrow>
-                  <xsl:apply-templates select="m:sub[1]" mode="mathml"/>
+                  <xsl:apply-templates select="m:sub[1]"/>
                 </mrow>
               </msub>
             </xsl:when>
@@ -763,7 +763,7 @@
                   <xsl:with-param name="fGrow" select="$fGrow"/>
                 </xsl:call-template>
                 <mrow>
-                  <xsl:apply-templates select="m:sub[1]" mode="mathml"/>
+                  <xsl:apply-templates select="m:sub[1]"/>
                 </mrow>
               </munder>
             </xsl:otherwise>
@@ -778,10 +778,10 @@
                   <xsl:with-param name="fGrow" select="$fGrow"/>
                 </xsl:call-template>
                 <mrow>
-                  <xsl:apply-templates select="m:sub[1]" mode="mathml"/>
+                  <xsl:apply-templates select="m:sub[1]"/>
                 </mrow>
                 <mrow>
-                  <xsl:apply-templates select="m:sup[1]" mode="mathml"/>
+                  <xsl:apply-templates select="m:sup[1]"/>
                 </mrow>
               </msubsup>
             </xsl:when>
@@ -792,7 +792,7 @@
                   <xsl:with-param name="fGrow" select="$fGrow"/>
                 </xsl:call-template>
                 <mrow>
-                  <xsl:apply-templates select="m:sub[1]" mode="mathml"/>
+                  <xsl:apply-templates select="m:sub[1]"/>
                 </mrow>
                 <mrow>
                   <xsl:apply-templates select="m:sup[1]"/>
@@ -803,70 +803,70 @@
         </xsl:otherwise>
       </xsl:choose>
       <mrow>
-        <xsl:apply-templates select="m:e[1]" mode="mathml"/>
+        <xsl:apply-templates select="m:e[1]"/>
       </mrow>
     </mrow>
   </xsl:template>
 
-  <xsl:template match="m:limLow" mode="mathml">
+  <xsl:template match="m:limLow">
     <munder>
       <mrow>
-        <xsl:apply-templates select="m:e[1]" mode="mathml"/>
+        <xsl:apply-templates select="m:e[1]"/>
       </mrow>
       <mrow>
-        <xsl:apply-templates select="m:lim[1]" mode="mathml"/>
+        <xsl:apply-templates select="m:lim[1]"/>
       </mrow>
     </munder>
   </xsl:template>
 
-  <xsl:template match="m:limUpp" mode="mathml">
+  <xsl:template match="m:limUpp">
     <mover>
       <mrow>
-        <xsl:apply-templates select="m:e[1]" mode="mathml"/>
+        <xsl:apply-templates select="m:e[1]"/>
       </mrow>
       <mrow>
-        <xsl:apply-templates select="m:lim[1]" mode="mathml"/>
+        <xsl:apply-templates select="m:lim[1]"/>
       </mrow>
     </mover>
   </xsl:template>
 
-  <xsl:template match="m:sSub" mode="mathml">
+  <xsl:template match="m:sSub">
     <msub>
       <mrow>
-        <xsl:apply-templates select="m:e[1]" mode="mathml"/>
+        <xsl:apply-templates select="m:e[1]"/>
       </mrow>
       <mrow>
-        <xsl:apply-templates select="m:sub[1]" mode="mathml"/>
+        <xsl:apply-templates select="m:sub[1]"/>
       </mrow>
     </msub>
   </xsl:template>
 
-  <xsl:template match="m:sSup" mode="mathml">
+  <xsl:template match="m:sSup">
     <msup>
       <mrow>
-        <xsl:apply-templates select="m:e[1]" mode="mathml"/>
+        <xsl:apply-templates select="m:e[1]"/>
       </mrow>
       <mrow>
-        <xsl:apply-templates select="m:sup[1]" mode="mathml"/>
+        <xsl:apply-templates select="m:sup[1]"/>
       </mrow>
     </msup>
   </xsl:template>
 
-  <xsl:template match="m:sSubSup" mode="mathml">
+  <xsl:template match="m:sSubSup">
     <msubsup>
       <mrow>
         <xsl:apply-templates select="m:e[1]"/>
       </mrow>
       <mrow>
-        <xsl:apply-templates select="m:sub[1]" mode="mathml"/>
+        <xsl:apply-templates select="m:sub[1]"/>
       </mrow>
       <mrow>
-        <xsl:apply-templates select="m:sup[1]" mode="mathml"/>
+        <xsl:apply-templates select="m:sup[1]"/>
       </mrow>
     </msubsup>
   </xsl:template>
 
-  <xsl:template match="m:groupChr" mode="mathml">
+  <xsl:template match="m:groupChr">
     <xsl:variable name="ndLastGroupChrPr" select="m:groupChrPr[last()]"/>
     <xsl:variable name="sLowerCasePos"
       select="translate($ndLastGroupChrPr/m:pos/@m:val, 
@@ -897,7 +897,7 @@
           <xsl:when test="$sLowerCaseVertJc = 'bot'">
             <mover accent="false">
               <mrow>
-                <xsl:apply-templates select="m:e[1]" mode="mathml"/>
+                <xsl:apply-templates select="m:e[1]"/>
               </mrow>
               <mo>
                 <xsl:value-of select="$chr"/>
@@ -910,7 +910,7 @@
                 <xsl:value-of select="$chr"/>
               </mo>
               <mrow>
-                <xsl:apply-templates select="m:e[1]" mode="mathml"/>
+                <xsl:apply-templates select="m:e[1]"/>
               </mrow>
             </munder>
           </xsl:otherwise>
@@ -924,14 +924,14 @@
                 <xsl:value-of select="$chr"/>
               </mo>
               <mrow>
-                <xsl:apply-templates select="m:e[1]" mode="mathml"/>
+                <xsl:apply-templates select="m:e[1]"/>
               </mrow>
             </mover>
           </xsl:when>
           <xsl:otherwise>
             <munder accentunder="false">
               <mrow>
-                <xsl:apply-templates select="m:e[1]" mode="mathml"/>
+                <xsl:apply-templates select="m:e[1]"/>
               </mrow>
               <mo>
                 <xsl:value-of select="$chr"/>
@@ -945,18 +945,18 @@
 
   <xsl:template name="fName">
     <xsl:for-each select="m:fName/*">
-      <xsl:apply-templates select="." mode="mathml"/>
+      <xsl:apply-templates select="."/>
     </xsl:for-each>
   </xsl:template>
 
-  <xsl:template match="m:func" mode="mathml">
+  <xsl:template match="m:func">
     <mrow>
       <mrow>
         <xsl:call-template name="fName"/>
       </mrow>
       <mo>&#x02061;</mo>
       <mrow>
-        <xsl:apply-templates select="m:e" mode="mathml"/>
+        <xsl:apply-templates select="m:e"/>
       </mrow>
     </mrow>
   </xsl:template>
@@ -965,18 +965,18 @@
 		
 		m:f maps directly to mfrac. 
 	-->
-  <xsl:template match="m:f" mode="mathml">
+  <xsl:template match="m:f">
     <xsl:variable name="sLowerCaseType"
       select="translate(m:fPr[last()]/m:type/@m:val, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')"/>
     <xsl:choose>
       <xsl:when test="$sLowerCaseType='lin'">
         <mrow>
           <mrow>
-            <xsl:apply-templates select="m:num[1]" mode="mathml"/>
+            <xsl:apply-templates select="m:num[1]"/>
           </mrow>
           <mo>/</mo>
           <mrow>
-            <xsl:apply-templates select="m:den[1]" mode="mathml"/>
+            <xsl:apply-templates select="m:den[1]"/>
           </mrow>
         </mrow>
       </xsl:when>
@@ -986,10 +986,10 @@
             <xsl:with-param name="type" select="$sLowerCaseType"/>
           </xsl:call-template>
           <mrow>
-            <xsl:apply-templates select="m:num[1]" mode="mathml"/>
+            <xsl:apply-templates select="m:num[1]"/>
           </mrow>
           <mrow>
-            <xsl:apply-templates select="m:den[1]" mode="mathml"/>
+            <xsl:apply-templates select="m:den[1]"/>
           </mrow>
         </mfrac>
       </xsl:otherwise>
@@ -1041,7 +1041,7 @@
 
       <!-- If there is no scriptLevel specified, just call through -->
       <xsl:when test="not(m:argPr[last()]/m:scrLvl/@m:val)">
-        <xsl:apply-templates select="*" mode="mathml"/>
+        <xsl:apply-templates select="*"/>
       </xsl:when>
 
       <!-- Otherwise, create an mstyle and set the script level -->
@@ -1050,7 +1050,7 @@
           <xsl:attribute name="scriptlevel">
             <xsl:value-of select="m:argPr[last()]/m:scrLvl/@m:val"/>
           </xsl:attribute>
-          <xsl:apply-templates select="*" mode="mathml"/>
+          <xsl:apply-templates select="*"/>
         </mstyle>
       </xsl:otherwise>
     </xsl:choose>
@@ -1072,7 +1072,7 @@
       <xsl:when test="$fTop=1">
         <mover accent="false">
           <mrow>
-            <xsl:apply-templates select="m:e[1]" mode="mathml"/>
+            <xsl:apply-templates select="m:e[1]"/>
           </mrow>
           <mo>
             <xsl:text>&#x00AF;</xsl:text>
@@ -1082,7 +1082,7 @@
       <xsl:otherwise>
         <munder underaccent="false">
           <mrow>
-            <xsl:apply-templates select="m:e[1]" mode="mathml"/>
+            <xsl:apply-templates select="m:e[1]"/>
           </mrow>
           <mo>
             <xsl:text>&#x005F;</xsl:text>
@@ -1096,7 +1096,7 @@
 
 		Process a delimiter. 
 	-->
-  <xsl:template match="m:d" mode="mathml">
+  <xsl:template match="m:d">
     <mfenced>
       <!-- open: default is '(' for both OMML and MathML -->
       <xsl:if test="m:dPr[1]/m:begChr/@m:val and not(m:dPr[1]/m:begChr/@m:val ='(')">
@@ -1135,13 +1135,13 @@
 			just in case it produces multiple runs, etc -->
       <xsl:for-each select="m:e">
         <mrow>
-          <xsl:apply-templates select="." mode="mathml"/>
+          <xsl:apply-templates select="."/>
         </mrow>
       </xsl:for-each>
     </mfenced>
   </xsl:template>
 
-  <xsl:template match="m:r" mode="mathml">
+  <xsl:template match="m:r">
     <xsl:variable name="fNor">
       <xsl:choose>
         <xsl:when test="count(child::m:rPr[last()]/m:nor) = 0">0</xsl:when>
@@ -1258,7 +1258,7 @@
     </xsl:choose>
   </xsl:template>
 
-  <xsl:template match="m:eqArr" mode="mathml">
+  <xsl:template match="m:eqArr">
     <mtable>
       <xsl:for-each select="m:e">
         <mtr>
@@ -1327,7 +1327,7 @@
         </xsl:call-template>
       </xsl:when>
       <xsl:otherwise>
-        <xsl:apply-templates select="$ndCur" mode="mathml"/>
+        <xsl:apply-templates select="$ndCur"/>
       </xsl:otherwise>
     </xsl:choose>
     <xsl:if test="count($ndCur/following-sibling::*) &gt; 0">
