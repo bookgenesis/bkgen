@@ -12,9 +12,11 @@
     xmlns:ncx="http://www.daisy.org/z3986/2005/ncx/" 
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 
+    xmlns:m="http://www.w3.org/1998/Math/MathML"
+
     xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" 
     xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" 
-    xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" 
+    xmlns:om="http://schemas.openxmlformats.org/officeDocument/2006/math" 
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
     xmlns:mo="http://schemas.microsoft.com/office/mac/office/2008/main" 
     xmlns:mv="urn:schemas-microsoft-com:mac:vml" 
@@ -34,7 +36,7 @@
     xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" 
     xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
 
-    exclude-result-prefixes="a aml dt m mc mo mv o pic r sl v ve w10 w14 w15 wne wp wp14 wpc wpg wpi wps wsp wx opf container cp dc dcmitype dcterms ncx w xsi">
+    exclude-result-prefixes="a aml dt om mc mo mv o pic r sl v ve w10 w14 w15 wne wp wp14 wpc wpg wpi wps wsp wx opf container cp dc dcmitype dcterms ncx w xsi">
 
     <xsl:output method="xml" encoding="utf-8"/>
 
@@ -727,5 +729,8 @@
     <xsl:template match="w:jc"/>
 
     <xsl:template match="mc:AlternateContent"/>
+
+    <!-- Word Equations to MathML -->
+    <xsl:include href="OMML2MML.XSL"/>
 
 </xsl:stylesheet>
