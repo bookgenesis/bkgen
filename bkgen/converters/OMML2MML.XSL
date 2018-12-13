@@ -155,7 +155,11 @@
   <!-- Templates -->
   
   <xsl:template match="m:oMath">
-    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+      <!-- only use display="block" if this equation is in a MathPara -->
+      <xsl:if test="ancestor::m:oMathPara">
+        <xsl:attribute name="display"><xsl:text>block</xsl:text></xsl:attribute>
+      </xsl:if>
       <xsl:apply-templates select="*"/>
     </math>
   </xsl:template>
