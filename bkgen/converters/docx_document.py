@@ -399,6 +399,7 @@ def font_attributes(root, **params):
 
 def get_images(root, **params):
     docx = params['docx']
+    image_subdir = params.get('image_subdir') or 'images'
     output_path = params.get('output_path') or os.path.dirname(params['fn'])
     rels = docx.xml(src='word/_rels/document.xml.rels').root
     imgs = root.xpath("//html:img", namespaces=DOCX.NS)
@@ -407,7 +408,7 @@ def get_images(root, **params):
         link_rel = XML.find(rels, "//rels:Relationship[@Id='%s']" % img.get('data-link-id'), namespaces=DOCX.NS)
         if embed_rel is not None:
             fd = docx.read('word/' + embed_rel.get('Target'))
-            imgfn = os.path.join(output_path, 'images', img.get('title') or os.path.split(embed_rel.get('Target'))[-1])
+            imgfn = os.path.join(output_path, image_subdir, img.get('title') or os.path.split(embed_rel.get('Target'))[-1])
             if not os.path.isdir(os.path.dirname(imgfn)): 
                 os.makedirs(os.path.dirname(imgfn))
             with open(imgfn, 'wb') as f: 
