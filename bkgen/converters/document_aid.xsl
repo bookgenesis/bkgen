@@ -2,11 +2,13 @@
 <xsl:stylesheet version="1.1" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     xmlns="http://www.w3.org/1999/xhtml"
     xmlns:html="http://www.w3.org/1999/xhtml"
+    xmlns:m="http://www.w3.org/1998/Math/MathML"
     xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/"
     xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/"
     xmlns:pub="http://publishingxml.org/ns"
     xmlns:epub="http://www.idpf.org/2007/ops"
-    exclude-result-prefixes="html">
+    exclude-result-prefixes="html"
+>
 
     <xsl:output method="xml" encoding="utf-8" indent="no"/>
 
@@ -36,7 +38,7 @@
         <xsl:apply-templates/>
     </xsl:template>
 
-    <xsl:template match="html:div | html:section">
+    <xsl:template match="html:section">
         <xsl:apply-templates></xsl:apply-templates>
     </xsl:template>
 
@@ -73,31 +75,33 @@
     </xsl:template>
 
     <xsl:template match="html:table">
-        <xsl:copy>
-        	<xsl:if test="@id">
-        	    <xsl:attribute name="id"><xsl:value-of select="@id"/></xsl:attribute>
-        	</xsl:if>
-        	<xsl:attribute name="aid:table">table</xsl:attribute>
-        	<xsl:attribute name="aid:trows">
-        	    <xsl:value-of select="count(html:tr)"/>
-        	</xsl:attribute>
-            <xsl:attribute name="aid:tcols">
-                <xsl:value-of select="count(html:tr[1]/*)"/>
-            </xsl:attribute>
-        	<xsl:if test="@class">
-        	    <xsl:attribute name="aid5-tablestyle"><xsl:value-of select="@class"/></xsl:attribute>
-                <xsl:attribute name="aid5:tablestyle"><xsl:value-of select="@class"/></xsl:attribute>
-        	</xsl:if>
-            <xsl:if test="not(@class)">
-                <xsl:attribute name="aid5:tablestyle">table</xsl:attribute>
-                <xsl:attribute name="aid5-tablestyle">table</xsl:attribute>
+        <p>            
+            <xsl:if test="@class">
+                <xsl:attribute name="aid:pstyle"><xsl:value-of select="@class"/></xsl:attribute>
             </xsl:if>
-        	<xsl:if test="@data-cols">
-                <xsl:attribute name="aid-tcols"><xsl:value-of select="@data-cols"/></xsl:attribute>
-	        	<xsl:attribute name="aid:tcols"><xsl:value-of select="@data-cols"/></xsl:attribute>
-        	</xsl:if>
-        	<xsl:apply-templates/>
-        </xsl:copy>
+            <xsl:copy>
+            	<xsl:if test="@id">
+            	    <xsl:attribute name="id"><xsl:value-of select="@id"/></xsl:attribute>
+            	</xsl:if>
+            	<xsl:attribute name="aid:table">table</xsl:attribute>
+            	<xsl:attribute name="aid:trows">
+            	    <xsl:value-of select="count(html:tr)"/>
+            	</xsl:attribute>
+                <xsl:attribute name="aid:tcols">
+                    <xsl:value-of select="count(html:tr[1]/*)"/>
+                </xsl:attribute>
+            	<xsl:if test="@class">
+                    <xsl:attribute name="aid5:tablestyle"><xsl:value-of select="@class"/></xsl:attribute>
+            	</xsl:if>
+                <xsl:if test="not(@class)">
+                    <xsl:attribute name="aid5:tablestyle">table</xsl:attribute>
+                </xsl:if>
+            	<xsl:if test="@data-cols">
+    	        	<xsl:attribute name="aid:tcols"><xsl:value-of select="@data-cols"/></xsl:attribute>
+            	</xsl:if>
+            	<xsl:apply-templates/>
+            </xsl:copy>
+        </p>
     </xsl:template>    
 
     <xsl:template match="html:tr">
@@ -107,24 +111,19 @@
     <xsl:template match="html:td">
         <xsl:copy>
         	<xsl:attribute name="aid:table">cell</xsl:attribute>
-            <xsl:attribute name="aid-table">cell</xsl:attribute>
         	<xsl:if test="@id">
         	    <xsl:attribute name="id"><xsl:value-of select="@id"/></xsl:attribute>
         	</xsl:if>
         	<xsl:if test="@class">
-                <xsl:attribute name="aid5-cellstyle"><xsl:value-of select="@class"/></xsl:attribute>
         	    <xsl:attribute name="aid5:cellstyle"><xsl:value-of select="@class"/></xsl:attribute>
         	</xsl:if>
             <xsl:if test="not(@class)">
-                <xsl:attribute name="aid5-cellstyle">cell</xsl:attribute>
                 <xsl:attribute name="aid5:cellstyle">cell</xsl:attribute>
             </xsl:if>
-        	<xsl:if test="@width">
-                <xsl:attribute name="aid-ccolwidth"><xsl:value-of select="@width"/></xsl:attribute>
+        	<xsl:if test="@width and @width &gt; 0">
         	    <xsl:attribute name="aid:ccolwidth"><xsl:value-of select="@width"/></xsl:attribute>
         	</xsl:if>
         	<xsl:if test="@colspan">
-                <xsl:attribute name="aid-ccols"><xsl:value-of select="@colspan"/></xsl:attribute>
         	    <xsl:attribute name="aid:ccols"><xsl:value-of select="@colspan"/></xsl:attribute>
         	</xsl:if>
         	<xsl:apply-templates/>
@@ -143,9 +142,13 @@
             <xsl:attribute name="aid:pstyle">
                 <xsl:if test="ancestor::html:section[last()][@class]">
                     <xsl:value-of select="ancestor::html:section[last()]/@class"/>
+                </xsl:if>
+                <xsl:if test="ancestor::html:section[last()][@class] and @class">
                     <xsl:text> </xsl:text>
                 </xsl:if>
-                <xsl:value-of select="@class"/>
+                <xsl:if test="@class">
+                    <xsl:value-of select="@class"/>
+                </xsl:if>
             </xsl:attribute>
             <xsl:apply-templates select="@*|node()"/>
             <!-- <xsl:text>&#xA;</xsl:text> -->
@@ -159,9 +162,13 @@
             <xsl:attribute name="aid:pstyle">
                 <xsl:if test="ancestor::html:section[last()][@class]">
                     <xsl:value-of select="ancestor::html:section[last()]/@class"/>
+                </xsl:if>
+                <xsl:if test="ancestor::html:section[last()][@class] and @class">
                     <xsl:text> </xsl:text>
                 </xsl:if>
-                <xsl:value-of select="@class"/>
+                <xsl:if test="@class">
+                    <xsl:value-of select="@class"/>
+                </xsl:if>
             </xsl:attribute>            
             <xsl:apply-templates select="@*|node()"/>
         </xsl:copy>
@@ -172,6 +179,8 @@
             <xsl:attribute name="aid:pstyle">
                 <xsl:if test="ancestor::html:section[last()][@class]">
                     <xsl:value-of select="ancestor::html:section[last()]/@class"/>
+                </xsl:if>
+                <xsl:if test="ancestor::html:section[last()][@class] and ancestor::html:dl[last()][@class]">
                     <xsl:text> </xsl:text>
                 </xsl:if>
                 <xsl:if test="ancestor::html:dl[last()][@class]">
@@ -181,9 +190,13 @@
             <xsl:attribute name="aid:cstyle">
                 <xsl:if test="ancestor::html:section[last()][@class]">
                     <xsl:value-of select="ancestor::html:section[last()]/@class"/>
-                    <xsl:text> </xsl:text>
                 </xsl:if>    
-                <xsl:value-of select="@class"/>
+                <xsl:if test="ancestor::html:section[last()][@class] and @class">
+                    <xsl:text> </xsl:text>
+                </xsl:if>
+                <xsl:if test="@class">
+                    <xsl:value-of select="@class"/>
+                </xsl:if>
             </xsl:attribute>
             <xsl:apply-templates select="@*|node()"/>
             <xsl:choose>
@@ -204,7 +217,12 @@
                     <xsl:value-of select="ancestor::html:section[last()]/@class"/>
                     <xsl:text> </xsl:text>
                 </xsl:if>
-                <xsl:value-of select="ancestor::html:dl[last()]/@class"/>
+                <xsl:if test="ancestor::html:section[last()][@class] and ancestor::html:dl[last()][@class]">
+                    <xsl:text> </xsl:text>
+                </xsl:if>
+                <xsl:if test="ancestor::html:dl[last()][@class]">
+                    <xsl:value-of select="ancestor::html:dl[last()]/@class"/>
+                </xsl:if>
             </xsl:attribute>
             <xsl:apply-templates select="@*|node()"/>
         </xsl:copy>
@@ -212,7 +230,7 @@
 
     <!-- UNSTYLED TEXT -->
 
-    <xsl:template match="text()[(ancestor::html:p or ancestor::html:td or ancestor::html:th or ancestor::html:li or ancestor::html:dt or ancestor::html:dd) and string-length(normalize-space(.)) > 0 and not(ancestor::html:span[@class] or ancestor::html:dt[@class] or ancestor::html:dd[@class])]">
+    <xsl:template match="text()[(ancestor::html:p or ancestor::html:td or ancestor::html:th or ancestor::html:li or ancestor::html:dt or ancestor::html:dd) and string-length(normalize-space(.)) > 0 and not(ancestor::html:span[@class] or ancestor::html:dt[@class] or ancestor::html:dd[@class] or ancestor::m:math)]">
         <span aid:cstyle='default'>
             <xsl:copy>
                 <xsl:apply-templates select="@*|node()"/>
