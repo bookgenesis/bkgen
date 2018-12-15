@@ -593,12 +593,12 @@
             <!-- image alignment, taken from the w:drawing[wp:anchor]/wp:positionH/@relativeFrom -->
             <xsl:if test="ancestor::w:drawing//wp:positionH/@relativeFrom='rightMargin'">
                 <xsl:attribute name="class">
-                    <xsl:text>right</xsl:text>
+                    <xsl:text>image--right</xsl:text>
                 </xsl:attribute>
             </xsl:if>
             <xsl:if test="ancestor::w:drawing//wp:positionH/@relativeFrom='margin'">
                 <xsl:attribute name="class">
-                    <xsl:text>left</xsl:text>
+                    <xsl:text>image--left</xsl:text>
                 </xsl:attribute>
             </xsl:if>
 
