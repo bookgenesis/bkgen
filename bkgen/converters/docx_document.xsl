@@ -490,6 +490,12 @@
                         </xsl:if>
                     </xsl:attribute>
                 </xsl:if>
+                <!-- colwidth -->
+                <xsl:if test="w:tcPr/w:tcW/@w:w &gt; 0">
+                    <xsl:attribute name="width">
+                        <xsl:value-of select="w:tcPr/w:tcW/@w:w"></xsl:value-of>
+                    </xsl:attribute>
+                </xsl:if>
                 <!-- colspan -->
                 <xsl:if test="w:tcPr/w:gridSpan/@w:val">
                     <xsl:attribute name="colspan">

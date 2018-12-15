@@ -70,6 +70,7 @@ def document(elem, **params):
     root = anchors_in_paragraphs(root)
     root = remove_empty_paras(root, **params)
     root = paragraphs_with_newlines(root)
+    root = table_column_widths(root)
 
     return [ root ]
 
@@ -458,6 +459,12 @@ def paragraphs_with_newlines(root):
                                 or name()='h5' or name()='h6' or name()='h7' or name()='h8' or name()='h9')]
                         """, namespaces=NS):
         p.tail = '\n'
+    return root
+
+def table_column_widths(root):
+    """convert Word column widths to points (N/20)"""
+    for td in XML.xpath(root, "//html:td[@width]", namespaces=NS):
+        td.set('width', "%.02fpt" % (int(td.get('width')) / 20.,))
     return root
 
 def anchors_in_paragraphs(root):
