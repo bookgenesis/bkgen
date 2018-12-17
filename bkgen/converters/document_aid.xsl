@@ -120,7 +120,7 @@
             <xsl:if test="not(@class)">
                 <xsl:attribute name="aid5:cellstyle">cell</xsl:attribute>
             </xsl:if>
-        	<xsl:if test="@width and @width &gt; 0">
+        	<xsl:if test="@width">
         	    <xsl:attribute name="aid:ccolwidth"><xsl:value-of select="@width"/></xsl:attribute>
         	</xsl:if>
         	<xsl:if test="@colspan">
