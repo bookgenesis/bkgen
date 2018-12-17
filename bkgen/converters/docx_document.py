@@ -166,12 +166,15 @@ def wrap_sections(root, **params):
     body = root.find('{%(html)s}body' % NS)
     section = Document.find(body, "pub:section_end")
     while section is not None:
+        section.tag = "{%(html)s}section" % NS
         prev = section.getprevious()
         while prev is not None and prev.tag != "{%(pub)s}section_end" % NS:
             section.insert(0, prev)
             prev = section.getprevious()
         if section.get('title') is None:
-            section.set('title', make_section_title(section))
+            title = make_section_title(section)
+            if title not in ['', None]:
+                section.set('title', title)
         section = Document.find(body, "pub:section_end")
     return root
 
@@ -356,7 +359,7 @@ def map_table_styles(root, **params):
     stylemap = params['docx'].stylemap(cache=True)
     for table in root.xpath(".//html:table[@class]", namespaces=NS):
         cls = stylemap.get(table.get('class'))
-        if cls is not None:
+        if cls is not None and cls.name is not None:
             table.set('class', cls.name)
     return root
 
