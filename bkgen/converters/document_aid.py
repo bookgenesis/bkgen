@@ -169,3 +169,4 @@ def table_column_widths(root):
         width = elem.get("{%(aid)}ccolwidth" % NS)
         points_val = CSS.to_unit(width, unit=CSS.pt) / CSS.pt
         elem.set("{%(aid)}ccolwidth" % NS, points_val)
+    return root
