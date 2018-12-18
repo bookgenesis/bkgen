@@ -70,13 +70,28 @@ def fill_head(root, **params):
                 head.append(H.link(rel='stylesheet', type=mimetype, href=href))
             elif resource.get('class')=='script':
                 head.append(H.script(type=mimetype, src=href))
+
+        # -- <title> -- 
         title = XML.find(head, "//html:title", namespaces=NS)     # matches an existing <title>
+
+        # first look for @aria-labelledby
         if title is None:
-            title_elem = XML.find(root, "//*[@title]", namespaces=NS)
+            labelledby = XML.find(root, "html:body/html:*/@aria-labelledby", namespaces=NS)
+            if labelledby is not None:
+                title_elem = XML.find(root, "//*[@id='%s']" % labelledby)
+                if title_elem is not None:
+                    title = H.title(etree.tounicode(title_elem, method='text', with_tail=False))
+
+        # then look for @aria-label or @title
+        if title is None:
+            title_elem = XML.find(root, "//*[@aria-label or @title]", namespaces=NS)
             if title_elem is not None: 
-                title = H.title(title_elem.get('title'))
+                title = H.title(title_elem.get('aria-label') or title_elem.get('title'))
+
+        # if we found a title, insert it
         if title is not None:                                           # new or existing title in <head>
             head.insert(0, title)
+
     return root
 
 def filter_conditions(root, **params):
