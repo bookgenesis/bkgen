@@ -39,11 +39,12 @@ def default(elem, **params):
     root = table_columns(root, **params)
 
     root = transformer_XSLT(root).getroot()
+
     root = image_hrefs(root, **params)
-    root = paragraph_returns(root, **params)
     root = dt_nobreak_cstyle(root)
     root = aid_style_names(root)
     root = table_column_widths(root)
+    root = paragraph_returns(root, **params)
     # root = special_characters(root, **params)
     return [root]
 
@@ -126,22 +127,23 @@ def paragraph_returns(root, **params):
     t = etree.tounicode(root).strip()
     t = re.sub(r'\s*\n\s*', '', t)
     root = etree.fromstring(t)
-    xpath = """//html:*[
-        (name()='p' or name()='li' or name()='dd' 
-            or name()='h1' or name()='h2' or name()='h3' 
-            or name()='h4' or name()='h5' or name()='h6' or name()='h7')
-        and ((not(ancestor::html:table)
-            and not(descendant::html:li or descendant::html:p or descendant::html:h1 
-                or descendant::html:h2 or descendant::html:h3 or descendant::html:h4 
-                or descendant::html:h5 or descendant::html:h6 or descendant::html:h7))
-            or (ancestor::html:table
-                and following-sibling::html:*)
-            or (html:table))
+    match_elements_to_paragraph_return = """
+        (name()='p' or name()='li' or name()='dd'
+        or name()='h1' or name()='h2' or name()='h3' 
+        or name()='h4' or name()='h5' or name()='h6' or name()='h7') 
+    """
+    xpath = f"""//*[
+        {match_elements_to_paragraph_return}
+        and (following-sibling::*
+            or not(parent::*[
+                {match_elements_to_paragraph_return}
+                or name()='td' or name()='th'
+            ]))
     ]"""
-    pp = Document.xpath(root, xpath)
-    log.debug('%d paragraphs in %r' % (len(pp), root.tag))
-    for p in pp:
-        p.tail = '\n'
+    p_elems = Document.xpath(root, xpath)
+    log.debug('%d paragraphs in %r' % (len(p_elems), root.tag))
+    for p_elem in p_elems:
+        p_elem.tail = '\n'
     return root
 
 
@@ -177,8 +179,8 @@ def table_column_widths(root):
     """convert table column widths to raw pts"""
     for table in Document.xpath(root, "//html:table"):
         for elem in Document.xpath(table, ".//*[@aid:ccolwidth]", namespaces=NS):
-        width = elem.get("{%(aid)s}ccolwidth" % NS)
-        points_val = CSS.to_unit(width, unit=CSS.pt) / CSS.pt
-        elem.set("{%(aid)s}ccolwidth" % NS, str(points_val))
+            width = elem.get("{%(aid)s}ccolwidth" % NS)
+            points_val = CSS.to_unit(width, unit=CSS.pt) / CSS.pt
+            elem.set("{%(aid)s}ccolwidth" % NS, str(points_val))
     return root
 
