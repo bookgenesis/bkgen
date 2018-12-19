@@ -7,7 +7,6 @@
     xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/"
     xmlns:pub="http://publishingxml.org/ns"
     xmlns:epub="http://www.idpf.org/2007/ops"
-    exclude-result-prefixes="html"
 >
 
     <xsl:output method="xml" encoding="utf-8" indent="no"/>
@@ -88,17 +87,25 @@
             	    <xsl:value-of select="count(html:tr)"/>
             	</xsl:attribute>
                 <xsl:attribute name="aid:tcols">
-                    <xsl:value-of select="count(html:tr[1]/*)"/>
+                    <xsl:choose>
+                        <xsl:when test="@data-tcols">
+                            <xsl:value-of select="@data-tcols"></xsl:value-of>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:value-of select="count(html:tr[1]/*)"/>
+                        </xsl:otherwise>
+                    </xsl:choose>
                 </xsl:attribute>
-            	<xsl:if test="@class">
-                    <xsl:attribute name="aid5:tablestyle"><xsl:value-of select="@class"/></xsl:attribute>
-            	</xsl:if>
-                <xsl:if test="not(@class)">
-                    <xsl:attribute name="aid5:tablestyle">table</xsl:attribute>
-                </xsl:if>
-            	<xsl:if test="@data-cols">
-    	        	<xsl:attribute name="aid:tcols"><xsl:value-of select="@data-cols"/></xsl:attribute>
-            	</xsl:if>
+                <xsl:attribute name="aid5:tablestyle">
+                    <xsl:choose>
+                        <xsl:when test="@class">
+                            <xsl:value-of select="@class"></xsl:value-of>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:text>table</xsl:text>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:attribute>
             	<xsl:apply-templates/>
             </xsl:copy>
         </p>
