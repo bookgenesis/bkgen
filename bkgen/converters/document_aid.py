@@ -36,6 +36,8 @@ class DocumentAid(Converter):
 @transformer.match("True")
 def default(elem, **params):
     root = get_includes(elem, **params)
+    root = table_columns(root, **params)
+
     root = transformer_XSLT(root).getroot()
     root = image_hrefs(root, **params)
     root = paragraph_returns(root, **params)
@@ -63,6 +65,14 @@ def get_includes(root, **params):
             if len(elem.xpath(".//pub:include", namespaces=NS)) > 0:
                 elem = get_includes(elem, **params)
             incl.append(elem)
+    return root
+
+
+def table_columns(root, **params):
+    """record the number of columns in each table in the table element"""
+    for table in XML.xpath(root, "//html:table", namespaces=NS):
+        cols = max([len(tr.getchildren()) for tr in XML.xpath(table, "html:tr", namespaces=NS)])
+        table.set('data-tcols', str(cols))
     return root
 
 
