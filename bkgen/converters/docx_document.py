@@ -315,7 +315,7 @@ def number_lists(root, **params):
             li = B.html.li(numbered_p); li.tail='\n' + '\t'*(level+1); li.getchildren()[-1].tail = ''
             lists[level].append(li)
             prev_num_params = num_params
-            numbered_p = XML.find(lists[0], "following::html:p[w:numPr]", namespaces=DOCX.NS)
+            numbered_p = XML.find(lists[level], "following::html:p[w:numPr]", namespaces=DOCX.NS)
         else:
             numbered_p = XML.find(numbered_p, "following::html:p[w:numPr]", namespaces=DOCX.NS)
     return root
