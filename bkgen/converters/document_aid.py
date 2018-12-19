@@ -175,8 +175,10 @@ def aid_style_names(root):
 
 def table_column_widths(root):
     """convert table column widths to raw pts"""
-    for elem in Document.xpath(root, "//*[@aid:ccolwidth]", namespaces=NS):
+    for table in Document.xpath(root, "//html:table"):
+        for elem in Document.xpath(table, ".//*[@aid:ccolwidth]", namespaces=NS):
         width = elem.get("{%(aid)s}ccolwidth" % NS)
         points_val = CSS.to_unit(width, unit=CSS.pt) / CSS.pt
         elem.set("{%(aid)s}ccolwidth" % NS, str(points_val))
     return root
+
