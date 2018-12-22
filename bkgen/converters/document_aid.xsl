@@ -43,13 +43,11 @@
 
 	<xsl:template match="html:p[@class] | html:h1[@class] | html:h2[@class] | html:h3[@class] | html:h4[@class] | html:h5[@class] | html:h6[@class] | html:h7[@class] | html:h8[@class] | html:h9[@class] ">
 		<xsl:copy>
-			<xsl:attribute name="aid:pstyle">
-                <!-- <xsl:if test="ancestor::html:section[last()][@class]">
-                    <xsl:value-of select="ancestor::html:section[last()]/@class"/>
-                    <xsl:text> </xsl:text>
-                </xsl:if> -->
-			    <xsl:value-of select="@class"/>
-			</xsl:attribute>
+			<xsl:if test="@class">
+                <xsl:attribute name="aid:pstyle">
+                    <xsl:value-of select="@class"/>
+                </xsl:attribute>
+            </xsl:if>
 			<xsl:apply-templates select="@*|node()"/>
 			<!-- <xsl:if test="not(ancestor::html:td) and following::*">
                 <xsl:text>&#xA;</xsl:text>
@@ -76,7 +74,9 @@
     <xsl:template match="html:table">
         <p>            
             <xsl:if test="@class">
-                <xsl:attribute name="aid:pstyle"><xsl:value-of select="@class"/></xsl:attribute>
+                <xsl:attribute name="aid:pstyle">
+                    <xsl:value-of select="@class"/>
+                </xsl:attribute>
             </xsl:if>
             <xsl:copy>
             	<xsl:if test="@id">
@@ -146,17 +146,11 @@
 
     <xsl:template match="html:li[not(descendant::html:p)]">
         <xsl:copy>
-            <xsl:attribute name="aid:pstyle">
-                <xsl:if test="ancestor::html:section[last()][@class]">
-                    <xsl:value-of select="ancestor::html:section[last()]/@class"/>
-                </xsl:if>
-                <xsl:if test="ancestor::html:section[last()][@class] and @class">
-                    <xsl:text> </xsl:text>
-                </xsl:if>
-                <xsl:if test="@class">
+            <xsl:if test="@class">
+                <xsl:attribute name="aid:pstyle">
                     <xsl:value-of select="@class"/>
-                </xsl:if>
-            </xsl:attribute>
+                </xsl:attribute>
+            </xsl:if>
             <xsl:apply-templates select="@*|node()"/>
             <!-- <xsl:text>&#xA;</xsl:text> -->
         </xsl:copy>        
@@ -167,12 +161,6 @@
     <xsl:template match="html:dl">
         <xsl:copy>
             <xsl:attribute name="aid:pstyle">
-                <xsl:if test="ancestor::html:section[last()][@class]">
-                    <xsl:value-of select="ancestor::html:section[last()]/@class"/>
-                </xsl:if>
-                <xsl:if test="ancestor::html:section[last()][@class] and @class">
-                    <xsl:text> </xsl:text>
-                </xsl:if>
                 <xsl:if test="@class">
                     <xsl:value-of select="@class"/>
                 </xsl:if>
@@ -183,17 +171,11 @@
 
     <xsl:template match="html:dt">
         <xsl:copy>
-            <xsl:attribute name="aid:pstyle">
-                <xsl:if test="ancestor::html:section[last()][@class]">
-                    <xsl:value-of select="ancestor::html:section[last()]/@class"/>
-                </xsl:if>
-                <xsl:if test="ancestor::html:section[last()][@class] and ancestor::html:dl[last()][@class]">
-                    <xsl:text> </xsl:text>
-                </xsl:if>
-                <xsl:if test="ancestor::html:dl[last()][@class]">
-                    <xsl:value-of select="ancestor::html:dl[last()]/@class"/>
-                </xsl:if>
-            </xsl:attribute>
+            <xsl:if test="@class">
+                <xsl:attribute name="aid:pstyle">
+                    <xsl:value-of select="@class"/>
+                </xsl:attribute>
+            </xsl:if>
             <xsl:attribute name="aid:cstyle">
                 <xsl:if test="ancestor::html:section[last()][@class]">
                     <xsl:value-of select="ancestor::html:section[last()]/@class"/>
@@ -219,18 +201,11 @@
 
     <xsl:template match="html:dd">
         <xsl:copy>
-            <xsl:attribute name="aid:pstyle">
-                <xsl:if test="ancestor::html:section[last()][@class]">
-                    <xsl:value-of select="ancestor::html:section[last()]/@class"/>
-                    <xsl:text> </xsl:text>
-                </xsl:if>
-                <xsl:if test="ancestor::html:section[last()][@class] and ancestor::html:dl[last()][@class]">
-                    <xsl:text> </xsl:text>
-                </xsl:if>
-                <xsl:if test="ancestor::html:dl[last()][@class]">
-                    <xsl:value-of select="ancestor::html:dl[last()]/@class"/>
-                </xsl:if>
-            </xsl:attribute>
+            <xsl:if test="@class">
+                <xsl:attribute name="aid:pstyle">
+                    <xsl:value-of select="@class"/>
+                </xsl:attribute>
+            </xsl:if>
             <xsl:apply-templates select="@*|node()"/>
         </xsl:copy>
     </xsl:template>
