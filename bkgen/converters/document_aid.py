@@ -2,12 +2,13 @@
 
 import logging
 
-import os, re
+import os, re, shutil
 from glob import glob
 from lxml import etree
 from bxml.xt import XT
 from bxml.builder import Builder
 from bl.file import File
+from bl.folder import Folder
 from bl.url import URL
 from bf.css import CSS
 from bxml.xml import XML
@@ -46,23 +47,40 @@ def default(elem, **params):
     root = table_column_widths(root)
     root = paragraph_returns(root, **params)
     # root = special_characters(root, **params)
+    output_images(root, **params)
     return [root]
 
 
 def get_includes(root, **params):
+    """place the content from <pub:include/> elements, and remap the src and href attributes therein
+    """
+    document = params.get('xml')
+    output_file = File(fn=params.get('fn'))
     for incl in root.xpath(".//pub:include", namespaces=NS):
         for ch in incl:
             incl.remove(ch)
-        srcfn = os.path.join(os.path.dirname(params['fn']), str(URL(incl.get('src'))).split('#')[0])
+        srcfn = os.path.join(document.path, str(URL(incl.get('src'))).split('#')[0])
         log.debug(srcfn)
         assert os.path.exists(srcfn)
-        src = XML(fn=srcfn)
+        src = Document(fn=srcfn)
         if '#' in incl.get('src'):
             srcid = str(URL(incl.get('src'))).split('#')[-1]
             elems = XML.xpath(src.root, "//*[@id='%s']" % srcid)
         else:
             elems = XML.xpath(src.root, "html:body/*", namespaces=NS)
         for elem in elems:
+            for href_elem in Document.xpath(elem, ".//*[@href]"):
+                url = URL(href_elem.get('href'))
+                if url.scheme in ['', 'file']:
+                    hrfn = str(src.folder / url.path)
+                    url.path = os.path.relpath(hrfn, document.path)
+                href_elem.set('href', str(url))
+            for img in Document.xpath(elem, ".//*[not(name()='include') and @src]"):
+                url = URL(img.get('src'))
+                if url.scheme in ['', 'file']:
+                    hrfile = src.folder / url.path
+                    url.path = os.path.relpath(hrfile.fn, document.path)
+                img.set('src', str(url))
             if len(elem.xpath(".//pub:include", namespaces=NS)) > 0:
                 elem = get_includes(elem, **params)
             incl.append(elem)
@@ -184,3 +202,20 @@ def table_column_widths(root):
             elem.set("{%(aid)s}ccolwidth" % NS, str(points_val))
     return root
 
+
+def output_images(root, art_path=None, **params):
+    """get any referenced images and write them to the output folder"""
+    src_file = params['xml']
+    out_file = File(fn=params['fn'])
+    for img in Document.xpath(root, "//html:img[@src]"):
+        src_image = src_file.folder / img.get('src')
+        art_image = Folder(fn=art_path or '') / img.get('src')
+        if not src_image.exists and art_image.exists:
+            src_image = art_image
+        out_image = out_file.folder / img.get('src')
+        if not src_image.exists:
+            if not out_image.exists:
+                log.warn(f"img src doesn't exists: {src_image.fn}")
+        elif not out_image.exists or src_image.mtime > out_image.mtime:
+            src_image.write(fn=out_image.fn)
+            log.info(f"wrote image file: {out_image.fn}")
