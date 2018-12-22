@@ -84,10 +84,12 @@ class Document(XML, Source):
         converter = DocumentIcml()
         return converter.convert(self, **params)
 
-    def aid(self, **params):
+    def aid(self, fn=None, **params):
         from .converters.document_aid import DocumentAid
         converter = DocumentAid()
-        return converter.convert(self, **params)
+        if fn is None:
+            fn = self.splitext()[0] + '.aid.xml'
+        return converter.convert(self, fn=fn, **params)
 
     def html(self, fn=None, ext='.xhtml', output_path=None, resources=[], lang='en', **args):
         from .converters.document_html import DocumentHtml
