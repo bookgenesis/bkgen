@@ -410,7 +410,7 @@ class Project(XML, Source):
         return result
     
     def import_source(self, source, documents=True, images=True, stylesheet=True, metadata=False, 
-        document_before_update_project=None, **params):
+        document_before_update_project=None, copy_to_source_folder=False, **params):
         """import a source into the project.
             source = a Source object that contains the content source [REQUIRED]
             documents = whether to import documents from the source (default=True)
@@ -419,13 +419,13 @@ class Project(XML, Source):
             metadata = whether to import metadata from the source (default=False)
             **params = passed to the Source.documents(**params) method
         """
-        # If the source file is not already in the project folder, 
+        # If the source file is not already in the project folder and copy_to_source_folder is True, 
         # copy the source file into the "canonical" source file location for this project.
         # (if it's already in the project folder, don't copy or move it! Just use it where it is.)
         common_prefix = os.path.commonprefix([self.path, source.fn])
         log.debug("\n\tproject_path=%r\n\tsource.fn=%r\n\tcommon_prefix=%r\n\tproject path in common prefix? %r" 
             % (self.path, source.fn, common_prefix, self.path in common_prefix))
-        if self.path not in common_prefix:
+        if self.path not in common_prefix and copy_to_source_folder is True:
             fn = os.path.join(self.source_path, os.path.basename(source.fn))
             shutil.copy(source.fn, fn)
             source.fn = fn
