@@ -597,16 +597,23 @@
                 </xsl:attribute>    
             </xsl:if>
             <!-- image alignment, taken from the w:drawing[wp:anchor]/wp:positionH/@relativeFrom -->
-            <xsl:if test="ancestor::w:drawing//wp:positionH/@relativeFrom='rightMargin'">
-                <xsl:attribute name="class">
-                    <xsl:text>image--right</xsl:text>
-                </xsl:attribute>
-            </xsl:if>
-            <xsl:if test="ancestor::w:drawing//wp:positionH/@relativeFrom='margin'">
-                <xsl:attribute name="class">
-                    <xsl:text>image--left</xsl:text>
-                </xsl:attribute>
-            </xsl:if>
+            <xsl:choose>
+                <xsl:when test="ancestor::w:drawing//wp:positionH/@relativeFrom='rightMargin'">
+                    <xsl:attribute name="class">
+                        <xsl:text>image--right</xsl:text>
+                    </xsl:attribute>
+                </xsl:when>
+                <xsl:when test="ancestor::w:drawing//wp:positionH/@relativeFrom='margin'">
+                    <xsl:attribute name="class">
+                        <xsl:text>image--left</xsl:text>
+                    </xsl:attribute>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:attribute name="class">
+                        <xsl:text>image--inline</xsl:text>
+                    </xsl:attribute>
+                </xsl:otherwise>
+            </xsl:choose>
 
             <!-- image width and height, measurements in EMUs: 1 inch = 72 pt = 914,400 EMUs, so 1 pt = 12,700 EMUs -->
             <xsl:if test=".//pic:spPr/a:xfrm/a:ext">
