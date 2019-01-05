@@ -25,8 +25,8 @@ transformer = XT()
 transformer_XSLT = XSLT(fn=os.path.splitext(__file__)[0] + '.xsl')
 
 class DocxDocument(Converter):
-    def convert(self, docx, fn=None, **params):
-        return docx.transform(transformer, fn=fn, XMLClass=Document, **params)
+    def convert(self, docx, fn=None, XMLClass=Document, **params):
+        return docx.transform(transformer, fn=fn, XMLClass=XMLClass, **params)
 
 @transformer.match("elem.tag=='{%(w)s}document'" % DOCX.NS)
 def document(elem, **params):
@@ -59,6 +59,7 @@ def document(elem, **params):
     root = resolve_hyperlinks(root, **params)
     # -- span cleanup -- 
     root = merge_contiguous_spans(root, **params)
+    root = handle_style_overrides(root, **params)
     root = remove_empty_spans(root, **params)
     # -- fields -- 
     root = nest_fields(root, **params)
@@ -449,6 +450,12 @@ def resolve_hyperlinks(root, **params):
 def merge_contiguous_spans(root, **params):
     """if spans are next to each other and have the same attributes, merge them"""
     return XML.merge_contiguous(root, "//html:span", namespaces=NS)
+
+def handle_style_overrides(root, style_overrides=True, **params):
+    if style_overrides is not True:
+        for elem in XML.xpath(root, "//html:*[@style]", namespaces=NS):
+            elem.attrib.pop('style')
+    return root
 
 def paragraphs_with_newlines(root):
     """paragraphs that are not in tables, comments, footnotes, or endnotes should be followed by a newline"""
