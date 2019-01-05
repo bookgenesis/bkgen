@@ -52,6 +52,8 @@ class DOCX(bxml.docx.DOCX, Source):
         """return a Metadata object with the metadata in the document"""
         from .metadata import Metadata
         md = self.xml(src="docProps/core.xml", XMLClass=Metadata)
+        if md is None:
+            md = Metadata()
         md.root.tag = "{%(pub)s}metadata" % NS
         return md
 
