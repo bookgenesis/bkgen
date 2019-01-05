@@ -153,7 +153,7 @@ def paragraph_returns(root, **params):
     xpath = f"""//*[
         {match_elements_to_paragraph_return}
         and (following-sibling::*
-            or not(parent::*[
+            or not(ancestor::*[
                 {match_elements_to_paragraph_return}
                 or name()='td' or name()='th'
             ]))
