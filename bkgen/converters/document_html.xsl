@@ -92,14 +92,14 @@
 	<!-- DEPRECATED: To be removed -->
 	<xsl:template match="pub:anchor_end"/>
 
-	<!-- DEPRECATED: Not going to be retained; instead, we're switching to html:a href in pub:document -->
 	<xsl:template match="pub:hyperlink">
 	    <a>
 	    	<xsl:attribute name="href">
 	    	    <xsl:value-of select="@filename"/>
-	    	    <xsl:if test="@anchor">
+	    	    <!-- @anchor is deprecated, new documents use @idref instead -->
+	    	    <xsl:if test="@anchor or @idref">
 	    	        <xsl:text>#</xsl:text>
-	    	        <xsl:value-of select="@anchor"/>
+	    	        <xsl:value-of select="@anchor or @idref"/>
 	    	    </xsl:if>
 	    	</xsl:attribute>
 	    	<xsl:apply-templates/>
