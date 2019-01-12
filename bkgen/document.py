@@ -18,6 +18,7 @@ class Document(XML, Source):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.root.text = '\n'
         if self.find(self.root, "html:body", namespaces=self.NS) is None:
             H = Builder.single(self.NS.html)
             body = H.body('\n'); body.tail = '\n'
