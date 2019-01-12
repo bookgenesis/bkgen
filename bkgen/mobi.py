@@ -51,9 +51,6 @@ class MOBI(Dict):
         # and remove those elements from the interior.
         self.remove_display_none(opffn)
 
-        # .mobi doesn't support CSS ::before or ::after
-        self.remove_css_before_after(opffn)
-
         if before_compile is not None:
             before_compile(build_path)
 
@@ -204,7 +201,10 @@ class MOBI(Dict):
             h.write()    
 
     def remove_display_none(self, opffn):
-        """Kindle doesn't like too much display:none; so just remove those elements, and remove the instruction from the stylesheets."""
+        """Kindle doesn't like too much display:none; so remove those elements, 
+        and remove the instruction from the stylesheets. 
+        Preserve any pagebreaks in the removed content.
+        """
         opf = XML(fn=opffn)
         html_items = [item for item in opf.root.xpath(
             "//opf:manifest/opf:item[not(@properties='nav') and @media-type='text/html']", namespaces=self.NS
@@ -221,6 +221,10 @@ class MOBI(Dict):
                     log.debug("%s %r" % (sel, style))
                     log.debug(xpath)
                     for elem in h.xpath(h.root, xpath):
+                        parent = elem.getparent()
+                        # preserve pagebreaks in the removed content
+                        for pagebreak in h.xpath(elem, ".//html:span[@epub:type='pagebreak']"):
+                            parent.insert(parent.index(elem), pagebreak)
                         h.remove(elem, leave_tail=True)
                         log.debug(etree.tounicode(elem, with_tail=False))
             h.write()
