@@ -14,8 +14,15 @@ class Source(File):
     def documents(self, path=None, **params):
         """returns a list of XML documents, with the root element tag pub:document, from the Source.
         """
-        return []
+        doc = self.document(path=path, **params)
+        if doc is not None:
+            return [doc]
+        else:
+            return []
         
+    def document(self, path=None, **params):
+        return
+
     def images(self):
         """returns a list of bf.image.Image objects provided by the Source.
         """
