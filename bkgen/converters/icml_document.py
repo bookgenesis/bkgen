@@ -121,22 +121,36 @@ def CharacterStyleRange(elem, **params):
             ]
             attribs['{%(pub)s}cond' % NS] = ' '.join(conditions)
 
-        # use MathML embedded in MathTools MathZones and delete corresponding MathExpression ranges
+        result = []
+
+        # use MathML embedded in MathTools MathZones and delete corresponding MathExpression ranges,
         if elem.get('MTMathZone') is not None and bool(elem.get('MathToolsML')) is False:
             # MathExpression ranges that should be deleted
-            span = None
+            pass
+
         elif bool(elem.get('MathToolsML')) is True:
             # MathML that should be used
             mml_text = elem.get('MathToolsML').replace('&quot;', '"').strip()
             mml_text = re.sub("&lt;((?!&[lg]t;).*?)&gt;", r"<\1>", mml_text)
             log.debug(mml_text)
             mml = etree.fromstring(mml_text)
+
             span = B.html.span(attribs, mml)
+            result += [span]
+
+            # add preceeding and trailing whitespace that might have been embedded in the MathML
+            mml_text = etree.tounicode(mml, method='text', with_tail=False)
+            if re.search(r'^\s+', mml_text) is not None:
+                result = [' '] + result
+            if re.search(r'\s+$', mml_text) is not None:
+                result += [' ']
+
         else:
             # regular span
             span = B.html.span(attribs, transformer(elem.getchildren(), **params))
+            result += [span]
 
-        return [span]
+        return result
 
 
 def character_attribs(elem):
