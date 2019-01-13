@@ -4,7 +4,7 @@
     xmlns:pub="http://publishingxml.org/ns"
     xmlns:epub="http://www.idpf.org/2007/ops"
     xmlns:m="http://www.w3.org/1998/Math/MathML"
-    exclude-result-prefixes="m pub">
+    exclude-result-prefixes="pub">
 
     <xsl:output method="xml" encoding="utf-8" indent="yes"
 	    doctype-system="http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" 
@@ -131,23 +131,35 @@
 
 	<!-- MathML: If an altimg is available, use it; otherwise, leave the MathML alone -->
 	<xsl:template match="m:math[@altimg] | math[@altimg]">
-	    <img>
+	    <img class="mathml">
 	    	<xsl:attribute name="src">
 	    	    <xsl:value-of select="@altimg"/>
 	    	</xsl:attribute>
-	    	<xsl:if test="@altimg-style">
+	    	<xsl:if test="@alttext">
+	    		<xsl:attribute name="alt">
+	    			<xsl:value-of select="@alttext"></xsl:value-of>
+	    		</xsl:attribute>
+	    	</xsl:if>
+	    	<xsl:if test="@altimg-width or @altimg-height or @altimg-valign">
 	    	    <xsl:attribute name="style">
-	    	        <xsl:value-of select="@altimg-style"/>
-	    	    </xsl:attribute>
-	    	</xsl:if>
-	    	<xsl:if test="@altimg-height">
-	    		<xsl:attribute name="height">
-	    	        <xsl:value-of select="@altimg-height"/>
-	    	    </xsl:attribute>
-	    	</xsl:if>
-	    	<xsl:if test="@altimg-width">
-	    		<xsl:attribute name="width">
-	    	        <xsl:value-of select="@altimg-width"/>
+	    	    	<!-- either height or width, not both -->
+	    	    	<xsl:choose>
+	    	    		<xsl:when test="@altimg-height">
+				    		<xsl:text>height:</xsl:text>
+			    	        <xsl:value-of select="@altimg-height"/>
+			    	        <xsl:text>;</xsl:text>
+				    	</xsl:when>
+	    	    		<xsl:when test="@altimg-width">
+				    		<xsl:text>width:</xsl:text>
+			    	        <xsl:value-of select="@altimg-width"/>
+			    	        <xsl:text>;</xsl:text>
+				    	</xsl:when>	
+	    	    	</xsl:choose>			    	
+			    	<xsl:if test="@altimg-valign">
+			    		<xsl:text>vertical-align:</xsl:text>
+		    	        <xsl:value-of select="@altimg-valign"/>
+		    	        <xsl:text>;</xsl:text>
+			    	</xsl:if>
 	    	    </xsl:attribute>
 	    	</xsl:if>
 	    </img>
