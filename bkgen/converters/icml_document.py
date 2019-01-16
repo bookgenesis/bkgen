@@ -57,6 +57,16 @@ def Story(elem, **params):
         '\n',
         transformer(elem.getchildren(), **params),
     )
+    ptitle = Document.find(section, "html:p[contains(@class,'Title')]")
+    if ptitle is not None:
+        title = (
+            String(etree.tounicode(ptitle, method='text', with_tail=False))
+            .resub(r'<[^>]+>', r'')
+            .resub(r'\s+', ' ')
+            .strip()
+        )
+        log.debug(title)
+        section.set('title', title)
     section = process_para_breaks(section)
     section = nest_span_hyperlinks(section)
     section = split_sections(section)
