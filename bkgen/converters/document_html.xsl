@@ -121,6 +121,11 @@
 		<br></br>
 	</xsl:template>
 
+	<!-- pub:x* special characters: make sure they are represented -->
+	<xsl:template match="pub:x202F"><xsl:text>&#x202F;</xsl:text></xsl:template>
+	<xsl:template match="pub:x00A0"><xsl:text>&#x00A0;</xsl:text></xsl:template>
+	<xsl:template match="pub:x2002"><xsl:text>&#x2002;</xsl:text></xsl:template>
+
 	<!-- NOT YET IMPLEMENTED and therefore ignored (stripped, leaving content) -->
 	<xsl:template match="pub:field"><xsl:apply-templates/></xsl:template>
 	<xsl:template match="pub:cref"><xsl:apply-templates/></xsl:template>
@@ -130,6 +135,7 @@
 	<xsl:template match="pub:modified"><xsl:apply-templates/></xsl:template>
 
 	<!-- MathML: If an altimg is available, use it; otherwise, leave the MathML alone -->
+
 	<xsl:template match="m:math[@altimg] | math[@altimg]">
 	    <img class="mathml">
 	    	<xsl:attribute name="src">
@@ -142,7 +148,7 @@
 	    	</xsl:if>
 	    	<xsl:if test="@altimg-width or @altimg-height or @altimg-valign">
 	    	    <xsl:attribute name="style">
-	    	    	<!-- either height or width, not both -->
+	    	    	<!-- either height or width, not both (avoid distorting the image) -->
 	    	    	<xsl:choose>
 	    	    		<xsl:when test="@altimg-height">
 				    		<xsl:text>height:</xsl:text>
@@ -171,10 +177,5 @@
     <xsl:template match="m:math[not(@altimg)] | math[not(@altimg)]">
     	<xsl:copy><xsl:apply-templates select="@*|node()"/></xsl:copy>
 	</xsl:template>
-
-	<!-- pub:x* special characters: make sure they are represented -->
-	<xsl:template match="pub:x202F"><xsl:text>&#x202F;</xsl:text></xsl:template>
-	<xsl:template match="pub:x00A0"><xsl:text>&#x00A0;</xsl:text></xsl:template>
-	<xsl:template match="pub:x2002"><xsl:text>&#x2002;</xsl:text></xsl:template>
 
 </xsl:stylesheet>
