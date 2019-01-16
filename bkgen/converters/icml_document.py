@@ -660,6 +660,7 @@ def post_process(root, **params):
             section.tail = '\n'
     for incl in root.xpath("//html:p/pub:include", namespaces=NS):
         XML.unnest(incl)
+    root = remove_empty_p(root)
     root = p_tails(root)
     return root
 
@@ -961,4 +962,17 @@ def unnest_p_divs(root):
         while Document.find(div, "ancestor::html:p") is not None:
             Document.unnest(div)
         div.text = div.tail = '\n'
+    return root
+def remove_empty_p(root):
+    for p in root.xpath(
+        """
+        .//html:*[
+            not(ancestor::html:table) 
+            and (name()='p' or name()='h1' or name()='h2' or name()='h3' or name()='h4' 
+                or name()='h5' or name()='h6' or name()='h7' or name()='h8' or name()='h9')]
+    """,
+        namespaces=NS,
+    ):
+        if (p.text is None or p.text.strip() == '') and len(p.getchildren()) == 0:
+            XML.remove(p, leave_tail=True)
     return root
