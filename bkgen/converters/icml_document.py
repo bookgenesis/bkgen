@@ -652,6 +652,7 @@ def post_process(root, **params):
     root = convert_lists(root)
     root = remove_container_sections(root)
     root = unnest_p_divs(root)
+    root = unnest_tables_from_p(root)
     for section in root.xpath("//html:section", namespaces=NS):
         chs = section.getchildren()
         if len(chs) == 1 and chs[0].tag == '{%(pub)s}include' % bkgen.NS:
@@ -963,6 +964,14 @@ def unnest_p_divs(root):
             Document.unnest(div)
         div.text = div.tail = '\n'
     return root
+
+
+def unnest_tables_from_p(root):
+    for table in Document.xpath(root, "//html:p/html:table"):
+        Document.unnest(table)
+    return root
+
+
 def remove_empty_p(root):
     for p in root.xpath(
         """
