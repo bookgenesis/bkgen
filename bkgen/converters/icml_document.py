@@ -228,7 +228,12 @@ def Footnote(elem, **params):
 # == Table ==
 @transformer.match("elem.tag=='Table'")
 def Table(elem, **params):
-    table = B.html.table('\n\t', transformer(elem.getchildren(), **params))
+    attrib = {}
+    if XML.find(elem, "@AppliedTableStyle") is not None:
+        attrib['class'] = ICML.classname(
+            elem.get('AppliedTableStyle').split('/')[-1].replace('%3a', ':').replace(": ", ":")
+        )
+    table = B.html.table(attrib, '\n\t', transformer(elem.getchildren(), **params))
     return [table, '\n']
 
 
@@ -248,6 +253,8 @@ def Row(elem, **params):
 def Cell(elem, **params):
     cell_params = {k: params[k] for k in params.keys() if k not in ['p_class', 'span_class']}
     td = B.html.td('\n', transformer(elem.getchildren(), **cell_params))
+    if elem.get('AppliedCellStyle') is not None:
+        td.set('class', ICML.classname(elem.get('AppliedCellStyle')))
     col_span = elem.get('ColumnSpan')
     if int(col_span) > 1:
         td.set('colspan', col_span)
