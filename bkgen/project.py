@@ -15,6 +15,7 @@ log = logging.getLogger(__name__)
 import json, os, re, shutil, subprocess, sys, tempfile, time, traceback, datetime
 from copy import deepcopy
 from glob import glob
+from itertools import chain
 from bl.dict import Dict
 from bl.file import File
 from bl.string import String
@@ -76,6 +77,8 @@ class Project(XML, Source):
             self.interior_folder = 'interior'
         if self.source_folder is None:
             self.source_folder = 'sources'
+        if self.font_folder is None:
+            self.font_folder = 'fonts'
 
     def __repr__(self):
         return "Project(fn=%r)" % self.fn
@@ -366,6 +369,22 @@ class Project(XML, Source):
             log.warn("resource with that href already exists: %r" % resource.attrib)
         return resource
 
+    def import_font_files(self, *fns):
+        resource_hrefs = [elem.get('href') for elem in self.resources()]
+        result_fns = []
+        for fn in fns:
+            src_file = File(fn=str(fn))
+            font_file = File(
+                fn=str((self.folder / self.font_folder / src_file.basename).clean_filename())
+            )
+            if src_file.fn != font_file.fn:
+                src_file.copy(font_file.fn)
+            href = font_file.relpath(self.path)
+            if href not in resource_hrefs:
+                self.add_resource(href, 'font')
+                result_fns.append(font_file.fn)
+        return result_fns
+
     def import_source_file(self, fn, SourceClass=None, **args):
         """import the source fn. 
         fn = the filesystem path to the file (such as a temporary file location)
@@ -391,10 +410,10 @@ class Project(XML, Source):
             for manifest_fn in manifest_fns:
                 result.sources.append(
                     self.import_source_file(
-                    manifest_fn,
-                    fns=manifest_fns,
-                    **{k: v for k, v in args.items() if k not in ['fns']}
-                )
+                        manifest_fn,
+                        fns=manifest_fns,
+                        **{k: v for k, v in args.items() if k not in ['fns']}
+                    )
                 )
             result['fns'] = list(chain(*[source['fns'] for source in result['sources']]))
 
@@ -462,6 +481,13 @@ class Project(XML, Source):
             'application/pdf',
         ] or ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff', '.pdf']:
             result.fns += self.import_image(fn, gs=config.Lib and config.Lib.gs or None)
+
+        # Fonts
+        elif content_type in ['application/x-font-ttf', 'application/font-sfnt'] or ext in [
+            '.ttf',
+            '.otf',
+        ]:
+            result.fns += self.import_font_files(fn)
 
         # not a matching file type
         else:
@@ -1694,6 +1720,7 @@ if __name__ == '__main__':
             project = Project(fn=project_fn)
             for fn in fns:
                 project.import_source_file(fn, fns=fns)
+            project.write()
 
         if 'stylesheet' in sys.argv[1]:
             css = project.stylesheet()
