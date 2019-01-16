@@ -386,13 +386,17 @@ class Project(XML, Source):
         elif content_type in ['application/json'] or ext in ['.json']:
             with open(fn, 'rb') as f:
                 manifest = json.load(f)
+            result['sources'] = []
             manifest_fns = [str(os.path.join(os.path.dirname(fn), entry)) for entry in manifest]
             for manifest_fn in manifest_fns:
-                result.fns += self.import_source_file(
+                result.sources.append(
+                    self.import_source_file(
                     manifest_fn,
                     fns=manifest_fns,
                     **{k: v for k, v in args.items() if k not in ['fns']}
                 )
+                )
+            result['fns'] = list(chain(*[source['fns'] for source in result['sources']]))
 
         # .DOCX files
         elif (
