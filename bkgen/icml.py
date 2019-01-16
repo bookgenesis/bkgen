@@ -13,19 +13,20 @@ from bkgen.source import Source
 
 log = logging.getLogger(__name__)
 
+
 class ICML(XML, Source):
     """model for working with ICML files (also idPkg:Story xml)"""
+
     ROOT_TAG = "Document"
     PTS_PER_EM = 12
-    NS = Dict(**{
-            'idPkg': "http://ns.adobe.com/AdobeInDesign/idml/1.0/packaging"
-        })
+    NS = Dict(**{'idPkg': "http://ns.adobe.com/AdobeInDesign/idml/1.0/packaging"})
 
     def documents(self, path=None, **params):
         """return a list of documents containing the content of the document"""
         fn = os.path.join(
-                path or os.path.dirname(os.path.abspath(self.fn)),
-                os.path.basename(os.path.splitext(self.fn)[0]+'.xml'))
+            path or os.path.dirname(os.path.abspath(self.fn)),
+            os.path.basename(os.path.splitext(self.fn)[0] + '.xml'),
+        )
         return [self.document(fn=fn, **params)]
 
     def document(self, fn=None, styles=None, **params):
@@ -34,9 +35,14 @@ class ICML(XML, Source):
         """
         import bkgen.converters.icml_document
         from .document import Document
-        x = self.transform(bkgen.converters.icml_document.transformer, 
-                fn=fn or self.clean_filename(os.path.splitext(self.fn)[0]+'.xml'), 
-                DocClass=Document, styles=styles or self.styles(), **params)
+
+        x = self.transform(
+            bkgen.converters.icml_document.transformer,
+            fn=fn or self.clean_filename(os.path.splitext(self.fn)[0] + '.xml'),
+            DocClass=Document,
+            styles=styles or self.styles(),
+            **params
+        )
         return x
 
     def metadata(self):
@@ -46,12 +52,16 @@ class ICML(XML, Source):
 
     def styles(self):
         return {
-            s.get('Self'):s for s 
-            in self.xpath(self.root, """//*[
+            s.get('Self'): s
+            for s in self.xpath(
+                self.root,
+                """//*[
                 name()='ParagraphStyle' or name()='CharacterStyle'
                 or name()='TableStyle' or name()='CellStyle'
                 or name()='ObjectStyle' or name()='TOCStyle'
-                ]""")}
+                ]""",
+            )
+        }
 
     def stylesheet(self, fn=None, pts_per_em=None):
         """create a CSS stylesheet, using the style definitions in the ICML file."""
@@ -74,14 +84,20 @@ class ICML(XML, Source):
                     selector = 'p'
                 else:
                     selector = 'p.' + clsname
-                    if len(self.root.xpath(
-                            """//ParagraphStyleRange[@AppliedParagraphStyle="%s" and .//Table]""" 
-                            % style.get('Self'))) > 0:
+                    if (
+                        len(
+                            self.root.xpath(
+                                """//ParagraphStyleRange[@AppliedParagraphStyle="%s" and .//Table]"""
+                                % style.get('Self')
+                            )
+                        )
+                        > 0
+                    ):
                         selector += ', div.' + clsname
 
             styles[selector] = self.style_block(style, pts_per_em=pts_per_em)
 
-        css = CSS(fn=fn or os.path.splitext(self.fn)[0]+'.css', styles=styles)
+        css = CSS(fn=fn or os.path.splitext(self.fn)[0] + '.css', styles=styles)
         return css
 
     @classmethod
@@ -94,7 +110,7 @@ class ICML(XML, Source):
             name = '_' + name
         return name
 
-    # query the style element for each supported attribute and build 
+    # query the style element for each supported attribute and build
     # its value based on what is there. Work by CSS attributes rather
     # than by ICML properties -- treat the style element as data to query
 
@@ -124,6 +140,7 @@ class ICML(XML, Source):
     @classmethod
     def lang_attribute(Class, elem):
         import pycountry
+
         key = 'AppliedLanguage'
         if elem.get(key) is not None:
             lang = pycountry.languages.lookup(elem.get(key).split('/')[-1].split(':')[0])
@@ -137,6 +154,7 @@ class ICML(XML, Source):
         """query style elem for attributes and return a CSS style definition block.
         """
         from bf.css import CSS
+
         log.debug(elem.attrib)
         pts_per_em = pts_per_em or Class.PTS_PER_EM
         style = Dict()
@@ -145,9 +163,9 @@ class ICML(XML, Source):
         cap = elem.get('Capitalization')
         if cap in ['SmallCaps', 'CapToSmallCap']:
             style['font-variant:'] = 'small-caps'
-        elif cap=='AllCaps':
+        elif cap == 'AllCaps':
             style['text-transform:'] = 'uppercase'
-        elif cap=='Normal':
+        elif cap == 'Normal':
             style['text-transform:'] = 'none'
             style['font-variant:'] = 'normal'
         elif cap is not None:
@@ -157,17 +175,17 @@ class ICML(XML, Source):
         if elem.get('FillColor') is not None:
             color = elem.get('FillColor').split('/')[-1]
             cmyk = re.match(r'^C=(\d+) M=(\d+) Y=(\d+) K=(\d+)$', color)
-            rgb = re.match(r'^R=(\d+) G=(\d+) B=(\d+)$', color) \
-                or re.match(r"Word_R(\d+)_G(\d+)_B(\d+)$", color)
+            rgb = re.match(r'^R=(\d+) G=(\d+) B=(\d+)$', color) or re.match(
+                r"Word_R(\d+)_G(\d+)_B(\d+)$", color
+            )
             if cmyk is not None:
                 rgb = CSS.cmyk_to_rgb(cmyk.group(1), cmyk.group(2), cmyk.group(3), cmyk.group(4))
                 style['color:'] = 'rgb(%(r)d, %(g)d, %(b)d)' % rgb
             elif rgb is not None:
-                style['color:'] = ('rgb(%s, %s, %s)' 
-                    % (rgb.group(1), rgb.group(2), rgb.group(3)))
-            elif color=='Black':
+                style['color:'] = 'rgb(%s, %s, %s)' % (rgb.group(1), rgb.group(2), rgb.group(3))
+            elif color == 'Black':
                 style['color:'] = 'rgb(0, 0, 0)'
-            elif color=='Paper':
+            elif color == 'Paper':
                 style['color:'] = 'rgb(255, 255, 255)'
             else:
                 style['color:'] = '"%s"' % color
@@ -191,8 +209,8 @@ class ICML(XML, Source):
         # font-size
         if elem.get('PointSize') is not None:
             pts = float(elem.get('PointSize'))
-            fontsize = float(elem.get('PointSize'))/pts_per_em
-            style['font-size:'] = "%.02fem" % (fontsize, )
+            fontsize = float(elem.get('PointSize')) / pts_per_em
+            style['font-size:'] = "%.02fem" % (fontsize,)
         else:
             fontsize = 1.0
             pts = pts_per_em
@@ -224,11 +242,11 @@ class ICML(XML, Source):
             elif fs in ['Italic', 'Oblique']:
                 style['font-weight:'] = 'normal'
                 style['font-style:'] = 'italic'
-            elif fs in ['Nothing',]:
+            elif fs in ['Nothing']:
                 pass
             else:
                 log.warn("FontStyle=%r" % fs)
-            
+
         # hyphens
         if elem.get('Hyphenation') == 'false':
             style['hyphens:'] = 'none'
@@ -245,23 +263,38 @@ class ICML(XML, Source):
 
         # margin-left
         if elem.get('LeftIndent') is not None:
-            style['margin-left:'] = "%.02f%s" % ((float(elem.get('LeftIndent'))/pts)/fontsize, unit)
+            style['margin-left:'] = "%.02f%s" % (
+                (float(elem.get('LeftIndent')) / pts) / fontsize,
+                unit,
+            )
 
         # margin-right
         if elem.get('RightIndent') is not None:
-            style['margin-right:'] = "%.02f%s" % ((float(elem.get('RightIndent'))/pts)/fontsize, unit)
+            style['margin-right:'] = "%.02f%s" % (
+                (float(elem.get('RightIndent')) / pts) / fontsize,
+                unit,
+            )
 
         # margin-top
         if elem.get('SpaceBefore') is not None:
-            style['margin-top:'] = "%.02f%s" % ((float(elem.get('SpaceBefore'))/pts)/fontsize, unit)
+            style['margin-top:'] = "%.02f%s" % (
+                (float(elem.get('SpaceBefore')) / pts) / fontsize,
+                unit,
+            )
 
         # margin-bottom
         if elem.get('SpaceAfter') is not None:
-            style['margin-bottom:'] = "%.02f%s" % ((float(elem.get('SpaceAfter'))/pts)/fontsize, unit)
+            style['margin-bottom:'] = "%.02f%s" % (
+                (float(elem.get('SpaceAfter')) / pts) / fontsize,
+                unit,
+            )
 
         # text-indent
         if elem.get('FirstLineIndent') is not None:
-            style['text-indent:'] = "%.02f%s" % ((float(elem.get('FirstLineIndent'))/pts)/fontsize, unit)
+            style['text-indent:'] = "%.02f%s" % (
+                (float(elem.get('FirstLineIndent')) / pts) / fontsize,
+                unit,
+            )
 
         # page-break-before
         if elem.get('StartParagraph') in ['NextColumn', 'NextFrame', 'NextPage']:
@@ -285,7 +318,12 @@ class ICML(XML, Source):
             style['text-align:'] = 'center'
         elif elem.get('Justification') in ['RightAlign', 'AwayFromBindingSide']:
             style['text-align:'] = 'right'
-        elif elem.get('Justification') in ['LeftJustified', 'RightJustified', 'CenterJustified', 'FullyJustified']:
+        elif elem.get('Justification') in [
+            'LeftJustified',
+            'RightJustified',
+            'CenterJustified',
+            'FullyJustified',
+        ]:
             style['text-align:'] = 'justify'
 
         # text-decoration (underline, strikethrough)
@@ -303,7 +341,7 @@ class ICML(XML, Source):
             style['vertical-align:'] = 'super'
         elif position in ['Subscript', 'OTSubscript']:
             style['vertical-align:'] = 'sub'
-        elif position=='Normal':
+        elif position == 'Normal':
             style['vertical-align:'] = 'baseline'
         elif alignment in ['AlignBaseline', 'AlignEmBottom', 'AlignICFBottom']:
             style['vertical-align:'] = 'text-bottom'
@@ -326,4 +364,3 @@ class ICML(XML, Source):
 
         log.debug("=> style: %r" % style)
         return style
-
