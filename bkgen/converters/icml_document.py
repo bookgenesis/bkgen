@@ -647,9 +647,13 @@ def post_process(root, **params):
     root = anchors_outside_hyperlinks(root)
     root = anchors_inside_paras(root)
     root = fix_endnote_refs(root)
-    if params.get('preserve_paragraphs') != True:
+    if params.get('preserve_paragraphs') is not True:
         root = remove_empty_paras(root)
-    root = convert_lists(root)
+    if params.get('convert_lists') is True:
+        root = convert_lists(root)
+    else:
+        for p in Document.xpath(root, "//html:p[@BulletsAndNumberingListType]"):
+            p.attrib.pop('BulletsAndNumberingListType')
     root = remove_container_sections(root)
     root = unnest_p_divs(root)
     root = unnest_tables_from_p(root)
