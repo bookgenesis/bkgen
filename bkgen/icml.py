@@ -87,10 +87,10 @@ class ICML(XML, Source):
     @classmethod
     def classname(C, stylename):
         """convert an Indesign style name into an HTML class name"""
-        name = stylename.replace('$ID/','').strip('/').replace('[','').replace(']','').replace(' ', '-')
-        name = String(name.split(':')[-1]).camelsplit().strip()
-        name = re.sub('[^0-9A-Za-z_\-]+', '-', name)
-        if re.search("^\d" ,name[0:1]) is not None:
+        name = stylename.strip('/').split(':')[-1].split('/')[-1].replace('[', '').replace(']', '')
+        name = str(String(name).camelsplit().strip())
+        name = re.sub(r'[^0-9A-Za-z_\-]+', '-', name)
+        if re.search(r"^\d", name[0:1]) is not None:
             name = '_' + name
         return name
 
