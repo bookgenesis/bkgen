@@ -794,7 +794,7 @@ def convert_lists(root):
 
 
 def p_tails(root):
-    for p in root.xpath(".//html:p", namespaces=NS):
+    for p in root.xpath(".//html:p | .//html:table | .//html:div | .//html:section", namespaces=NS):
         p.tail = '\n'
     return root
 
