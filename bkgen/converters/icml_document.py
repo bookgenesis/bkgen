@@ -124,7 +124,7 @@ def CharacterStyleRange(elem, **params):
         result = []
 
         # use MathML embedded in MathTools MathZones and delete corresponding MathExpression ranges,
-        if elem.get('MTMathZone') is not None and bool(elem.get('MathToolsML')) is False:
+        if elem.get('MathExprPartData') is not None and bool(elem.get('MathToolsML')) is False:
             # MathExpression ranges that should be deleted
             pass
 
