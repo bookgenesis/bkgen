@@ -347,7 +347,7 @@ def hyperlink_href(hyperlink_elem, source=None, **params):
                 attribs['filename'] = found['filename']
         elif 'HyperlinkURLDestination/' in destination.text:
             find_xpath = "//HyperlinkURLDestination[@Self='%s']" % destination.text
-            found = find_in_documents_or_sources(elem, find_xpath, **params)
+            found = find_in_documents_or_sources(hyperlink_elem, find_xpath, **params)
             if found is not None:
                 attribs['idref'] = make_element_id(found['element'], fn=found['filename'])
                 attribs['filename'] = found['element'].get('DestinationURL')
