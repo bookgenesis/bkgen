@@ -133,6 +133,7 @@
 	<xsl:template match="pub:index"><xsl:apply-templates/></xsl:template>
 	<xsl:template match="pub:toc"><xsl:apply-templates/></xsl:template>
 	<xsl:template match="pub:modified"><xsl:apply-templates/></xsl:template>
+	<xsl:template match="pub:footnote_ref"><xsl:apply-templates/></xsl:template>
 
 	<!-- MathML: If an altimg is available, use it; otherwise, leave the MathML alone -->
 
@@ -148,18 +149,18 @@
 	    	</xsl:if>
 	    	<xsl:if test="@altimg-width or @altimg-height or @altimg-valign">
 	    	    <xsl:attribute name="style">
-	    	    	<!-- either height or width, not both (avoid distorting the image) -->
-	    	    	<xsl:choose>
-	    	    		<xsl:when test="@altimg-height">
+	    	    	<!-- either width or height, not both (avoid distorting the image) -->
+				    <xsl:choose>
+				    	<xsl:when test="@altimg-width">
+				    		<xsl:text>width:</xsl:text>
+			    	        <xsl:value-of select="@altimg-width"/>
+			    	        <xsl:text>;</xsl:text>
+				    	</xsl:when>
+				    	<xsl:when test="@altimg-height">
 				    		<xsl:text>height:</xsl:text>
 			    	        <xsl:value-of select="@altimg-height"/>
 			    	        <xsl:text>;</xsl:text>
 				    	</xsl:when>
-	    	    		<xsl:when test="@altimg-width">
-				    		<xsl:text>width:</xsl:text>
-			    	        <xsl:value-of select="@altimg-width"/>
-			    	        <xsl:text>;</xsl:text>
-				    	</xsl:when>	
 	    	    	</xsl:choose>			    	
 			    	<xsl:if test="@altimg-valign">
 			    		<xsl:text>vertical-align:</xsl:text>
