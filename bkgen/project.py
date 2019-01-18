@@ -1560,6 +1560,20 @@ class Project(XML, Source):
                 self.remove(spineitem)
             self.write()
 
+    def remove_unused_img_files(self):
+        """math files that are unused in the project content are removed from the math content folder."""
+        imgs = []
+        for doc in self.documents():
+            for img in doc.xpath(doc.root, "//img[@src]"):
+                imgs.append(str(doc.folder / img.get('src')))
+        img_paths = [os.normpath(fn) for fn in glob(str(doc.folder / 'images' / '*'))]
+        for img_path in img_paths:
+            if img_path not in imgs:
+                os.remove(img_path)
+                LOG.debug(f"removed {img_path}")
+
+
+
 
 def rmtree_warn(function, path, excinfo):
     log.warn("%s: Could not remove %s: %s" % (function.__name__, path, excinfo()[1]))
