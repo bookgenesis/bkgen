@@ -1,5 +1,5 @@
 {
   "dependencies": {
-    "@daisy/ace": "^1.0.0"
+    "@daisy/ace": "^1.0.2"
   }
 }
