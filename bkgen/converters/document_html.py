@@ -152,7 +152,7 @@ def render_footnotes(root, **params):
             parent = footnote.getparent()
             fnum = footnote.get('title') or str(section_footnotes.index(footnote)+1)
             fnid = footnote.get('id') or "fn-%s" % fnum
-            fnrefid = XML.find(footnote, "pub:footnote-ref/@id", namespaces=NS) or fnid.replace('fn-', 'fnref-')
+            fnrefid = XML.find(footnote, "pub:footnote-ref/@id", namespaces=NS) or fnid + 'ref'
             fnlink = H.a(fnum, href="#%s" % fnid, id=fnrefid)
             parent.insert(parent.index(footnote), fnlink)
             XML.remove(footnote, leave_tail=True)
