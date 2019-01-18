@@ -142,11 +142,11 @@
 	    	<xsl:attribute name="src">
 	    	    <xsl:value-of select="@altimg"/>
 	    	</xsl:attribute>
-	    	<xsl:if test="@alttext">
-	    		<xsl:attribute name="alt">
+	    	<xsl:attribute name="alt">
+	    		<xsl:if test="@alttext">
 	    			<xsl:value-of select="@alttext"></xsl:value-of>
-	    		</xsl:attribute>
-	    	</xsl:if>
+	    		</xsl:if>
+	    	</xsl:attribute>
 	    	<xsl:if test="@altimg-width or @altimg-height or @altimg-valign">
 	    	    <xsl:attribute name="style">
 	    	    	<!-- either width or height, not both (avoid distorting the image) -->
@@ -172,9 +172,7 @@
 	    </img>
 	</xsl:template>
 
-	<!-- altimg attribute (such as on tables) to be removed -->
-	<xsl:template match="@altimg"></xsl:template>
-
+	<!-- math without altimg is just copied -->
     <xsl:template match="m:math[not(@altimg)] | math[not(@altimg)]">
     	<xsl:copy><xsl:apply-templates select="@*|node()"/></xsl:copy>
 	</xsl:template>
