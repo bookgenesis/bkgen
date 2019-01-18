@@ -60,14 +60,11 @@ class EPUB(ZIP, Source):
         log.info("epubcheck log: %s" % checkfn)
         return checkfn
 
-    def ace(self, zip=True):
+    def ace(self, zip=False):
         """use DAISY Ace to validate the epub for accessibility"""
         node = os.environ.get('node') or 'node'
-        daisy_ace = File.normpath(
-            os.path.join(os.path.dirname(PATH), 'node_modules', '@daisy', 'ace', 'bin', 'ace.js')
-        )
         report_path = os.path.splitext(self.fn)[0] + '_ACE'
-        cmd = [node, daisy_ace, '-s', '-f', '-o', report_path, self.fn]
+        cmd = [node, config.Resources.daisyace, '-s', '-f', '-o', report_path, self.fn]
         subprocess.call(cmd)
         if zip == True:
             report_zip_fn = ZIP.zip_path(report_path)
@@ -222,7 +219,7 @@ class EPUB(ZIP, Source):
         before_compile=None,
         zip=True,
         check=True,
-        ace=False,
+        ace=True,
         progress=None,
     ):
         """build EPUB file output; returns EPUB object
