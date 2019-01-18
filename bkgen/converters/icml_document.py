@@ -229,7 +229,7 @@ def Footnote(elem, **params):
     return [
         B.pub.footnote(
             # id is the index + 1 of this footnote in document footnotes
-            {'id': fn_id},
+            {'id': 'fn' + fn_id},
             transformer(elem.getchildren(), **fn_params),
         )
     ]
