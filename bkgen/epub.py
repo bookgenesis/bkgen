@@ -405,7 +405,7 @@ class EPUB(ZIP, Source):
             # (this also removes empty spans such as pagebreaks and index entries)
             for e in XML.xpath(nav_toc, ".//html:p", namespaces=NS):
                 XML.replace_with_contents(e)
-            for e in XML.xpath(nav_toc, ".//html:span[not(parent::html:li)]", namespaces=NS):
+            for e in XML.xpath(nav_toc, ".//html:span", namespaces=NS):
                 XML.replace_with_contents(e)
 
             # must update hrefs and srcs to the nav_href location.
