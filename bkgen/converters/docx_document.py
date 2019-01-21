@@ -411,6 +411,7 @@ def get_images(root, **params):
     for img in imgs:
         embed_rel = XML.find(rels, "//rels:Relationship[@Id='%s']" % img.get('data-embed-id'), namespaces=DOCX.NS)
         link_rel = XML.find(rels, "//rels:Relationship[@Id='%s']" % img.get('data-link-id'), namespaces=DOCX.NS)
+        # source image
         if embed_rel is not None:
             fd = docx.read('word/' + embed_rel.get('Target'))
             imgfn = os.path.join(output_path, image_subdir, img.get('title') or os.path.split(embed_rel.get('Target'))[-1])
@@ -427,7 +428,7 @@ def get_images(root, **params):
             if os.path.exists(srcfn) and not os.path.exists(outfn):
                 shutil.copy(srcfn, outfn)
             if img.get('data-link-id') is not None: _=img.attrib.pop('data-link-id')
-            if img.get('data-embed-id') is not None: _=img.attrib.pop('data-embed-id')            
+            if img.get('data-embed-id') is not None: _=img.attrib.pop('data-embed-id')
         log.debug(img.attrib)
     return root
 
