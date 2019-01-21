@@ -581,11 +581,19 @@
 
     <xsl:template match="pic:pic">
         <img>
+            <!-- title attribute -->
             <xsl:if test="./pic:nvPicPr/pic:cNvPr/@name">
                 <xsl:attribute name="title">
                     <xsl:value-of select="pic:nvPicPr/pic:cNvPr/@name"/>
                 </xsl:attribute>
             </xsl:if>
+            <!-- alt attribute -->
+            <xsl:if test="ancestor::w:drawing//wp:docPr/@descr">
+                <xsl:attribute name="alt">
+                    <xsl:value-of select="(ancestor::w:drawing//wp:docPr/@descr)[1]"></xsl:value-of>
+                </xsl:attribute>
+            </xsl:if>
+            <!-- data-* attributes -->
             <xsl:if test=".//a:blip/@r:embed">
                 <xsl:attribute name="data-embed-id">
                     <xsl:value-of select=".//a:blip/@r:embed"/>
