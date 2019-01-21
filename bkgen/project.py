@@ -567,7 +567,7 @@ class Project(XML, Source):
         (2) adding sections of the document to the spine, if not present
         (3) importing referenced images, if available
         """
-        with open(os.path.join(PATH, 'resources', 'epubtypes.json'), 'rb') as f:
+        with open(os.path.join(config.Resources.path, 'epubtypes.json'), 'rb') as f:
             epubtypes = json.loads(f.read().decode('utf-8'))
         if documents is None:
             return
