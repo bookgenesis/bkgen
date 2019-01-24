@@ -556,9 +556,8 @@ def field_attributes(root, **params):
 
 def parse_field_attributes(cls, tokens):
     attr = Dict()
-    if FIELD_TEMPLATES.get(cls) is not None:
+    if FIELD_TEMPLATES.get(cls) is not None and len(tokens) > 0:
         template = FIELD_TEMPLATES.get(cls)
-
         if template.get('') is not None:    # first token is a value
             attr[template.get('')[0]] = tokens.pop(0)
         while len(tokens) > 0:
