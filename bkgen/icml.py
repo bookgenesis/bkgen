@@ -187,9 +187,19 @@ class ICML(XML, Source):
                 style['color:'] = 'rgb(0, 0, 0)'
             elif color == 'Paper':
                 style['color:'] = 'rgb(255, 255, 255)'
+            elif color in ['None', 'Registration']:
+                # don't set the color attribute for this style
+                pass
             else:
                 style['color:'] = '"%s"' % color
-                log.warn("color=%r" % color)
+                log.warn(
+                    "color=%r on %r %r"
+                    % (
+                        color,
+                        XML.tag_name(elem),
+                        {k: v for k, v in elem.attrib.items() if k in ['Self', 'Name']},
+                    )
+                )
 
         # direction
         direction = elem.get('CharacterDirection')
