@@ -151,14 +151,14 @@
 	    	    <xsl:attribute name="style">
 	    	    	<!-- either width or height, not both (avoid distorting the image) -->
 				    <xsl:choose>
-				    	<xsl:when test="@altimg-width">
-				    		<xsl:text>width:</xsl:text>
-			    	        <xsl:value-of select="@altimg-width"/>
-			    	        <xsl:text>;</xsl:text>
-				    	</xsl:when>
 				    	<xsl:when test="@altimg-height">
 				    		<xsl:text>height:</xsl:text>
 			    	        <xsl:value-of select="@altimg-height"/>
+			    	        <xsl:text>;</xsl:text>
+				    	</xsl:when>
+				    	<xsl:when test="@altimg-width">
+				    		<xsl:text>width:</xsl:text>
+			    	        <xsl:value-of select="@altimg-width"/>
 			    	        <xsl:text>;</xsl:text>
 				    	</xsl:when>
 	    	    	</xsl:choose>			    	
