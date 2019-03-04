@@ -37,6 +37,9 @@
         <xsl:apply-templates/>
     </xsl:template>
 
+    <!-- delete comments for now; maybe later we'll convert them to Notes. -->
+    <xsl:template match="pub:comment"></xsl:template>
+
     <xsl:template match="html:section">
         <xsl:apply-templates></xsl:apply-templates>
     </xsl:template>
