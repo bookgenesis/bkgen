@@ -77,7 +77,7 @@ def get_includes(root, **params):
                 href_elem.set('href', str(url))
             for img in Document.xpath(elem, ".//*[not(name()='include') and @src]"):
                 url = URL(img.get('src'))
-                if url.scheme in ['', 'file']:
+                if url.scheme in ['', 'file'] and url.path[0:1] != '/':
                     hrfile = src.folder / url.path
                     url.path = os.path.relpath(hrfile.fn, document.path)
                 img.set('src', str(url))
@@ -208,14 +208,19 @@ def output_images(root, art_path=None, **params):
     src_file = params['xml']
     out_file = File(fn=params['fn'])
     for img in Document.xpath(root, "//html:img[@src]"):
-        src_image = src_file.folder / img.get('src')
+        src_url = URL(img.get('src'))
+        if src_url.scheme in ['', 'file'] and src_url.path[0:1] != '/':
+            # treat it as a relative path
+            src_url.path = src_file.folder / src_url.path
+        src_image = File(src_url.path)
         art_image = Folder(fn=art_path or '') / img.get('src')
         if not src_image.exists and art_image.exists:
             src_image = art_image
-        out_image = out_file.folder / img.get('src')
+        out_image = out_file.folder / os.path.splitext(out_file.basename)[0] / src_image.basename
         if not src_image.exists:
             if not out_image.exists:
                 log.warn(f"img src doesn't exists: {src_image.fn}")
+                log.debug(dict(**src_url))
         elif not out_image.exists or src_image.mtime > out_image.mtime:
             src_image.write(fn=out_image.fn)
             log.info(f"wrote image file: {out_image.fn}")
