@@ -360,17 +360,18 @@ def tds_with_image_style_min_width_height(root):
             "//html:td[descendant::html:img[contains(@style,'width') or contains(@style,'height')]]"
     ):
         td_style = {
-            k: v
-            for k, v in
-            [attr.split(':') for attr in (td.get('style') or ':').strip(';').split(';')] if k != ''
+            key.strip(): val.strip()
+            for key, val in
+            [attr.split(':') for attr in (td.get('style') or ':').strip(';').split(';')]
+            if key != ''
         }
         for img in Document.xpath(
                 td, "descendant::html:img[contains(@style,'width') or contains(@style,'height')]"):
             img_style = {
-                k: v
-                for k, v in
+                key.strip(): val.strip()
+                for key, val in
                 [attr.split(':') for attr in (img.get('style') or ':').strip(';').split(';')]
-                if k != ''
+                if key != ''
             }
             for key in ['width', 'height']:
                 if key in img_style and 'min-' + key not in td_style:
@@ -379,6 +380,6 @@ def tds_with_image_style_min_width_height(root):
                 if key in img_style and key not in td_style:
                     td_style[key] = img_style[key]
         if len(td_style) > 0:
-            td.set('style', ';'.join(["%s:%s" % (k, v) for k, v in td_style.items()]) + ';')
+            td.set('style', '; '.join(["%s: %s" % (k, v) for k, v in td_style.items()]) + ';')
 
     return root
