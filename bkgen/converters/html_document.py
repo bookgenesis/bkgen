@@ -19,9 +19,11 @@ B = Builder(**NS)
 transformer = XT()
 transformer_XSLT = etree.XSLT(etree.parse(os.path.splitext(__file__)[0] + '.xsl'))
 
+
 class HtmlDocument(Converter):
     def convert(self, html, **params):
         return html.transform(transformer, XMLClass=Document, **params)
+
 
 @transformer.match("elem.tag=='{%(html)s}html'" % NS)
 def document(elem, **params):
@@ -35,12 +37,13 @@ def document(elem, **params):
     root = remove_event_attributes(root)
     return [root]
 
+
 def wrap_sections(root, body_xpath=None):
     """each level of heading creates a new section
     body_xpath = path to elements that indicate the start of a new section
     """
     body = root.find("{%(html)s}body" % NS)
-    if body_xpath is None: 
+    if body_xpath is None:
         body_xpath = """
               .//html:p[(contains(@class, 'Heading')
                          or contains(@class, 'heading')
@@ -59,7 +62,8 @@ def wrap_sections(root, body_xpath=None):
         parent = elem.getparent()
         if parent.tag != "{%(html)s}section" % NS:
             # start a section, go until another body_xpath element or no more available
-            section = etree.Element("{%(html)s}section" % NS); section.text=section.tail='\n'
+            section = etree.Element("{%(html)s}section" % NS)
+            section.text = section.tail = '\n'
             parent.insert(parent.index(elem), section)
             nxt = elem.getnext()
             section.append(elem)
@@ -68,6 +72,7 @@ def wrap_sections(root, body_xpath=None):
                 nxt = elem.getnext()
                 section.append(elem)
     return root
+
 
 def sections_ids(root):
     """every section needs to have a title, if possible, and a unique id in the document
@@ -84,57 +89,66 @@ def sections_ids(root):
                     or contains(@class, 'Title')]"""
     for section in sections:
         if section.get('title') is None:
-            title_elems = section.xpath(title_xpath, namespaces=NS) 
+            title_elems = section.xpath(title_xpath, namespaces=NS)
             if len(title_elems) > 0:
                 title_elem = title_elems[0]
                 if title_elem.tag == "{%(html)s}img" % NS:
                     title_text = title_elem.get('title') or title_elem.get('alt')
                 else:
-                    title_text = String(etree.tounicode(title_elems[0], method='text', with_tail=False)).titleify()
+                    title_text = String(
+                        etree.tounicode(title_elems[0], method='text', with_tail=False)).titleify()
                 section.set('title', title_text)
-        id = "s%d" % (sections.index(section)+1,)
+        id = "s%d" % (sections.index(section) + 1, )
         if section.get('title') is not None:
             id += '_' + String(section.get('title') or '').nameify(ascii=True)
         section.set('id', id)
     return root
+
 
 def p_ids(root):
     """every p needs an id"""
     paras = root.xpath(".//html:p[not(@id)]", namespaces=NS)
     for p in paras:
         # create a unique but repeatable id: sequence number + digest
-        id = "p%d_%s" % (
-            paras.index(p)+1, 
-            String(etree.tounicode(p, method='text', with_tail=False)).digest()[:4])
+        id = "p%d_%s" % (paras.index(p) + 1,
+                         String(etree.tounicode(p, method='text', with_tail=False)).digest()[:4])
         p.set('id', id)
     return root
+
 
 def hrefs_to_xml(root):
     """hrefs to html files in this document space need to be to xml files instead."""
     for a in root.xpath("//*[contains(@href, 'html')]", namespaces=NS):
         url = URL(a.get('href'))
         if url.host in ['', None] and 'html' in url.path:
-            url.path = os.path.splitext(url.path)[0]+'.xml'
+            url.path = os.path.splitext(url.path)[0] + '.xml'
         a.set('href', str(url))
     return root
 
+
 def normalize_img_src(root):
     for e in root.xpath("//html:img[@src]", namespaces=NS):
-        src = os.path.splitext(File(fn=str(URL(e.get('src')))).clean_filename())[0]+'.jpg'
-        e.set('src', src)
+        src = File(fn=str(URL(e.get('src'))))
+        newfn = src.clean_filename()
+        if newfn != src.fn:
+            os.rename(src.fn, newfn)
+            e.set('src', newfn)
     return root
+
 
 def remove_empty_spans(root):
     """all empty spans should be removed, as they confuse web browsers"""
-    for span in [span for span in root.xpath("//html:span", namespaces=NS) 
-                if span.text in [None, ''] and len(span.getchildren())==0]:
+    for span in [
+            span for span in root.xpath("//html:span", namespaces=NS)
+            if span.text in [None, ''] and len(span.getchildren()) == 0
+    ]:
         XML.remove(span, leave_tail=True)
     return root
+
 
 def remove_event_attributes(root):
     """all event attributes (onLoad, etc.) should be removed."""
     for elem in root.xpath("//*[@*[starts-with(name(),'on')]]"):
-        for key in [key for key in elem.attrib.keys() if key[:2]=='on']:
+        for key in [key for key in elem.attrib.keys() if key[:2] == 'on']:
             _ = elem.attrib.pop(key)
     return root
-
