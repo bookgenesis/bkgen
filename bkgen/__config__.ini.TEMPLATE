@@ -16,8 +16,8 @@ level: 20
 
 [EPUB]
 # iBooks allows 4 megapixels per image maximum
-images: {'quality': 90, 'maxpixels': 4e6}
+images: {'quality': 90, 'maxpixels': 4e6, 'format': 'png16m', 'ext': '.png', 'res': 600}
 
 [Kindle]
 # https://kdp.amazon.com/help?topicId=A2J0TRG6OPX0VM
-images: {'quality': 90, 'maxwh': 2560, 'maxpixels': 100e6}
+images: {'quality': 90, 'maxwh': 2560, 'maxpixels': 100e6, 'format': 'jpeg', 'ext': '.jpg'}
