@@ -1,4 +1,3 @@
-
 import logging
 import bf.css
 from bxml import XML
@@ -6,8 +5,8 @@ from bkgen import NS
 
 log = logging.getLogger(__name__)
 
-class CSS(bf.css.CSS):
 
+class CSS(bf.css.CSS):
     def remove_unused_styles(self, xmlfns):
         """delete the styles that are not used in the given XML fns."""
         selectors = []
@@ -21,7 +20,7 @@ class CSS(bf.css.CSS):
         for sel in self.styles.keys():
             if sel not in selectors:
                 log.debug("%s %r" % (sel, self.styles[sel]))
-                _=self.styles.pop(sel)
+                _ = self.styles.pop(sel)
 
     def add_undefined_styles(self, xmlfns):
         """add XML styles that are not defined in the stylesheet"""
@@ -37,4 +36,3 @@ class CSS(bf.css.CSS):
             if sel not in self.styles.keys():
                 log.debug("adding: %r" % sel)
                 self.styles[sel] = Dict()
-

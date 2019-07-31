@@ -1,5 +1,5 @@
-
 from bl.file import File
+
 
 class Source(File):
     """Base class/mixin for supported source formats. All sources must have the following properties and methods.
@@ -19,7 +19,7 @@ class Source(File):
             return [doc]
         else:
             return []
-        
+
     def document(self, path=None, **params):
         return
 
@@ -37,4 +37,3 @@ class Source(File):
         """returns a :doc:`bkgen.css.CSS </api/css>` stylesheet object provided by the Source, or None.
         """
         return None
-

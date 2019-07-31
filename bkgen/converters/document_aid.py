@@ -100,26 +100,32 @@ def special_characters(root, **params):
     InDesign
     """
     for elem in root.xpath("//*[text()]"):
-        elem.text = ((elem.text or '').replace('\u00A0', '[pub:x00A0]\u00A0[/pub:x00A0]').replace(
-            '\u00AD', '[pub:x00AD]\u00AD[/pub:x00AD]').replace(
-                '\u2002', '[pub:x2002]\u2002[/pub:x2002]').replace(
-                    '\u2003', '[pub:x2003]\u2003[/pub:x2003]').replace(
-                        '\u2007', '[pub:x2007]\u2007[/pub:x2007]').replace(
-                            '\u2008', '[pub:x2008]\u2008[/pub:x2008]').replace(
-                                '\u2009', '[pub:x2009]\u2009[/pub:x2009]').replace(
-                                    '\u200A', '[pub:x200A]\u200A[/pub:x200A]').replace(
-                                        '\u2011', '[pub:x2011]\u2011[/pub:x2011]').replace(
-                                            '\u202F', '[pub:x202F]\u202F[/pub:x202F]'))
-        elem.tail = ((elem.tail or '').replace('\u00A0', '[pub:x00A0]\u00A0[/pub:x00A0]').replace(
-            '\u00AD', '[pub:x00AD]\u00AD[/pub:x00AD]').replace(
-                '\u2002', '[pub:x2002]\u2002[/pub:x2002]').replace(
-                    '\u2003', '[pub:x2003]\u2003[/pub:x2003]').replace(
-                        '\u2007', '[pub:x2007]\u2007[/pub:x2007]').replace(
-                            '\u2008', '[pub:x2008]\u2008[/pub:x2008]').replace(
-                                '\u2009', '[pub:x2009]\u2009[/pub:x2009]').replace(
-                                    '\u200A', '[pub:x200A]\u200A[/pub:x200A]').replace(
-                                        '\u2011', '[pub:x2011]\u2011[/pub:x2011]').replace(
-                                            '\u202F', '[pub:x202F]\u202F[/pub:x202F]'))
+        elem.text = (
+            (elem.text or '')
+            .replace('\u00A0', '[pub:x00A0]\u00A0[/pub:x00A0]')
+            .replace('\u00AD', '[pub:x00AD]\u00AD[/pub:x00AD]')
+            .replace('\u2002', '[pub:x2002]\u2002[/pub:x2002]')
+            .replace('\u2003', '[pub:x2003]\u2003[/pub:x2003]')
+            .replace('\u2007', '[pub:x2007]\u2007[/pub:x2007]')
+            .replace('\u2008', '[pub:x2008]\u2008[/pub:x2008]')
+            .replace('\u2009', '[pub:x2009]\u2009[/pub:x2009]')
+            .replace('\u200A', '[pub:x200A]\u200A[/pub:x200A]')
+            .replace('\u2011', '[pub:x2011]\u2011[/pub:x2011]')
+            .replace('\u202F', '[pub:x202F]\u202F[/pub:x202F]')
+        )
+        elem.tail = (
+            (elem.tail or '')
+            .replace('\u00A0', '[pub:x00A0]\u00A0[/pub:x00A0]')
+            .replace('\u00AD', '[pub:x00AD]\u00AD[/pub:x00AD]')
+            .replace('\u2002', '[pub:x2002]\u2002[/pub:x2002]')
+            .replace('\u2003', '[pub:x2003]\u2003[/pub:x2003]')
+            .replace('\u2007', '[pub:x2007]\u2007[/pub:x2007]')
+            .replace('\u2008', '[pub:x2008]\u2008[/pub:x2008]')
+            .replace('\u2009', '[pub:x2009]\u2009[/pub:x2009]')
+            .replace('\u200A', '[pub:x200A]\u200A[/pub:x200A]')
+            .replace('\u2011', '[pub:x2011]\u2011[/pub:x2011]')
+            .replace('\u202F', '[pub:x202F]\u202F[/pub:x202F]')
+        )
     root = etree.fromstring(re.sub(r"\[(/?pub:[^\]]*?)\]", r"<\1>", etree.tounicode(root)))
     return root
 
@@ -173,14 +179,15 @@ def aid_style_names(root):
     """hyphens to spaces in AID style names"""
     for elem in Document.xpath(root, "//*[@aid:pstyle]", namespaces=NS):
         pstyle = elem.get("{%(aid)s}pstyle" % NS).replace('-', ' ')
-        if pstyle[:len('heading')] == 'heading':
+        if pstyle[: len('heading')] == 'heading':
             pstyle = pstyle.replace('heading', 'Heading')
         elem.set("{%(aid)s}pstyle" % NS, pstyle)
     for elem in Document.xpath(root, "//*[@aid:cstyle]", namespaces=NS):
         elem.set("{%(aid)s}cstyle" % NS, elem.get("{%(aid)s}cstyle" % NS).replace('-', ' '))
     for elem in Document.xpath(root, "//*[@aid5:tablestyle]", namespaces=NS):
-        elem.set("{%(aid5)s}tablestyle" % NS,
-                 elem.get("{%(aid5)s}tablestyle" % NS).replace('-', ' '))
+        elem.set(
+            "{%(aid5)s}tablestyle" % NS, elem.get("{%(aid5)s}tablestyle" % NS).replace('-', ' ')
+        )
     for elem in Document.xpath(root, "//*[@aid5:cellstyle]", namespaces=NS):
         elem.set("{%(aid5)s}cellstyle" % NS, elem.get("{%(aid5)s}cellstyle" % NS).replace('-', ' '))
     return root

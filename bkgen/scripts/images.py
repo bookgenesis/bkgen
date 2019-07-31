@@ -1,4 +1,3 @@
-
 import os, sys, logging
 from bl.rglob import rglob
 from bgs import GS
@@ -7,6 +6,7 @@ from bkgen import config
 
 magick = Magick(cmd=config.Images and config.Images.magick or 'gm')
 gs = GS(magick=magick.cmd)
+
 
 def trim(fn):
     """trim the file and return the output filename"""

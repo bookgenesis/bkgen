@@ -1,18 +1,19 @@
-
 from bl.dict import Dict
 from lxml import etree
 from bxml import XML
-from . import NS    
+from . import NS
+
 
 class Metadata(XML):
     ROOT_TAG = "{%(opf)s}metadata" % NS
-    NS = Dict(**{k:NS[k] for k in NS if k in ['opf', 'dc', 'dcterms', 'dcmitype', 'cp', 'xsi',]})
+    NS = Dict(**{k: NS[k] for k in NS if k in ['opf', 'dc', 'dcterms', 'dcmitype', 'cp', 'xsi']})
 
     def identifier(self, id_patterns=['isbn']):
         identifier = None
         for pattern in id_patterns:
             identifier = self.find(self.root, "dc:identifier[contains(@id, '%s')]" % pattern)
-            if identifier is not None: return identifier
+            if identifier is not None:
+                return identifier
 
     def meta(self, property_name):
         return self.element("opf:meta", property=property_name)
@@ -27,7 +28,7 @@ class Metadata(XML):
 
     @property
     def date(self):
-        return self.element("dc:date")        
+        return self.element("dc:date")
 
     @property
     def description(self):
@@ -46,7 +47,11 @@ class Metadata(XML):
         entries = []
         for elem in self.xpath(self.root, "dc:identifier"):
             entries.append(
-                (elem.text or '', self.element("opf:meta", refines='#%s' % elem.get('id')).text or ''))
+                (
+                    elem.text or '',
+                    self.element("opf:meta", refines='#%s' % elem.get('id')).text or '',
+                )
+            )
         return entries
 
     @property
@@ -58,7 +63,8 @@ class Metadata(XML):
         entries = []
         for elem in self.xpath(self.root, "dc:creator"):
             entries.append(
-                (elem.text or '', self.element("opf:meta", refines='#%s' % elem.get('id')).text))
+                (elem.text or '', self.element("opf:meta", refines='#%s' % elem.get('id')).text)
+            )
         return entries
 
     @property
@@ -68,4 +74,3 @@ class Metadata(XML):
     @property
     def subjects(self):
         return self.xpath(self.root, "dc:subject")
-

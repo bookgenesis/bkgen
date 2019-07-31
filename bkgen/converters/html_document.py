@@ -96,9 +96,10 @@ def sections_ids(root):
                     title_text = title_elem.get('title') or title_elem.get('alt')
                 else:
                     title_text = String(
-                        etree.tounicode(title_elems[0], method='text', with_tail=False)).titleify()
+                        etree.tounicode(title_elems[0], method='text', with_tail=False)
+                    ).titleify()
                 section.set('title', title_text)
-        id = "s%d" % (sections.index(section) + 1, )
+        id = "s%d" % (sections.index(section) + 1,)
         if section.get('title') is not None:
             id += '_' + String(section.get('title') or '').nameify(ascii=True)
         section.set('id', id)
@@ -110,8 +111,10 @@ def p_ids(root):
     paras = root.xpath(".//html:p[not(@id)]", namespaces=NS)
     for p in paras:
         # create a unique but repeatable id: sequence number + digest
-        id = "p%d_%s" % (paras.index(p) + 1,
-                         String(etree.tounicode(p, method='text', with_tail=False)).digest()[:4])
+        id = "p%d_%s" % (
+            paras.index(p) + 1,
+            String(etree.tounicode(p, method='text', with_tail=False)).digest()[:4],
+        )
         p.set('id', id)
     return root
 
@@ -139,8 +142,9 @@ def normalize_img_src(root):
 def remove_empty_spans(root):
     """all empty spans should be removed, as they confuse web browsers"""
     for span in [
-            span for span in root.xpath("//html:span", namespaces=NS)
-            if span.text in [None, ''] and len(span.getchildren()) == 0
+        span
+        for span in root.xpath("//html:span", namespaces=NS)
+        if span.text in [None, ''] and len(span.getchildren()) == 0
     ]:
         XML.remove(span, leave_tail=True)
     return root

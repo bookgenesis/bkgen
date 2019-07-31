@@ -22,9 +22,11 @@ B = Builder(default=NS.html, **NS)
 transformer = XT()
 transformer_XSLT = etree.XSLT(etree.parse(os.path.splitext(__file__)[0] + '.xsl'))
 
+
 class DocBookDocument(Converter):
     def convert(self, docx, fn=None, **params):
         return docx.transform(transformer, fn=fn, XMLClass=Document, **params)
+
 
 @transformer.match("True")
 def document(elem, **params):
@@ -32,9 +34,10 @@ def document(elem, **params):
     root = transformer_XSLT(root).getroot()
     docroot = B.pub.document(B._.body('\n', root, '\n'))
     for e in docroot.xpath("//*[@href or @src]"):
-        if e.get('href') is not None: e.set('href', str(URL(e.get('href'))))
-        if e.get('src') is not None: e.set('src', str(URL(e.get('src'))))
+        if e.get('href') is not None:
+            e.set('href', str(URL(e.get('href'))))
+        if e.get('src') is not None:
+            e.set('src', str(URL(e.get('src'))))
     for img in docroot.xpath("//html:img[@height]", namespaces=NS):
         img.set('style', 'height:%s;%s' % (img.attrib.pop('height'), img.get('style') or ''))
-    return [ docroot ]
-
+    return [docroot]

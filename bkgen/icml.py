@@ -1,4 +1,3 @@
-
 import os, re, sys, traceback, logging
 import glob
 from lxml import etree

@@ -9,19 +9,14 @@ config = {
     "classifiers": [
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
-        "Programming Language :: Python :: 3"
+        "Programming Language :: Python :: 3",
     ],
     "entry_points": {},
     "install_requires": ["bl", "bf", "bxml", "pycountry"],
-    "extras_require": {
-        "dev": [],
-        "test": []
-    },
-    "package_data": {
-        "": []
-        },
+    "extras_require": {"dev": [], "test": []},
+    "package_data": {"": []},
     "data_files": [],
-    "scripts": []
+    "scripts": [],
 }
 
 import os, json, shutil

@@ -1,19 +1,19 @@
-
 import os
 from bxml import XML
 from bkgen.source import Source
 
-class DocBook(XML, Source):
 
-    def document(self, fn=None, **params): 
+class DocBook(XML, Source):
+    def document(self, fn=None, **params):
         """returns an XML document containing the content of the DocBook document"""
         from .converters.docbook_document import DocBookDocument
+
         converter = DocBookDocument()
-        fn = fn or os.path.splitext(self.clean_filename(self.fn))[0]+'.xml'
+        fn = fn or os.path.splitext(self.clean_filename(self.fn))[0] + '.xml'
         doc = converter.convert(self, fn=fn, **params)
         return doc
 
-    # == Source Properties == 
+    # == Source Properties ==
 
     def documents(self, path=None, **params):
         """return a list of documents containing the content of the document"""
