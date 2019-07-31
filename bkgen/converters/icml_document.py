@@ -1,26 +1,27 @@
 # XT .icml to pub:document
 
 import logging
+import os
+import re
+import urllib.parse
+
+from bl.dict import Dict
+from bl.file import File
+from bl.id import random_id
+from bl.string import String
+from bl.url import URL
+from bxml.builder import Builder
+from bxml.xml import XML
+from bxml.xt import XT
+from lxml import etree
+
+import bkgen
+from bkgen.converters import Converter
+from bkgen.document import Document
+from bkgen.icml import ICML
 
 log = logging.getLogger(__name__)
 
-import os, re, json, sys
-import urllib.parse
-from lxml import etree
-import pycountry
-from bl.id import random_id
-from bl.dict import Dict
-from bl.string import String
-from bl.url import URL
-from bl.file import File
-from bl.text import Text
-from bxml.xml import XML
-from bxml.xt import XT
-from bxml.builder import Builder
-from bkgen.icml import ICML
-from bkgen.converters import Converter
-from bkgen.document import Document
-import bkgen
 
 NS = Document.NS
 NS.update(**{k: bkgen.NS[k] for k in bkgen.NS if 'aid' in k})
@@ -251,10 +252,11 @@ def Table(elem, **params):
 def Row(elem, **params):
     tr = B.html.tr('\n\t\t')
     tail = ":" + elem.get('Name')
+    len_tail = len(tail)
     for cell in [
         cell
         for cell in elem.xpath("../Cell[contains(@Name, ':%s')]" % elem.get('Name'))
-        if cell.get('Name')[-len(tail) :] == tail
+        if cell.get('Name')[-len_tail:] == tail
     ]:
         tr.append(Cell(cell, **params)[0])
     return [tr, '\n\t']
@@ -274,7 +276,6 @@ def Cell(elem, **params):
 # == HyperlinkTextDestination ==
 @transformer.match("elem.tag=='HyperlinkTextDestination'")
 def HyperlinkTextDestination(elem, **params):
-    hyperlink = ''
     result = []
     attrib = {'id': make_element_id(elem, **params)}
 
@@ -341,7 +342,7 @@ def hyperlink_href(hyperlink_elem, source=None, **params):
     if destination is not None:
         if 'HyperlinkTextDestination/' in destination.text:
             find_xpath = "//HyperlinkTextDestination[@Self='%s']" % destination.text
-            found = find_in_documents_or_sources(elem, find_xpath, **params)
+            found = find_in_documents_or_sources(hyperlink_elem, find_xpath, **params)
             if found is not None:
                 attribs['idref'] = make_element_id(found['element'], fn=found['filename'])
                 attribs['filename'] = found['filename']
@@ -559,7 +560,9 @@ def ProcessingInstruction(elem, **params):
 # == Changes ==
 @transformer.match("elem.tag=='Change'")
 def Change(elem, **params):
-    """Deal with redlining. For now, just provide the results. Later, we'll support the HTML <ins> and <del> tags.
+    """
+    Deal with redlining. For now, just provide the results. 
+    Later, we'll support the HTML <ins> and <del> tags.
     """
     # attrib = dict(
     #     datetime=elem.get('Date'),
@@ -707,7 +710,6 @@ def remove_empty_spans(root):
 
 
 def process_t_codes(root):
-    body = root.find("{%(html)s}body" % NS)
     for t in root.xpath("//pub:t", namespaces=NS):
         XML.replace_with_contents(t)
     return root
@@ -885,7 +887,13 @@ def anchors_inside_paras(root):
 def fix_endnote_refs(root):
     "make sure endnote references are superscript"
     for hyperlink in root.xpath(
-        "//pub:hyperlink[not(ancestor::html:span) and not(html:span) and contains(@anchor, 'endnote_ref_')]",
+        """
+        //pub:hyperlink[
+            not(ancestor::html:span) 
+            and not(html:span) 
+            and contains(@anchor, 'endnote_ref_')
+        ]
+        """,
         namespaces=NS,
     ):
         span = B.html.span({'class': "_Endnote Reference"})

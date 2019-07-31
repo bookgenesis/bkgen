@@ -1,15 +1,14 @@
 # xt stylesheet to transform Word docx to pub:document
 
-import os, re, sys
-from lxml import etree
-from bl.id import random_id
+import os
+
 from bl.file import File
 from bl.string import String
 from bl.url import URL
 from bxml import XML
-from bxml.xslt import XSLT
-from bxml.xt import XT
 from bxml.builder import Builder
+from bxml.xt import XT
+from lxml import etree
 
 from bkgen import NS
 from bkgen.converters import Converter
@@ -57,8 +56,6 @@ def wrap_sections(root, body_xpath=None):
     following_xpath = body_xpath.replace(".//", "following::")
     for elem in body.xpath(body_xpath, namespaces=NS):
         following = elem.xpath(following_xpath, namespaces=NS)
-        elem_tag = elem.tag
-        elem_class = elem.get('class')
         parent = elem.getparent()
         if parent.tag != "{%(html)s}section" % NS:
             # start a section, go until another body_xpath element or no more available

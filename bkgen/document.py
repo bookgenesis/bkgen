@@ -1,15 +1,17 @@
 import logging
+import os
+import re
 
-log = logging.getLogger(__name__)
-
-import os, re
-from lxml import etree
 from bl.dict import Dict
 from bl.url import URL
 from bxml import XML
 from bxml.builder import Builder
+from lxml import etree
+
 from . import NS
 from .source import Source
+
+log = logging.getLogger(__name__)
 
 
 class Document(XML, Source):
@@ -106,7 +108,6 @@ class Document(XML, Source):
         from .converters.document_html import DocumentHtml
 
         converter = DocumentHtml()
-        B = self.Builder()
         fn = fn or os.path.splitext(self.fn)[0] + ext
         output_path = output_path or self.path
         h = converter.convert(
@@ -144,7 +145,7 @@ class Document(XML, Source):
                     incl_elems = XML.xpath(src.root, "html:body/*", namespaces=NS)
                 for ie in incl_elems:
                     incl.append(ie)
-            if strip == True:
+            if strip is True:
                 self.replace_with_contents(incl)
 
     def section_content(self, section_id):

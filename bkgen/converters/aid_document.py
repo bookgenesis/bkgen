@@ -1,12 +1,10 @@
 # XT stylesheet to transform InDesign AID .xml to pub:document
 
-import os, re, sys, logging
-from lxml import etree
+import logging
 from copy import deepcopy
 
-from bxml.xt import XT
 from bxml.builder import Builder
-from bxml.xslt import XSLT
+from bxml.xt import XT
 
 from bkgen import NS
 from bkgen.converters import Converter

@@ -1,9 +1,11 @@
-import os, sys
-from lxml import etree
+import os
+import sys
+
+import bxml.docx
 from bl.dict import Dict
 from bl.url import URL
 from bxml import XML
-import bxml.docx
+
 from bkgen import NS
 from bkgen.source import Source
 

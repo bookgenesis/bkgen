@@ -2,13 +2,8 @@ from bl.file import File
 
 
 class Source(File):
-    """Base class/mixin for supported source formats. All sources must have the following properties and methods.
-    
-    **fn**    
-        the filesystem path (filename) of the source, or None
-    
-    **write()**
-        to write the source to the filesystem
+    """
+    Base class/mixin for supported source formats. 
     """
 
     def documents(self, path=None, **params):

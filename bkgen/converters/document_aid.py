@@ -1,17 +1,17 @@
 """convert pub:document and document fragments to (X)HTML"""
 
 import logging
+import os
+import re
 
-import os, re, shutil
-from glob import glob
-from lxml import etree
-from bxml.xt import XT
-from bxml.builder import Builder
+from bf.css import CSS
 from bl.file import File
 from bl.folder import Folder
 from bl.url import URL
-from bf.css import CSS
+from bxml.builder import Builder
 from bxml.xml import XML
+from bxml.xt import XT
+from lxml import etree
 
 from bkgen import NS, config
 from bkgen.converters import Converter
@@ -55,7 +55,6 @@ def get_includes(root, **params):
     """place the content from <pub:include/> elements, and remap the src and href attributes therein
     """
     document = params.get('xml')
-    output_file = File(fn=params.get('fn'))
     for incl in root.xpath(".//pub:include", namespaces=NS):
         for ch in incl:
             incl.remove(ch)

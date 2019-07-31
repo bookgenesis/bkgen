@@ -8,39 +8,43 @@ The Project object is used to represent a project.xml file. Example usage:
 Now all of the methods of the project can be called.
 """
 
+import json
 import logging
-
-log = logging.getLogger(__name__)
-
-import json, os, re, shutil, subprocess, sys, tempfile, time, traceback, datetime
+import os
+import re
+import shutil
+import sys
+import tempfile
+import time
+import traceback
 from copy import deepcopy
 from glob import glob
 from itertools import chain
-import click
 
+from bf.image import Image
+from bf.pdf import PDF
+from bgs.gs import GS
 from bl.dict import Dict
 from bl.file import File
-from bl.string import String
 from bl.rglob import rglob
+from bl.string import String
 from bl.text import Text
-from bl.dict import Dict
 from bl.url import URL
 from bl.zip import ZIP
-from bf.image import Image
-from bf.pdf import PDF, DEVICE_EXTENSIONS
-from bgs.gs import GS
-from bxml.xml import XML, etree
-from bxml.xslt import XSLT  # side-effect: registers lowercase and uppercase xpath functions
 from bxml.builder import Builder
+from bxml.xml import XML, etree
 
-from . import NS, config, mimetypes, PATH
+from . import NS, PATH, config, mimetypes
 from .css import CSS
 from .document import Document
 from .epub import EPUB
 from .html import HTML
-from .mobi import MOBI
 from .metadata import Metadata
+from .mobi import MOBI
 from .source import Source
+
+log = logging.getLogger(__name__)
+
 
 PUB = Builder.single(NS.pub)
 H = Builder.single(NS.html)
@@ -173,7 +177,7 @@ class Project(XML, Source):
                     href=os.path.relpath(fn, self.path) + '#' + elem.get('id'),
                     title=elem.get('title'),
                 )
-                if include_content == True:
+                if include_content is True:
                     sd.element = elem
                 data.append(sd)
         return data
@@ -223,12 +227,13 @@ class Project(XML, Source):
         return css
 
     def content_stylesheet(self, href=None, fn=None):
-        """If href is not None and the target document has an associated stylesheet, 
-            combine the document stylesheet with the project stylesheet(s) to provide a single stylesheet,
-            giving precedence to the project stylesheet(s). 
-            (Precedence to the project stylesheet(s) allows the content stylesheet to be auto-generated, 
-            and then for its styles to be pulled into the project stylesheet and edited there. Then when
-            the content stylesheet is re-generated, the edits to those styles are not lost.)
+        """
+        If href is not None and the target document has an associated stylesheet, combine the
+        document stylesheet with the project stylesheet(s) to provide a single stylesheet, giving
+        precedence to the project stylesheet(s). (Precedence to the project stylesheet(s) allows the
+        content stylesheet to be auto-generated, and then for its styles to be pulled into the
+        project stylesheet and edited there. Then when the content stylesheet is re-generated, the
+        edits to those styles are not lost.)        
         """
         css = self.stylesheet()
         log.debug("href = %r" % href)
@@ -246,7 +251,7 @@ class Project(XML, Source):
         return [
             f
             for f in File(fn=self.path).file_list(depth=depth)
-            if (hidden == True or os.path.basename(f.fn)[0] != '.')
+            if (hidden is True or os.path.basename(f.fn)[0] != '.')
         ]
 
     def content_files(self):
@@ -297,7 +302,6 @@ class Project(XML, Source):
             )
         if not os.path.exists(parent_path):
             os.makedirs(parent_path)
-            # raise ValueError("Before creating the project, first create the parent folder, %s" % parent_path)
 
         project_path = path or os.path.join(parent_path, name)
         if not os.path.exists(project_path):
@@ -306,7 +310,7 @@ class Project(XML, Source):
             log.debug("Project folder already exists: %s" % project_path)
 
         project_fn = os.path.join(project_path, '%s.xml' % basename)
-        if os.path.exists(project_fn) and refresh == True:
+        if os.path.exists(project_fn) and refresh is True:
             log.info("Refreshing project by removing existing project file: %s" % project_fn)
             os.remove(project_fn)
         if os.path.exists(project_fn):
@@ -340,7 +344,7 @@ class Project(XML, Source):
             if not os.path.exists(stylesheet_fn):
                 stylesheet_elem.getparent().remove(stylesheet_elem)
                 stylesheet_elem = None
-        if stylesheet_elem is None and include_stylesheet == True:
+        if stylesheet_elem is None and include_stylesheet is True:
             stylesheet_fn = os.path.splitext(project_fn)[0] + '.css'
             stylesheet_href = os.path.relpath(stylesheet_fn, project.path).replace('\\', '/')
             project.add_resource(stylesheet_href, 'stylesheet')
@@ -530,8 +534,9 @@ class Project(XML, Source):
         # (if it's already in the project folder, don't copy or move it! Just use it where it is.)
         common_prefix = os.path.commonprefix([self.path, source.fn])
         log.debug(
-            "\n\tproject_path=%r\n\tsource.fn=%r\n\tcommon_prefix=%r\n\tproject path in common prefix? %r"
-            % (self.path, source.fn, common_prefix, self.path in common_prefix)
+            f"\n\tproject_path={self.path}"
+            + f"\n\tsource.fn={source.fn}\n\tcommon_prefix={common_prefix}"
+            + f"\n\tproject path in common prefix? {self.path in common_prefix}"
         )
         if self.path not in common_prefix and copy_to_source_folder is True:
             fn = os.path.join(self.source_path, os.path.basename(source.fn))
@@ -540,10 +545,10 @@ class Project(XML, Source):
 
         # import the documents, metadata, images, and stylesheet from this source
         fns = []
-        if images == True:
+        if images is True:
             imgfns = self.import_images(source.images())
             fns += imgfns
-        if documents == True:
+        if documents is True:
             docs = source.documents(path=self.content_path, **params)
             docfns = self.import_documents(
                 docs,
@@ -551,12 +556,12 @@ class Project(XML, Source):
                 document_before_update_project=document_before_update_project,
             )
             fns += docfns
-        if metadata == True:
+        if metadata is True:
             try:
                 self.import_metadata(source.metadata())
             except:
                 log.error(f'could not import_metadata for {source}')
-        if stylesheet == True:
+        if stylesheet is True:
             ss = source.stylesheet()
             if ss is not None:
                 # merge the stylesheet into the project.css
@@ -786,7 +791,6 @@ class Project(XML, Source):
                         cleanup=cleanup,
                         doc_stylesheets=doc_stylesheets,
                         before_compile=before_compile,
-                        **args,
                     )
                 elif output_kind == 'Kindle':
                     result = self.build_mobi(
@@ -865,10 +869,10 @@ class Project(XML, Source):
         print("epub_name =", epub_name)
         epub_path = os.path.join(self.path, str(self.output_folder), epub_name + '_EPUB')
         print("epub_path =", epub_path)
-        if name_kind == True:
+        if name_kind is True:
             epub_name += '_EPUB'
 
-        if clean == True:
+        if clean is True:
             if os.path.isdir(epub_path):
                 shutil.rmtree(epub_path, onerror=rmtree_warn)
 
@@ -910,7 +914,7 @@ class Project(XML, Source):
             check=check,
             ace=ace,
         )
-        if cleanup == True:
+        if cleanup is True:
             shutil.rmtree(epub_path, onerror=rmtree_warn)
         return result
 
@@ -948,7 +952,7 @@ class Project(XML, Source):
         )
         html_path = os.path.join(self.output_path, self.name + '_HTML')
         log.info(html_path)
-        if clean == True and os.path.isdir(html_path):
+        if clean is True and os.path.isdir(html_path):
             shutil.rmtree(html_path, onerror=rmtree_warn)
         if not os.path.isdir(html_path):
             os.makedirs(html_path)
@@ -972,15 +976,15 @@ class Project(XML, Source):
             conditions='digital html',
             image_args=image_args,
         )
-        if singlepage != True:
+        if singlepage is not True:
             EPUB.make_nav(html_path, spine_items, show_nav=True, nav_href="index.xhtml")
         if before_compile is not None:
             before_compile(html_path)
-        if zip == True:
+        if zip is True:
             from bl.zip import ZIP
 
             result['fn'] = ZIP.zip_path(html_path)
-            if cleanup == True:
+            if cleanup is True:
                 shutil.rmtree(html_path, onerror=rmtree_warn)
         else:
             result['fn'] = html_path
@@ -1015,10 +1019,10 @@ class Project(XML, Source):
         print("mobi_name =", mobi_name)
         mobi_path = os.path.join(self.path, str(self.output_folder), mobi_name + '_Kindle')
         print("mobi_path =", mobi_path)
-        if name_kind == True:
+        if name_kind is True:
             mobi_name += '_Kindle'
 
-        if clean == True and os.path.isdir(mobi_path):
+        if clean is True and os.path.isdir(mobi_path):
             shutil.rmtree(mobi_path, onerror=rmtree_warn)
 
         if not os.path.isdir(mobi_path):
@@ -1055,7 +1059,7 @@ class Project(XML, Source):
             cover_src=cover_src,
             before_compile=before_compile,
         )
-        if cleanup == True:
+        if cleanup is True:
             shutil.rmtree(mobi_path, onerror=rmtree_warn)
         if progress is not None:
             progress.report()
@@ -1143,13 +1147,13 @@ class Project(XML, Source):
                 if mimetype == 'application/pdf' or f.ext.lower() in ['.pdf', '.eps']:
                     PDF(fn=fn).gswrite(fn=outfn, device=format, res=res, gs=gs)
                     Image(fn=outfn).mogrify(trim="")
-                elif (mimetype == 'image/jpeg' or f.ext == '.jpg') and jpg == True:
+                elif (mimetype == 'image/jpeg' or f.ext == '.jpg') and jpg is True:
                     outfn = os.path.splitext(outfn)[0] + '.jpg'
                     f.write(fn=outfn)
-                elif (mimetype == 'image/png' or f.ext == '.png') and png == True:
+                elif (mimetype == 'image/png' or f.ext == '.png') and png is True:
                     outfn = os.path.splitext(outfn)[0] + '.png'
                     f.write(fn=outfn)
-                elif (mimetype == 'image/svg+xml' or f.ext == '.svg') and svg == True:
+                elif (mimetype == 'image/svg+xml' or f.ext == '.svg') and svg is True:
                     outfn = os.path.splitext(outfn)[0] + '.svg'
                     f.write(fn=outfn)
                 elif format in mimetype or f.ext == ext:
@@ -1187,7 +1191,7 @@ class Project(XML, Source):
                         log.debug("res=%r, width=%r, height=%r" % (res, width, height))
                         image_args.update(geometry="%dx%d>" % (width, height))
 
-                    # apply the image_args to the image -- only once, so that we don't lose quality in jpeg output
+                    # apply the image_args to the image -- only once, so that we don't lose quality
                     log.debug("img: %r %r" % (outfn, image_args))
                     image.mogrify(**image_args)
 
@@ -1267,7 +1271,7 @@ class Project(XML, Source):
                     conditions=conditions,
                 )
                 # add the document-specific CSS, if it exists
-                if len(doc_css_fns) > 0 and doc_stylesheets == True:
+                if len(doc_css_fns) > 0 and doc_stylesheets is True:
                     css_fns = []
                     head = h.find(h.root, "html:head", namespaces=NS)
                     for css_link in h.xpath(
@@ -1359,10 +1363,8 @@ class Project(XML, Source):
             spineitems.append(endnotes_spineitem)
             outfns.append(endnotes_html.fn)
 
-        if singlepage == True and len(spineitems) > 0:
+        if singlepage is True and len(spineitems) > 0:
             # concatenate all the outfns into a single document
-            from .html import HTML
-
             html = HTML()
             html.root.set('lang', lang)
             html.root.set('{%(xml)s}lang' % NS, lang)
@@ -1376,10 +1378,10 @@ class Project(XML, Source):
             # head = H.head(
             #         H.title(title),
             #         H.meta({'charset': 'UTF-8'}))
-            # for stylesheet in self.xpath(self.root, "pub:resources/pub:resource[@class='stylesheet']"):
+            # for ss in self.xpath(self.root, "pub:resources/pub:resource[@class='stylesheet']"):
             #     link = H.link(rel='stylesheet', type='text/css',
             #         href=os.path.relpath(
-            #             os.path.abspath(os.path.join(self.path, stylesheet.get('href'))),
+            #             os.path.abspath(os.path.join(self.path, ss.get('href'))),
             #             html.path)).replace('\\','/')
             html.root.append(
                 H.head(
@@ -1479,7 +1481,7 @@ class Project(XML, Source):
                 {'resources': resources, 'outputs': outputs, 'logs': logs, 'exclude': exclude},
             )
         )
-        if outputs == True:
+        if outputs is True:
             dirs = [
                 d
                 for d in glob(self.output_path + '/*')
@@ -1489,12 +1491,12 @@ class Project(XML, Source):
             for d in dirs:
                 log.debug("removing: %s" % d)
                 shutil.rmtree(d, onerror=rmtree_warn)
-        if logs == True:
+        if logs is True:
             log_glob = os.path.join(self.path, '/logs', '*.log')
             log.debug("cleanup logs: %s" % log_glob)
             for fn in glob(log_glob):
                 os.remove(fn)
-        if resources == True:
+        if resources is True:
             # Get all the resource filenames that don't match the exclusion pattern
             resourcefns = list(
                 set(
@@ -1579,7 +1581,9 @@ class Project(XML, Source):
             self.write()
 
     def remove_unused_img_files(self):
-        """math files that are unused in the project content are removed from the math content folder."""
+        """
+        Math files that are unused in the project content are removed from the math content folder.
+        """
         imgs = []
         for doc in self.documents():
             for img in doc.xpath(doc.root, "//img[@src]"):
@@ -1588,7 +1592,7 @@ class Project(XML, Source):
         for img_path in img_paths:
             if img_path not in imgs:
                 os.remove(img_path)
-                LOG.debug(f"removed {img_path}")
+                log.debug(f"removed {img_path}")
 
 
 def rmtree_warn(function, path, excinfo):
@@ -1720,9 +1724,10 @@ if __name__ == '__main__':
     else:
         project_path = File(os.path.abspath(sys.argv[2])).fn  # normalize by all means!
         fns = [File(fn=fn).fn for fn in sys.argv[3:]]
+        len_project_xml = len('project.xml')
         if os.path.isdir(project_path):
             project_fn = os.path.join(project_path, 'project.xml')
-        elif project_path[-len('project.xml') :] == 'project.xml':
+        elif project_path[-len_project_xml:] == 'project.xml':
             project_fn = project_path
             project_path = os.path.dirname(project_path)
         else:

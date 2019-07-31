@@ -1,6 +1,8 @@
-import os, json
-from bl.dict import Dict
+import json
+import os
 from importlib import import_module
+
+from bl.dict import Dict
 
 CONVERTERS_FILENAME = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'converters.json')
 

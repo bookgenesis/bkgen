@@ -1,10 +1,12 @@
-import os, tempfile
-from lxml import etree
+import os
+
 import markdown.extensions.wikilinks
-from bl.text import Text
 from bl.string import String
+from bl.text import Text
 from bl.url import URL
 from bxml.builder import Builder
+from lxml import etree
+
 from bkgen import NS
 from bkgen.html import HTML
 from bkgen.source import Source
@@ -36,7 +38,7 @@ class Markdown(Text, Source):
         return [self.document(**params)]
 
     def html(self, reload=False, output_format='xhtml5', lazy_ol=False, extensions=None):
-        if reload == True or self.__HTML is None:
+        if reload is True or self.__HTML is None:
             from markdown import markdown
 
             content = markdown(
@@ -47,12 +49,12 @@ class Markdown(Text, Source):
             )
             body = etree.fromstring("""<body xmlns="%s">\n%s\n</body>""" % (NS.html, content))
             root = B.html.html('\n\t', body, '\n')
-            for e in root.xpath("//*[contains(@href, '.md')]"):
-                l = str(URL(e.get('href'))).split('#')
-                l[0] = os.path.splitext(l[0])[0] + '.html'
-                e.set('href', '#'.join(l))
-            for e in root.xpath("//*[@id]"):
-                e.set('id', String(e.get('id')).nameify())
+            for elem in root.xpath("//*[contains(@href, '.md')]"):
+                path_fragment = str(URL(elem.get('href'))).split('#')
+                path_fragment[0] = os.path.splitext(path_fragment[0])[0] + '.html'
+                elem.set('href', '#'.join(path_fragment))
+            for elem in root.xpath("//*[@id]"):
+                elem.set('id', String(elem.get('id')).nameify())
             self.__HTML = HTML(root=root, fn=os.path.splitext(self.fn)[0] + '.html')
         return self.__HTML
 

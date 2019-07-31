@@ -1,19 +1,22 @@
 # XT stylesheet to transform Word docx to pub:document
 
-import math, os, re, shutil, sys, logging
-from lxml import etree
-from copy import deepcopy
+import logging
+import math
+import os
+import re
+import shutil
 import urllib.parse
+from copy import deepcopy
 
 from bl.dict import Dict
+from bl.int import Int
 from bl.string import String
 from bl.url import URL
-from bl.int import Int
 from bxml.docx import DOCX
 from bxml.xml import XML
-from bxml.xt import XT
-from bkgen.document import Document
 from bxml.xslt import XSLT
+from bxml.xt import XT
+from lxml import etree
 
 from bkgen import NS
 from bkgen.converters import Converter
@@ -204,7 +207,6 @@ def nest_level_sections(root, **params):
 
 def wrap_sections(root, **params):
     """wrap sections divided by section breaks (<pub:section_end> elements)"""
-    fn = params['fn']
     body = root.find('{%(html)s}body' % NS)
     section = Document.find(body, "pub:section_end")
     while section is not None:
@@ -267,7 +269,7 @@ def make_section_title(section):
                 namespaces=NS,
             )
         )
-        title = String(etree.tounicode(xslt(p).getroot(), method='text').strip()).resub('\s+', ' ')
+        title = String(etree.tounicode(xslt(p).getroot(), method='text').strip()).resub(r'\s+', ' ')
     return title
 
 
@@ -347,7 +349,6 @@ def section_note_numbering(root, **params):
 
 def number_lists(root, **params):
     """interpret OOXML paragraph numbering into ordered and unordered lists"""
-    numbering = params['docx'].xml(src='word/numbering.xml')
     numbered_p = XML.find(root, "//html:p[w:numPr]", namespaces=DOCX.NS)
     prev_num_params = Dict()
     lists = Dict()
@@ -360,13 +361,13 @@ def number_lists(root, **params):
         log.debug("num_params: %r" % num_params)
         XML.remove(numPr, leave_tail=True)
 
-        if params.get('number_lists') != False:
+        if params.get('number_lists') is False:
             if (
                 num_params.id != prev_num_params.id  # new list
                 or prev_num_params.level is None
                 or num_params.level > prev_num_params.level
             ):  # new nested list
-                if num_params.get('ul') == True:
+                if num_params.get('ul') is True:
                     lists[level] = B.html.ul('\n' + '\t' * (level + 1))
                     lists[level].tail = '\n' + '\t' * (level)
                 else:
@@ -555,17 +556,20 @@ def handle_style_overrides(root, style_overrides=True, **params):
 
 
 def paragraphs_with_newlines(root):
-    """paragraphs that are not in tables, comments, footnotes, or endnotes should be followed by a newline"""
+    """
+    Paragraphs that are not in tables, comments, footnotes, or endnotes 
+    should be followed by a newline
+    """
     for p in root.xpath(
         """//html:*[
-                            not(ancestor::html:table
-                                or ancestor::html:li
-                                or ancestor::pub:comment 
-                                or ancestor::pub:footnote 
-                                or ancestor::pub:endnote)
-                            and (name()='p' or name()='h1' or name()='h2' or name()='h3' or name()='h4'
-                                or name()='h5' or name()='h6' or name()='h7' or name()='h8' or name()='h9')]
-                        """,
+            not(ancestor::html:table
+                or ancestor::html:li
+                or ancestor::pub:comment 
+                or ancestor::pub:footnote 
+                or ancestor::pub:endnote)
+            and (name()='p' or name()='h1' or name()='h2' or name()='h3' or name()='h4'
+                or name()='h5' or name()='h6' or name()='h7' or name()='h8' or name()='h9')]
+        """,
         namespaces=NS,
     ):
         p.tail = '\n'
@@ -632,13 +636,11 @@ def nest_fields(root, **params):
         field.text, field.tail = (field.tail or ''), ''
         nxt = field.getnext()
         while nxt is not None and nxt.tag != "{%(pub)s}field_end" % NS:
-            e = nxt
             nxt = field.getnext()
             if nxt is not None:
                 field.append(nxt)
         if nxt is None:
-            pass
-            # log("ERROR: unclosed field:", field.attrib)
+            log.error("unclosed field: %r")
         elif nxt.tag == "{%(pub)s}field_end" % NS:
             XML.remove(nxt, leave_tail=True)
         else:
@@ -652,7 +654,7 @@ def field_attributes(root, **params):
     for field in root.xpath(".//pub:field[@instr]", namespaces=NS):
         tokens = [
             i.strip('"')
-            for i in re.split('(?:("[^"]+")|\s+)', field.attrib.pop('instr'))
+            for i in re.split(r'(?:("[^"]+")|\s+)', field.attrib.pop('instr'))
             if i not in [None, '']
         ]
         cls = tokens.pop(0).upper()
@@ -693,8 +695,11 @@ def parse_field_attributes(cls, tokens):
 
 
 def toc_fields(root, **params):
-    """TOC fields usually have PAGEREF fields inside them, but the main text of each entry is not linked.
-    Add a link to the main text of each entry that has a PAGEREF field but no link."""
+    """
+    TOC fields usually have PAGEREF fields inside them, 
+    but the main text of each entry is not linked.
+    Add a link to the main text of each entry that has a PAGEREF field but no link.
+    """
     for toc in root.xpath("//pub:field[@class='TOC']", namespaces=NS):
         for p in toc.xpath(
             ".//html:p[.//pub:field[@class='PAGEREF'] and not(.//html:a[@href])]", namespaces=NS

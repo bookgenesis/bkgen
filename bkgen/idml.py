@@ -1,18 +1,18 @@
-import logging, os
-from lxml import etree
+import logging
+import os
+
 from bl.dict import Dict
-from bl.file import File
 from bl.folder import Folder
-from bl.id import random_id
-from bl.string import String
 from bl.url import URL
 from bl.zip import ZIP
 from bxml import XML
 from bxml.builder import Builder
-from .icml import ICML
-from bkgen.document import Document
+
 from bkgen import NS
+from bkgen.document import Document
 from bkgen.source import Source
+
+from .icml import ICML
 
 LOG = logging.getLogger(__name__)
 B = Builder(default=NS.html, **{'html': NS.html, 'pub': NS.pub})
@@ -31,8 +31,10 @@ class IDML(ZIP, Source):
 
     @property
     def designmap(self):
-        """The designmap.xml contains the definitions for Hyperlinks, Destinations, Bookmarks, and the like,
-        so it's needed to resolve links within an IDML file as well as between IDML files in a collection.
+        """
+        The designmap.xml contains the definitions for Hyperlinks, Destinations, Bookmarks, and the
+        like, so it's needed to resolve links within an IDML file as well as between IDML files in
+        a collection.
         """
         if self.__designmap is None:
             self.__designmap = ICML(root=self.read('designmap.xml'))
@@ -40,7 +42,10 @@ class IDML(ZIP, Source):
 
     @property
     def stories(self):
-        """it's useful to have access to all the stories (as ICML documents) in the package. Cached, as with others."""
+        """
+        It's useful to have access to all the stories (as ICML documents) in the package. 
+        Cached, as with others.
+        """
         if self.__stories is None:
             self.__stories = []
             for story in self.designmap.root.xpath("idPkg:Story", namespaces=self.NS):
@@ -51,7 +56,10 @@ class IDML(ZIP, Source):
 
     @property
     def items(self):
-        """returns a dict of items (anything with a Self) in the IDML file. Needed to resolve Article components."""
+        """
+        Return a dict of items (anything with a Self) in the IDML file. 
+        Needed to resolve Article components.
+        """
         if self.__items is None:
             d = Dict()
             for rp in [
@@ -92,7 +100,7 @@ class IDML(ZIP, Source):
             for fn in [fn for fn in (params.get('fns') or []) if fn != self.fn]:
                 sources.append(IDML(fn=fn))
         # Articles or Stories?
-        if articles == True and len(self.designmap.root.xpath("//Article")) > 0:
+        if articles is True and len(self.designmap.root.xpath("//Article")) > 0:
             doc = self.articles_document(path=path, sources=sources)
         else:
             doc = self.stories_document(path=path, sources=sources)

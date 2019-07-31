@@ -1,6 +1,9 @@
-import os, sys, mimetypes
-from bl.dict import Dict, OrderedDict
+import mimetypes
+import os
+import sys
+
 from bl.config import Config
+from bl.dict import Dict, OrderedDict
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 PACKAGE_PATH = os.path.dirname(PATH)

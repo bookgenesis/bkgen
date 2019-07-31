@@ -1,17 +1,13 @@
 # XT stylesheet to transform Word docx to pub:document
 
-import os, re, sys, logging
-from lxml import etree
+import logging
+import os
 from copy import deepcopy
-import urllib.parse
 
-from bl.dict import Dict
-from bl.string import String
 from bl.url import URL
-from bxml.xml import XML
-from bxml.xt import XT
 from bxml.builder import Builder
-from bxml.xslt import XSLT
+from bxml.xt import XT
+from lxml import etree
 
 from bkgen import NS
 from bkgen.converters import Converter

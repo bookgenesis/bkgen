@@ -1,20 +1,26 @@
-import os, logging, mimetypes, subprocess, zipfile
-from datetime import datetime
+import logging
+import mimetypes
+import os
+import subprocess
+import zipfile
 from copy import deepcopy
+from datetime import datetime
 from uuid import uuid4
-from lxml import etree
+
 from bl.dict import Dict
-from bl.string import String
-from bl.rglob import rglob
-from bxml.xml import XML
-from bl.zip import ZIP
-from bl.text import Text
 from bl.file import File
+from bl.rglob import rglob
+from bl.string import String
+from bl.text import Text
 from bl.url import URL
+from bl.zip import ZIP
 from bxml.builder import Builder
+from bxml.xml import XML
+from lxml import etree
+
 from bkgen import NS, config
-from bkgen.source import Source
 from bkgen.css import CSS
+from bkgen.source import Source
 
 DEBUG = False
 
@@ -51,7 +57,7 @@ class EPUB(ZIP, Source):
         checkfn = self.fn + '.epubcheck.txt'
         checkf = open(checkfn, 'wb')
         cmd = [java, '-jar', config.Resources.epubcheck]
-        if xml == True:
+        if xml is True:
             cmd += ['-out', os.path.splitext(checkfn)[0] + '.xml']
         cmd += [self.fn]
         subprocess.call(cmd, stdout=checkf, stderr=checkf)
@@ -65,7 +71,7 @@ class EPUB(ZIP, Source):
         report_path = os.path.splitext(self.fn)[0] + '_ACE'
         cmd = [node, config.Resources.daisyace, '-s', '-f', '-o', report_path, self.fn]
         subprocess.call(cmd)
-        if zip == True:
+        if zip is True:
             report_zip_fn = ZIP.zip_path(report_path)
             log.info('DAISY Ace report .zip: %s' % report_zip_fn)
             return report_zip_fn
@@ -162,7 +168,7 @@ class EPUB(ZIP, Source):
             f.write(data=fd)
             res.append(f)
 
-        if found_cover == False:
+        if found_cover is False:
             # look in the metadata block
             cover_id = opf.find(
                 opf.root, "opf:metadata/opf:meta[@name='cover']/@content", namespaces=NS
@@ -249,9 +255,6 @@ class EPUB(ZIP, Source):
             zip_epub    = if True, zip the EPUB after building
 
         """
-        from .html import HTML
-
-        H = Builder(default=C.NS.html, **{'html': C.NS.html})._
         if not os.path.isdir(output_path):
             os.makedirs(output_path)
         if epub_name is None:
@@ -260,7 +263,7 @@ class EPUB(ZIP, Source):
         opf_metadata = C.opf_package_metadata(metadata, cover_src=cover_src)
 
         log.debug("cover_src: %r" % cover_src)
-        if cover_src is not None and cover_html == True:
+        if cover_src is not None and cover_html is True:
             cover_html_fn = C.make_cover_html(output_path, cover_src, lang=lang)
             cover_html_relpath = str(URL(File(cover_html_fn).relpath(output_path)))
             log.debug("cover_html_relpath: %r" % cover_html_relpath)
@@ -315,7 +318,7 @@ class EPUB(ZIP, Source):
             guide=guide,
         )
 
-        if show_nav == True:
+        if show_nav is True:
             C.unhide_toc(os.path.join(output_path, nav_href))
             C.append_toc_to_spine(opffn, nav_href)
 
@@ -326,7 +329,7 @@ class EPUB(ZIP, Source):
         if before_compile is not None:
             before_compile(output_path)
 
-        if zip == True:
+        if zip is True:
             the_epub = C.zip_epub(
                 output_path,
                 epubfn=result.fn,
@@ -337,9 +340,9 @@ class EPUB(ZIP, Source):
             result.fn = the_epub.fn
             if progress is not None:
                 progress.report()
-            if check == True:
+            if check is True:
                 result.reports.append({'epubcheck': the_epub.check()})
-            if ace == True:
+            if ace is True:
                 result.reports.append({'ace': the_epub.ace()})
         else:
             result.fn = output_path
@@ -373,8 +376,8 @@ class EPUB(ZIP, Source):
             nav_elem = nav.find(nav.root, "//html:nav", namespaces=NS)
             if nav_elem is None:
                 log.error(
-                    "No '<nav>' element found in the 'toc' landmark document; creating one from links in %s."
-                    % nav.fn
+                    "No '<nav>' element found in the 'toc' landmark document; "
+                    + f"creating one from links in {nav.fn}."
                 )
                 nav_toc = H.nav(
                     '\n',
@@ -394,7 +397,7 @@ class EPUB(ZIP, Source):
                 nav_toc.insert(0, h1)
 
             nav_toc.set('{%(epub)s}type' % NS, 'toc')
-            if show_nav != True:
+            if show_nav is not True:
                 nav_toc.set('hidden', "")
 
             # remove any p and span elements in the nav -- replace with content
@@ -454,7 +457,7 @@ class EPUB(ZIP, Source):
             lang=lang,
         )
 
-        if show_nav == True:
+        if show_nav is True:
             C.unhide_toc(navfn)
 
         return navfn
@@ -505,7 +508,7 @@ class EPUB(ZIP, Source):
         for excl in exclude:
             excludefns += [os.path.normpath(fn) for fn in rglob(output_path, excl)]
 
-        if opf_name == None:
+        if opf_name is None:
             opf_name = os.path.basename(os.path.abspath(output_path))
         opf_path = os.path.dirname(os.path.join(output_path, opf_name + '.opf'))
         manifest = C.OPF.manifest('\n\t')
@@ -645,17 +648,20 @@ class EPUB(ZIP, Source):
 
     @classmethod
     def nav_landmarks(C, *landmarks, title='Landmarks', hidden=""):
-        """builds a landmarks nav element from the given landmarks parameters. Each parameter is a dict:
+        """
+        Builds a landmarks nav element from the given landmarks parameters. 
+        Each parameter is a dict:
             'epub_type' : the epub:type attribute, which is the landmark type
             'href'      : the href to the landmark
             'title'     : the text to display for this landmark
-        Common landmarks include: (see http://www.idpf.org/accessibility/guidelines/content/nav/landmarks.php)
+        Common landmarks include: 
             cover, toc, 
             title-page, 
             frontmatter, bodymatter, backmatter,  
             loi (list of illustrations), 
             lot (list of tables), 
             preface, bibliography, index, glossary, acknowledgments 
+        (see http://www.idpf.org/accessibility/guidelines/content/nav/landmarks.php)
         """
         return C.nav_elem(*landmarks, epub_type='landmarks', title=title, hidden=hidden)
 
@@ -829,20 +835,23 @@ class EPUB(ZIP, Source):
             raise ValueError(
                 "opf:metadata, opf:manifest, and opf:spine are required to make opf package file"
             )
-        if opf_name == None:
+        if opf_name is None:
             opf_name = os.path.basename(os.path.abspath(output_path))
 
         xml_lang = metadata.find("{%(dc)s}language" % C.NS).text
         opffn = os.path.join(output_path, opf_name + '.opf')
         metadata.tail = '\n\n\t'
         manifest.tail = '\n\n\t'
+        prefixes = {
+            'ibooks': 'http://vocabulary.itunes.apple.com/rdf/ibooks/vocabulary-extensions-1.0/'
+        }
         opfdoc = XML(
             fn=opffn,
             root=C.OPF.package(
                 {
                     'version': '3.0',
                     '{%(xml)s}lang' % C.NS: xml_lang,
-                    'prefix': "ibooks: http://vocabulary.itunes.apple.com/rdf/ibooks/vocabulary-extensions-1.0/",
+                    'prefix': ' '.join(["%s: %s" % (k, v) for k, v in prefixes.items()]),
                 },
                 '\n\t',
                 metadata,
@@ -926,7 +935,7 @@ class EPUB(ZIP, Source):
             cover_elem.tail = '\n\t\t'
             metadata_elem.append(cover_elem)
 
-        # add the ibooks specified fonts instruction to the end of the metadata section if not present
+        # add the ibooks specified fonts instruction to the end of the metadata section
         if metadata_elem.find("meta[@property='ibooks:specified-fonts']") is None:
             ibook_fonts_elem = C.OPF.meta({'property': 'ibooks:specified-fonts'}, 'true')
             ibook_fonts_elem.tail = '\n\t\t'
@@ -952,7 +961,8 @@ class EPUB(ZIP, Source):
             )
         else:
             raise ValueError(
-                "either spine_items (a list) or manifest (opf:manifest element) must be provided to EPUB.opf_spine()"
+                "Either spine_items (a list) or a manifest (opf:manifest element) "
+                + "must be provided to EPUB.opf_spine()"
             )
         for ch in spine.getchildren():
             ch.tail = '\n\t\t'
@@ -1086,7 +1096,7 @@ class EPUB(ZIP, Source):
             epub.zipfile.write(fn, os.path.relpath(fn, output_path).replace('\\', '/'))
 
         # write other_fns, such as special contents of META-INF
-        for fn in other_fns:
+        for other_fn in other_fns:
             epub.zipfile.write(other_fn, os.path.relpath(fn, output_path).replace('\\', '/'))
 
         epub.close()

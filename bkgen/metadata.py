@@ -1,6 +1,6 @@
 from bl.dict import Dict
-from lxml import etree
 from bxml import XML
+
 from . import NS
 
 

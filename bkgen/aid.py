@@ -1,7 +1,10 @@
 import os
-from .source import Source
+
 from bxml import XML
+
 from bkgen import NS
+
+from .source import Source
 
 
 class AID(XML, Source):

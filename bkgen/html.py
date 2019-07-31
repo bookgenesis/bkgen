@@ -1,7 +1,10 @@
-import os, logging
+import logging
+import os
+
 from bl.dict import Dict
 from bl.url import URL
 from bxml import XML
+
 from bkgen import NS
 from bkgen.source import Source
 
@@ -16,7 +19,6 @@ class HTML(XML, Source):
     def document(self, fn=None, **params):
         """convert an xhtml file into a pub:document"""
         from .converters.html_document import HtmlDocument
-        from .document import Document
 
         converter = HtmlDocument()
         fn = fn or os.path.splitext(self.clean_filename(self.fn))[0] + '.xml'
@@ -58,9 +60,8 @@ class HTML(XML, Source):
         return css
 
     def audit_links(self):
-        documents = (
-            {}
-        )  # document cache for the current HTML file, to avoid repeatedly parsing the same document.
+        # document cache for the current HTML file, to avoid repeatedly parsing the same document.
+        documents = {}
         for a in self.xpath(self.root, "//html:a[@href]"):
             url = URL(a.get('href'))
             if url.scheme in ['', 'file']:

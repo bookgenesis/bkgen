@@ -1,18 +1,20 @@
-import re, json, os, sys
-from glob import glob
-from lxml import etree
+import json
+import os
+import re
 import urllib.parse
+from glob import glob
+
 from bl.dict import Dict
 from bl.id import random_id
 from bl.string import String
 from bl.url import URL
+from bxml.builder import Builder
 from bxml.xml import XML
 from bxml.xt import XT
-from bxml.builder import Builder
+from lxml import etree
 
 from bkgen import NS, config
 from bkgen.converters import Converter
-from bkgen.document import Document
 from bkgen.icml import ICML
 
 B = Builder(**NS)
@@ -95,13 +97,13 @@ def document(elem, **params):
     )
     rcsg.tail = '\n\t'
     if params.get('charstyles') is not None:
-        # a list of CharacterStyle definitions was given -- insert into rpsg
+        # a list of CharacterStyle definitions was given -- insert into rcsg
         for charstyle in params.get('charstyles'):
-            existing_charstyle = rpsg.find("CharacterStyle[@Name='%s']" % charstyle.get('Name'))
+            existing_charstyle = rcsg.find("CharacterStyle[@Name='%s']" % charstyle.get('Name'))
             if existing_charstyle is not None:
-                rpsg.replace(existing_charstyle, charstyle)
+                rcsg.replace(existing_charstyle, charstyle)
             else:
-                rpsg.append(charstyle)
+                rcsg.append(charstyle)
     root.insert(root.index(story), rcsg)
 
     # RootParagraphStyleGroup
@@ -253,7 +255,7 @@ def body(elem, **params):
 
 @transformer.match("elem.tag=='{%(html)s}section'" % NS)
 def section(elem, **params):
-    attrib_string = ' '.join(['%s="%s"' % (k, elem.get(k)) for k in elem.attrib.keys()])
+    # attrib_string = ' '.join(['%s="%s"' % (k, elem.get(k)) for k in elem.attrib.keys()])
     r = (
         [
             # '\n',
@@ -267,7 +269,6 @@ def section(elem, **params):
     )
 
     # put a hard page break of the correct kind, if called for by the section break
-    sections = elem.xpath("//html:section", namespaces=NS)
     if elem.get('break_type') == 'nextPage':
         r = page_break(elem, break_type='Next') + r
     elif elem.get('break_type') == 'oddPage':
@@ -501,7 +502,8 @@ def footnote_ref(elem, **params):
 
 
 # == Endnotes ==
-# section @endnote_fmt in ['decimal', 'lowerLetter', 'upperLetter', 'lowerRoman', 'upperRoman', 'chicago']
+# section element with @endnote_fmt in
+# ['decimal', 'lowerLetter', 'upperLetter', 'lowerRoman', 'upperRoman', 'chicago']
 
 
 @transformer.match("elem.tag=='{%(pub)s}endnote'" % NS)
@@ -541,7 +543,8 @@ def paragraph_destination(source_id, anchor, **params):
 
 
 # def endnote(elem, **params):
-#     # collect the endnote into params['mutable']['Endnotes'], to be output at insert_endnotes or a separate document.
+#     # collect the endnote into params['mutable']['Endnotes'], to be output at insert_endnotes
+#     # or a separate document.
 #     # number the endnote according to the parameters of the enclosing section.
 #     # hyperlink from the endnote reference to the endnote and back. (hyperlinking across stories?)
 

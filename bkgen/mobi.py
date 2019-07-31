@@ -1,12 +1,17 @@
-import os, logging, re, subprocess
-from bl.dict import Dict
-from bl.url import URL
-from bl.text import Text
-from bf.image import Image
+import logging
+import os
+import re
+import subprocess
+
 from bf.css import CSS
+from bf.image import Image
+from bl.dict import Dict
+from bl.text import Text
+from bl.url import URL
 from bxml.xml import XML, etree
-from bkgen.html import HTML
+
 from bkgen import NS, config
+from bkgen.html import HTML
 
 log = logging.getLogger(__name__)
 
@@ -97,8 +102,11 @@ class MOBI(Dict):
 
     @classmethod
     def move_anchors_before_paragraphs(C, build_path, opffn):
-        """In Kindle ebooks, link targets **NO LONGER** need to be moved before the containing paragraph so that the 
-        paragraph formatting can be displayed properly."""
+        """
+        In Kindle ebooks, link targets **NO LONGER** need to be moved 
+        before the containing paragraph so that the 
+        paragraph formatting can be displayed properly.
+        """
         opf = XML(fn=opffn)
         n = 0
         for item in opf.root.xpath(
@@ -134,7 +142,10 @@ class MOBI(Dict):
             h.write()
 
     def size_images(self, opffn):
-        """resample images to the width / height specified in the img tag, and remove those size attributes"""
+        """
+        Resample images to the width / height specified in the img tag, 
+        and remove those size attributes
+        """
         opf = XML(fn=opffn)
         for item in [
             item
@@ -324,11 +335,14 @@ class MOBI(Dict):
         ]:
             # do string replace -- easiest
             css = Text(fn=os.path.join(opf.path, css_item.get('href')))
-            css.text = css.text.resub("display:\s*none;?\n?", "")
+            css.text = css.text.resub(r"display:\s*none;?\n?", "")
             css.write()
 
     def remove_css_before_after(self, opffn):
-        """remove ::before and ::after selectors from the stylesheets, because they cause problems on the Kindle."""
+        """
+        Remove ::before and ::after selectors from the stylesheets, 
+        because they cause problems on the Kindle.
+        """
         opf = XML(fn=opffn)
         for css_item in [
             item

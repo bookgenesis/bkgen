@@ -1,13 +1,15 @@
-import os, re, sys, traceback, logging
-import glob
-from lxml import etree
-from time import time
+import logging
+import os
+import re
 
+from bf.css import CSS
+from bf.styles import Styles
 from bl.dict import Dict
 from bl.string import String
-from bl.text import Text
 from bxml.xml import XML
-from bkgen import NS
+from lxml import etree
+
+import bkgen
 from bkgen.source import Source
 
 log = logging.getLogger(__name__)
@@ -64,11 +66,6 @@ class ICML(XML, Source):
 
     def stylesheet(self, fn=None, pts_per_em=None):
         """create a CSS stylesheet, using the style definitions in the ICML file."""
-
-        from bl.file import File
-        from bf.styles import Styles
-        from bf.css import CSS
-
         pts_per_em = pts_per_em or self.PTS_PER_EM
         styles = Styles()
         for style in self.root.xpath("//CharacterStyle | //ParagraphStyle"):
@@ -86,7 +83,7 @@ class ICML(XML, Source):
                     if (
                         len(
                             self.root.xpath(
-                                """//ParagraphStyleRange[@AppliedParagraphStyle="%s" and .//Table]"""
+                                '//ParagraphStyleRange[@AppliedParagraphStyle="%s" and .//Table]'
                                 % style.get('Self')
                             )
                         )
@@ -363,7 +360,8 @@ class ICML(XML, Source):
 
         # tracking
         # if elem.get('Tracking') is not None:
-        #     style['letter-spacing:'] = "%.03fem" % (float(elem.get('Tracking'))/1000)   # tracking in 1/1000 ems
+        #     # tracking is in 1/1000 ems units
+        #     style['letter-spacing:'] = "%.03fem" % (float(elem.get('Tracking'))/1000)
 
         # word-spacing
         if elem.get('DesiredWordSpacing') is not None:

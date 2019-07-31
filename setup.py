@@ -1,3 +1,8 @@
+import os
+import shutil
+
+from setuptools import find_packages, setup
+
 config = {
     "name": "bkgen",
     "version": "0.17.0",
@@ -18,10 +23,6 @@ config = {
     "data_files": [],
     "scripts": [],
 }
-
-import os, json, shutil
-from setuptools import setup, find_packages
-from codecs import open
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 configfn = os.path.join(PATH, 'bkgen', '__config__.ini')

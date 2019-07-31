@@ -1,19 +1,20 @@
 """convert pub:document and document fragments to (X)HTML"""
 
-import os, logging
+import logging
+import os
 from copy import deepcopy
-from lxml import etree
-from bxml.xt import XT
-from bxml.builder import Builder
+
 from bl.file import File
-from bl.string import String
 from bl.url import URL
+from bxml.builder import Builder
 from bxml.xml import XML
+from bxml.xt import XT
+from lxml import etree
 
 from bkgen import NS
-from bkgen.html import HTML
 from bkgen.converters import Converter
 from bkgen.document import Document
+from bkgen.html import HTML
 
 log = logging.getLogger(__name__)
 
@@ -44,7 +45,7 @@ def default(elem, **params):
     root = render_crossrefs(root)
     root = process_index_entries(root, **params)
     root = replace_ligature_characters(root)
-    if params.get('simple_tables') == True:
+    if params.get('simple_tables') is True:
         root = render_simple_tables(root)
     root = tds_with_image_style_min_width_height(root)
     return [root]
@@ -65,7 +66,7 @@ def fill_head(root, **params):
         if XML.find(head, "html:meta[@charset]", namespaces=NS) is None:
             head.append(H.meta(charset='UTF-8'))
         if (
-            params.get('http_equiv_content_type') == True
+            params.get('http_equiv_content_type') is True
             and XML.find(head, "html:meta[@http-equiv='Content-Type']", namespaces=NS) is None
         ):
             head.append(
@@ -120,7 +121,7 @@ def filter_conditions(root, **params):
             if condition in include:
                 remove = False
                 break
-        if remove == True:
+        if remove is True:
             XML.remove(conditional_elem)
     # element with @pub:condlink that doesn't match current context has the link element removed
     # (the link element is either the element itself, or an ancestor)
@@ -133,7 +134,7 @@ def filter_conditions(root, **params):
             if condition in include:
                 remove = False
                 break
-        if remove == True:
+        if remove is True:
             link_elem = XML.find(conditional_elem, "ancestor-or-self::html:*[@href]", namespaces=NS)
             XML.replace_with_contents(link_elem)
     return root
@@ -232,7 +233,7 @@ def process_endnotes(root, endnotes=[], insert_endnotes=False, **params):
         elem = XML.find(
             this_elem, '|'.join(['following::' + x for x in endnote_xpaths]), namespaces=NS
         )
-    if insert_endnotes == True and len(endnotes) > 0:
+    if insert_endnotes is True and len(endnotes) > 0:
         body = XML.find(root, "html:body", namespaces=NS)
         if body is None:
             body = root
@@ -290,8 +291,10 @@ def process_index_entries(root, **params):
 
 
 def replace_ligature_characters(root):
-    """Sometimes ligature characters (fl, fi) are used in books directly, 
-    but these don't work well in HTML contexts, so replace them with their multi-character equivalents.
+    """
+    Sometimes ligature characters (fl, fi) are used in books directly, 
+    but these don't work well in HTML contexts, 
+    so replace them with their multi-character equivalents.
     """
     ligatures = {
         '\uA732': 'AA',
@@ -347,7 +350,7 @@ def render_simple_tables(root):
             if len(row.getchildren()) != len(first_row.getchildren()):
                 next_table = True
                 break
-        if next_table == True:
+        if next_table is True:
             continue
         # Okay, this is a table we can transform
         parent = table.getparent()
