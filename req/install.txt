@@ -1,8 +1,8 @@
--e git+https://github.com/BlackEarth/bf.git@b02325ebf93fcdd3d2d644a8d51fdf5ce87dcea3#egg=bf
--e git+https://github.com/BlackEarth/bgs.git@7d8acc22b69320ca5ffd5c5a95dd0940a588005e#egg=bgs
--e git+https://github.com/BlackEarth/bl.git@023a1864c464edf753ec7863c5df6391dc83c1f8#egg=bl
--e git+https://github.com/BlackEarth/bmagick.git@2a53c1e1d6b99ec02c349c231d79e3c1f9534de9#egg=bmagick
--e git+https://github.com/BlackEarth/bxml.git@b51aa91eeef2f026e0b2128b17484f4147313be4#egg=bxml
-lxml==4.1.1
-Markdown==2.6.11
-pycountry==17.9.23
+-e git+https://github.com/BlackEarth/bf.git@b7cffaa1f8d5075f559c2bacbf51cfd11109e149#egg=bf
+-e git+https://github.com/BlackEarth/bgs.git@0760426ecaa0a3bd630fe5a60951cc2df6d5cd81#egg=bgs
+-e git+https://github.com/BlackEarth/bl.git@af2d151bc145ff08b3ad7b39a9e215ff1219f148#egg=bl
+-e git+https://github.com/BlackEarth/bmagick.git@61d216db3438de82b1e7616f8769846f8fe91aa1#egg=bmagick
+-e git+https://github.com/BlackEarth/bxml.git@99d9cc529290696ceefed716cedb292f9ca26a6e#egg=bxml
+lxml==4.4.0
+Markdown==3.1.1
+pycountry==19.7.15
