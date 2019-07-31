@@ -24,65 +24,69 @@ B = Document.Builder()
 transformer = XT()
 transformer_XSLT = XSLT(fn=os.path.splitext(__file__)[0] + '.xsl')
 
+
 class DocxDocument(Converter):
     def convert(self, docx, fn=None, XMLClass=Document, **params):
         return docx.transform(transformer, fn=fn, XMLClass=XMLClass, **params)
+
 
 @transformer.match("elem.tag=='{%(w)s}document'" % DOCX.NS)
 def document(elem, **params):
     # Pre-Process
     root = deepcopy(elem)
-    root = embed_notes(root, **params) 
+    root = embed_notes(root, **params)
 
     # Transform
-    xsl_params = {
-        'source':os.path.relpath(params['docx'].fn, os.path.dirname(params['fn']))
-    }
-    xsl_params = {k:etree.XSLT.strparam(xsl_params[k]) for k in xsl_params.keys()}
+    xsl_params = {'source': os.path.relpath(params['docx'].fn, os.path.dirname(params['fn']))}
+    xsl_params = {k: etree.XSLT.strparam(xsl_params[k]) for k in xsl_params.keys()}
     root = transformer_XSLT(root, **xsl_params).getroot()
 
-    # == POST-PROCESS == 
-    # -- document metadata -- 
+    # == POST-PROCESS ==
+    # -- document metadata --
     root = get_document_metadata(root, **params)
-    # -- styles -- 
+    # -- styles --
     root = map_para_styles_levels(root, **params)
     root = map_span_styles(root, **params)
     root = map_table_styles(root, **params)
     root = font_attributes(root, **params)
-    # -- sections -- 
+    # -- sections --
     root = nest_level_sections(root, **params)
     root = wrap_sections(root, **params)
     root = set_section_ids(root, **params)
     root = section_note_numbering(root, **params)
-    # -- images and links -- 
+    # -- images and links --
     root = get_images(root, **params)
     root = resolve_hyperlinks(root, **params)
-    # -- span cleanup -- 
+    # -- span cleanup --
     root = merge_contiguous_spans(root, **params)
     root = handle_style_overrides(root, **params)
     root = remove_empty_spans(root, **params)
-    # -- fields -- 
+    # -- cleanup notes (footnotes, endnotes) --
+    root = cleanup_notes(root, **params)
+    # -- fields --
     root = nest_fields(root, **params)
     root = field_attributes(root, **params)
     root = toc_fields(root, **params)
-    # -- lists -- 
+    # -- lists --
     root = number_lists(root, **params)
-    # -- paragraph cleanup -- 
+    # -- paragraph cleanup --
     root = anchors_in_paragraphs(root)
     root = remove_empty_paras(root, **params)
     root = paragraphs_with_newlines(root)
     root = table_column_widths(root)
 
-    return [ root ]
+    return [root]
+
 
 def get_document_metadata(root, **params):
     docx = params['docx']
     metadata = docx.metadata().root
     metadata.text = metadata.tail = '\n\t'
     for ch in metadata.getchildren():
-        ch.tail='\n\t'
+        ch.tail = '\n\t'
     root.insert(0, metadata)
     return root
+
 
 def embed_notes(root, **params):
     docx = params['docx']
@@ -109,22 +113,53 @@ def embed_notes(root, **params):
         parent.replace(elem, note_elem)
     return root
 
+
 def remove_empty_spans(root, **params):
     for span in root.xpath(".//html:span", namespaces=NS):
-        if span.attrib=={}:
+        if span.attrib == {}:
             XML.replace_with_contents(span)
     return root
 
+
+def cleanup_notes(root, **params):
+    for note in Document.xpath(root, ".//pub:footnote | .//pub:endnote"):
+
+        # Replace footnote-reference and endnote-reference spans with content
+        for span in Document.xpath(
+            note, ".//html:span[@class='footnote-reference' or @class='endnote-reference']"
+        ):
+            XML.replace_with_contents(span)
+
+        # Make sure any note reference in the footnote is followed by a tab, not a space
+        for note_ref in Document.xpath(note, ".//pub:footnote-ref | .//pub:endnote-ref"):
+            parent = note_ref.getparent()
+            if parent.tag != "{%(html)s}span" % NS:
+                span = B.html.span({'class': XML.tag_name(note) + '-text-reference'})
+                parent.replace(note_ref, span)
+                span.insert(0, note_ref)
+                span.tail, note_ref.tail = note_ref.tail or '', ''
+            else:
+                parent = span
+            span.set('class', XML.tag_name(note) + '-text-reference')
+            span.tail = '\t' + (span.tail or '').lstrip()
+
+    return root
+
+
 def remove_empty_paras(root, **params):
-    for p in root.xpath("""
+    for p in root.xpath(
+        """
         .//html:*[
             not(ancestor::html:table) 
             and (name()='p' or name()='h1' or name()='h2' or name()='h3' or name()='h4' 
                 or name()='h5' or name()='h6' or name()='h7' or name()='h8' or name()='h9')]
-    """, namespaces=NS):
-        if p.text in [None, ''] and len(p.getchildren())==0:
+    """,
+        namespaces=NS,
+    ):
+        if p.text in [None, ''] and len(p.getchildren()) == 0:
             XML.remove(p, leave_tail=True)
     return root
+
 
 def nest_level_sections(root, **params):
     """h1...h9 paragraphs indicate the beginning of a nested section;
@@ -137,10 +172,10 @@ def nest_level_sections(root, **params):
         or name()='h6' or name()='h7' or name()='h8' or name()='h9')]"""
     for elem in body.xpath(level_section_xpath, namespaces=NS):
         parent = elem.getparent()
-        # if this is the only element at this level in this section, 
+        # if this is the only element at this level in this section,
         # and it's at the beginning of the section,
         # then don't make a nested section for this element -- it's already done.
-        if parent.tag!='{%(html)s}section' % NS or parent.index(elem) > 0:
+        if parent.tag != '{%(html)s}section' % NS or parent.index(elem) > 0:
             # start a section, go until another element like this one or no more available
             level_tag = elem.tag
             level = int(level_tag[-1])
@@ -149,7 +184,12 @@ def nest_level_sections(root, **params):
             parent.insert(parent.index(elem), section)
             nxt = elem.getnext()
             section.append(elem)
-            while nxt is not None and nxt.tag != "{%(pub)s}section_end" % NS and nxt.tag != level_tag and nxt.tag[-1] != str(level):
+            while (
+                nxt is not None
+                and nxt.tag != "{%(pub)s}section_end" % NS
+                and nxt.tag != level_tag
+                and nxt.tag[-1] != str(level)
+            ):
                 elem = nxt
                 nxt = elem.getnext()
                 section.append(elem)
@@ -161,7 +201,8 @@ def nest_level_sections(root, **params):
                 section.set('title', make_section_title(section))
     return root
 
-def wrap_sections(root, **params): 
+
+def wrap_sections(root, **params):
     """wrap sections divided by section breaks (<pub:section_end> elements)"""
     fn = params['fn']
     body = root.find('{%(html)s}body' % NS)
@@ -179,20 +220,25 @@ def wrap_sections(root, **params):
         section = Document.find(body, "pub:section_end")
     return root
 
+
 def set_section_ids(root, **params):
     for section in Document.xpath(root, "//html:section"):
         section.set('id', make_section_id(section))
     return root
+
 
 # *** OBSOLETE ***
 def split_level_sections(root, levels=1, **params):
     """hN paragraphs (for levels in 1..9) indicate the beginning of a section;
         each creates a new section.
     """
-    level_section_xpath = ' | '.join([".//html:h%d[not(ancestor::html:table)]" % i for i in range(1, levels+1)])
+    level_section_xpath = ' | '.join(
+        [".//html:h%d[not(ancestor::html:table)]" % i for i in range(1, levels + 1)]
+    )
     for elem in XML.xpath(root, level_section_xpath, namespaces=NS):
         parent = elem.getparent()
-        section_end = B.pub.section_end(); section_end.tail = '\n'
+        section_end = B.pub.section_end()
+        section_end.tail = '\n'
         parent.insert(parent.index(elem), section_end)
         # give the section the attributes of the section it is in.
         next_section_end = XML.find(section_end, "following::pub:section_end", namespaces=NS)
@@ -200,6 +246,7 @@ def split_level_sections(root, levels=1, **params):
             for key in next_section_end.attrib.keys():
                 section_end.set(key, next_section_end.get(key))
     return root
+
 
 def make_section_title(section):
     title = ''
@@ -212,14 +259,17 @@ def make_section_title(section):
         # turn the first paragraph into the title, but omit comments and notes
         xslt = etree.XSLT(
             XSLT.stylesheet(
-                XSLT.copy_all(), 
+                XSLT.copy_all(),
                 XSLT.template_match("html:br", XSLT.text(' ')),
                 XSLT.template_match_omission("pub:footnote"),
                 XSLT.template_match_omission("pub:endnote"),
                 XSLT.template_match_omission("pub:comment"),
-                namespaces=NS))        
+                namespaces=NS,
+            )
+        )
         title = String(etree.tounicode(xslt(p).getroot(), method='text').strip()).resub('\s+', ' ')
     return title
+
 
 def make_section_id(section):
     sections = Document.xpath(section, "//html:section")
@@ -231,41 +281,56 @@ def make_section_id(section):
     id = 's%d_%s' % (n, t)
     return id
 
+
 # Numbered Elements: Notes and Lists
 
 # supported non-integer number formats used in .docx (unsupported formats default to decimal)
 NUMBERS_FORMATS = dict(
     lowerLetter='abcdefghijklmnopqrstuvwxyz',
     upperLetter='ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-    chicago=['*','\u2020','\u2021','\u00A7'],
+    chicago=['*', '\u2020', '\u2021', '\u00A7'],
 )
 
+
 def formatted_number(number, format):
-    """return the number that should be displayed for the given number and format"""    
+    """return the number that should be displayed for the given number and format"""
     num = Int(number)
     if format == 'lowerRoman':
         fmt_num = num.roman().lower()
     elif format == 'upperRoman':
         fmt_num = num.roman().upper()
     elif format in NUMBERS_FORMATS.keys():
-        i = (num-1) % len(NUMBERS_FORMATS[format])
+        i = (num - 1) % len(NUMBERS_FORMATS[format])
         n = math.ceil(num / len(NUMBERS_FORMATS[format]))
-        fmt_num = NUMBERS_FORMATS[format][i]*n
-    else:   # default to decimal
+        fmt_num = NUMBERS_FORMATS[format][i] * n
+    else:  # default to decimal
         fmt_num = str(num)
     return fmt_num
+
 
 def section_note_numbering(root, **params):
     """assign note numbering to the sections, as indicated by the note options on each section"""
     note_options = {
-        'footnote-start':'1', 'footnote-format':'decimal', 'footnote-restart':'continuous',
-        'endnote-start':'1', 'endnote-format':'lowerLetter', 'endnote-restart':'continuous',}
+        'footnote-start': '1',
+        'footnote-format': 'decimal',
+        'footnote-restart': 'continuous',
+        'endnote-start': '1',
+        'endnote-format': 'lowerLetter',
+        'endnote-restart': 'continuous',
+    }
     fnum = enum = 1
     for section in root.xpath("//html:section", namespaces=NS):
-        for key in ['footnote-start', 'footnote-format', 'footnote-restart', 'endnote-start', 'endnote-format', 'endnote-restart']:
+        for key in [
+            'footnote-start',
+            'footnote-format',
+            'footnote-restart',
+            'endnote-start',
+            'endnote-format',
+            'endnote-restart',
+        ]:
             val = section.get('{%s}%s' % (NS.pub, key))
             if val is not None:
-                note_options.update(**{key:val})
+                note_options.update(**{key: val})
         if note_options['footnote-restart'] != 'continuous':
             fnum = int(note_options['footnote-start'])
         if note_options['endnote-restart'] != 'continuous':
@@ -278,6 +343,7 @@ def section_note_numbering(root, **params):
             enum += 1
         log.debug("Note options: %r" % note_options)
     return root
+
 
 def number_lists(root, **params):
     """interpret OOXML paragraph numbering into ordered and unordered lists"""
@@ -294,32 +360,39 @@ def number_lists(root, **params):
         log.debug("num_params: %r" % num_params)
         XML.remove(numPr, leave_tail=True)
 
-        if params.get('number_lists')!=False:
-            if (num_params.id != prev_num_params.id                 # new list
-            or prev_num_params.level is None 
-            or num_params.level > prev_num_params.level):           # new nested list
-                if num_params.get('ul')==True:
-                    lists[level] = B.html.ul('\n' + '\t'*(level+1)); lists[level].tail='\n' + '\t'*(level)
+        if params.get('number_lists') != False:
+            if (
+                num_params.id != prev_num_params.id  # new list
+                or prev_num_params.level is None
+                or num_params.level > prev_num_params.level
+            ):  # new nested list
+                if num_params.get('ul') == True:
+                    lists[level] = B.html.ul('\n' + '\t' * (level + 1))
+                    lists[level].tail = '\n' + '\t' * (level)
                 else:
-                    lists[level] = B.html.ol('\n' + '\t'*(level+1)); lists[level].tail='\n' + '\t'*(level)
+                    lists[level] = B.html.ol('\n' + '\t' * (level + 1))
+                    lists[level].tail = '\n' + '\t' * (level)
                     if num_params.get('start') is not None:
                         lists[level].set('start', num_params.get('start'))
                 if num_params.get('numFmt') is not None:
                     lists[level].set('class', num_params.get('numFmt'))
-                if int(level) > 0 and lists.get(level-1) is not None:
-                    lists[level-1][-1][-1].tail = '\n' + '\t'*(level+1)
-                    lists[level-1][-1].append(lists[level])
+                if int(level) > 0 and lists.get(level - 1) is not None:
+                    lists[level - 1][-1][-1].tail = '\n' + '\t' * (level + 1)
+                    lists[level - 1][-1].append(lists[level])
                 else:
                     parent = numbered_p.getparent()
                     parent.insert(parent.index(numbered_p), lists[level])
 
-            li = B.html.li(numbered_p); li.tail='\n' + '\t'*(level+1); li.getchildren()[-1].tail = ''
+            li = B.html.li(numbered_p)
+            li.tail = '\n' + '\t' * (level + 1)
+            li.getchildren()[-1].tail = ''
             lists[level].append(li)
             prev_num_params = num_params
             numbered_p = XML.find(lists[level], "following::html:p[w:numPr]", namespaces=DOCX.NS)
         else:
             numbered_p = XML.find(numbered_p, "following::html:p[w:numPr]", namespaces=DOCX.NS)
     return root
+
 
 def map_para_styles_levels(root, **params):
     """Adjust the para class to use the Word style name.
@@ -331,22 +404,25 @@ def map_para_styles_levels(root, **params):
         # class name
         cls = DOCX.classname(style.name)
         p.set('class', cls)
-    
+
         # outline level
         level = None
         if style.properties.outlineLvl is not None and int(style.properties.outlineLvl.val) < 9:
-            level = int(style.properties.outlineLvl.val) + 1    # 1-based
+            level = int(style.properties.outlineLvl.val) + 1  # 1-based
         else:
             # look for outlineLvl in the ancestry
             while style.basedOn is not None and level is None:
                 style = stylemap.get(style.basedOn)
-                if style.properties.outlineLvl is not None \
-                and int(style.properties.outlineLvl.val) < 9:
+                if (
+                    style.properties.outlineLvl is not None
+                    and int(style.properties.outlineLvl.val) < 9
+                ):
                     level = int(style.properties.outlineLvl.val) + 1
         if level is not None:
-            p.tag = "{%s}h%d" % (NS.html, level)          # change tag to h1...h9
+            p.tag = "{%s}h%d" % (NS.html, level)  # change tag to h1...h9
 
     return root
+
 
 def map_span_styles(root, **params):
     stylemap = params['docx'].stylemap(cache=True)
@@ -356,6 +432,7 @@ def map_span_styles(root, **params):
             sp.set('class', DOCX.classname(cls.name))
     return root
 
+
 def map_table_styles(root, **params):
     stylemap = params['docx'].stylemap(cache=True)
     for table in root.xpath(".//html:table[@class]", namespaces=NS):
@@ -364,6 +441,7 @@ def map_table_styles(root, **params):
             table.set('class', cls.name)
     return root
 
+
 def font_attributes(root, **params):
     """convert font attributes to classes and styles"""
     toggle_props = ['italic', 'bold', 'allcap', 'smcap', 'strike', 'dstrike', 'hidden']
@@ -371,7 +449,8 @@ def font_attributes(root, **params):
         class_list = [c for c in span.get('class', '').split(' ') if c != '']
         # toggle properties
         for attrib in toggle_props:
-            if span.get(attrib) is None: continue
+            if span.get(attrib) is None:
+                continue
             val = span.attrib.pop(attrib)
             if val in ['on', 'true', '1', 'toggle']:
                 if attrib not in class_list:
@@ -382,8 +461,10 @@ def font_attributes(root, **params):
         # regular properties
         if span.get('valign') is not None:
             val = span.attrib.pop('valign')
-            if val=='superscript': class_list.append('sup')
-            if val=='subscript': class_list.append('sub')
+            if val == 'superscript':
+                class_list.append('sup')
+            if val == 'subscript':
+                class_list.append('sub')
         if span.get('u') is not None:
             class_list.append('u%s' % span.attrib.pop('u'))
         # create the span class
@@ -402,6 +483,7 @@ def font_attributes(root, **params):
             span.set('style', ';'.join(styles))
     return root
 
+
 def get_images(root, **params):
     docx = params['docx']
     image_subdir = params.get('image_subdir') or 'images'
@@ -409,15 +491,23 @@ def get_images(root, **params):
     rels = docx.xml(src='word/_rels/document.xml.rels').root
     imgs = root.xpath("//html:img", namespaces=DOCX.NS)
     for img in imgs:
-        embed_rel = XML.find(rels, "//rels:Relationship[@Id='%s']" % img.get('data-embed-id'), namespaces=DOCX.NS)
-        link_rel = XML.find(rels, "//rels:Relationship[@Id='%s']" % img.get('data-link-id'), namespaces=DOCX.NS)
+        embed_rel = XML.find(
+            rels, "//rels:Relationship[@Id='%s']" % img.get('data-embed-id'), namespaces=DOCX.NS
+        )
+        link_rel = XML.find(
+            rels, "//rels:Relationship[@Id='%s']" % img.get('data-link-id'), namespaces=DOCX.NS
+        )
         # source image
         if embed_rel is not None:
             fd = docx.read('word/' + embed_rel.get('Target'))
-            imgfn = os.path.join(output_path, image_subdir, img.get('title') or os.path.split(embed_rel.get('Target'))[-1])
-            if not os.path.isdir(os.path.dirname(imgfn)): 
+            imgfn = os.path.join(
+                output_path,
+                image_subdir,
+                img.get('title') or os.path.split(embed_rel.get('Target'))[-1],
+            )
+            if not os.path.isdir(os.path.dirname(imgfn)):
                 os.makedirs(os.path.dirname(imgfn))
-            with open(imgfn, 'wb') as f: 
+            with open(imgfn, 'wb') as f:
                 f.write(fd)
             img.set('src', os.path.relpath(imgfn, output_path))
         elif link_rel is not None:
@@ -427,10 +517,13 @@ def get_images(root, **params):
             outfn = os.path.join(output_path, str(URL(img.get('src'))))
             if os.path.exists(srcfn) and not os.path.exists(outfn):
                 shutil.copy(srcfn, outfn)
-            if img.get('data-link-id') is not None: _=img.attrib.pop('data-link-id')
-            if img.get('data-embed-id') is not None: _=img.attrib.pop('data-embed-id')
+            if img.get('data-link-id') is not None:
+                _ = img.attrib.pop('data-link-id')
+            if img.get('data-embed-id') is not None:
+                _ = img.attrib.pop('data-embed-id')
         log.debug(img.attrib)
     return root
+
 
 def resolve_hyperlinks(root, **params):
     docx = params['docx']
@@ -448,9 +541,11 @@ def resolve_hyperlinks(root, **params):
         a.set('href', href)
     return root
 
+
 def merge_contiguous_spans(root, **params):
     """if spans are next to each other and have the same attributes, merge them"""
     return XML.merge_contiguous(root, "//html:span", namespaces=NS)
+
 
 def handle_style_overrides(root, style_overrides=True, **params):
     if style_overrides is not True:
@@ -458,9 +553,11 @@ def handle_style_overrides(root, style_overrides=True, **params):
             elem.attrib.pop('style')
     return root
 
+
 def paragraphs_with_newlines(root):
     """paragraphs that are not in tables, comments, footnotes, or endnotes should be followed by a newline"""
-    for p in root.xpath("""//html:*[
+    for p in root.xpath(
+        """//html:*[
                             not(ancestor::html:table
                                 or ancestor::html:li
                                 or ancestor::pub:comment 
@@ -468,46 +565,63 @@ def paragraphs_with_newlines(root):
                                 or ancestor::pub:endnote)
                             and (name()='p' or name()='h1' or name()='h2' or name()='h3' or name()='h4'
                                 or name()='h5' or name()='h6' or name()='h7' or name()='h8' or name()='h9')]
-                        """, namespaces=NS):
+                        """,
+        namespaces=NS,
+    ):
         p.tail = '\n'
     return root
+
 
 def table_column_widths(root):
     """convert Word column widths to points (N/20)"""
     for td in XML.xpath(root, "//html:td[@width]", namespaces=NS):
-        td.set('width', "%.02fpt" % (int(td.get('width')) / 20.,))
+        td.set('width', "%.02fpt" % (int(td.get('width')) / 20.0,))
     return root
+
 
 def anchors_in_paragraphs(root):
     """make sure anchors are inside paragraphs"""
-    for a in root.xpath("""//html:*[(name()='a' or @class='anchor') and not(
+    for a in root.xpath(
+        """//html:*[(name()='a' or @class='anchor') and not(
         ancestor::html:p or ancestor::html:h1 or ancestor::html:h2 or ancestor::html:h3 
         or ancestor::html:h4 or ancestor::html:h5 or ancestor::html:h6 or ancestor::html:h7 
-        or ancestor::html:h8 or ancestor::html:h9)]""", namespaces=NS
+        or ancestor::html:h8 or ancestor::html:h9)]""",
+        namespaces=NS,
     ):
-        nextp = XML.find(a, """following::html:p | following::html:h1 | following::html:h2 
+        nextp = XML.find(
+            a,
+            """following::html:p | following::html:h1 | following::html:h2 
             | following::html:h3 | following::html:h4 | following::html:h5 | following::html:h6 
-            | following::html:h7 | following::html:h8 | following::html:h9""", namespaces=NS)
+            | following::html:h7 | following::html:h8 | following::html:h9""",
+            namespaces=NS,
+        )
         if nextp is not None:
             XML.remove(a, leave_tail=True)
             nextp.insert(0, a)
             nextp.text, a.tail = '', nextp.text or ''
     return root
 
-# == FIELDS == 
+
+# == FIELDS ==
+
 
 def nest_fields(root, **params):
     """fields need to be converted from a series of milestones to properly nested form
     """
     # move TOC, ..., field_end out of parent paragraph when it's the first thing
-    for field in root.xpath(".//pub:field_start[starts-with(@instr,'TOC')] | .//pub:field_end", namespaces=NS):
+    for field in root.xpath(
+        ".//pub:field_start[starts-with(@instr,'TOC')] | .//pub:field_end", namespaces=NS
+    ):
         parent = field.getparent()
-        if XML.tag_name(parent.tag) in ['p','h1','h2','h3','h4','h5','h6','h7','h8','h9'] \
-        and parent[0]==field and parent.text in [None, '']:
+        if (
+            XML.tag_name(parent.tag) in ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'h9']
+            and parent[0] == field
+            and parent.text in [None, '']
+        ):
             gparent = parent.getparent()
             gparent.insert(gparent.index(parent), field)
             parent.text = (parent.text or '') + (field.tail or '')
-            field.tail='\n'
+            field.tail = '\n'
 
     # nest fields -- this assumes fields will nest
     field_starts = root.xpath("//pub:field_start", namespaces=NS)
@@ -532,14 +646,19 @@ def nest_fields(root, **params):
         field_starts = root.xpath("//pub:field_start", namespaces=NS)
     return root
 
+
 def field_attributes(root, **params):
     """convert the Word field instructions to attributes"""
     for field in root.xpath(".//pub:field[@instr]", namespaces=NS):
-        tokens = [i.strip('"') for i in re.split('(?:("[^"]+")|\s+)', field.attrib.pop('instr')) if i not in [None, '']]
+        tokens = [
+            i.strip('"')
+            for i in re.split('(?:("[^"]+")|\s+)', field.attrib.pop('instr'))
+            if i not in [None, '']
+        ]
         cls = tokens.pop(0).upper()
-        if cls in FIELD_TAGS:               # use the tag in FIELD_TAGS, if given
+        if cls in FIELD_TAGS:  # use the tag in FIELD_TAGS, if given
             field.tag = FIELD_TAGS[cls]
-        else:                               # otherwise it's a <pub:field class="cls"/>
+        else:  # otherwise it's a <pub:field class="cls"/>
             field.set('class', cls)
         attributes, tokens = parse_field_attributes(cls, tokens)
         for k in attributes.keys():
@@ -549,16 +668,17 @@ def field_attributes(root, **params):
 
         # -- Field Post-Processing
         # <a href="file#anchor">
-        if Document.tag_name(field)=='a' and field.get('anchor') is not None:
+        if Document.tag_name(field) == 'a' and field.get('anchor') is not None:
             field.set('href', (field.get('href') or '') + '#' + field.attrib.pop('anchor'))
 
     return root
+
 
 def parse_field_attributes(cls, tokens):
     attr = Dict()
     if FIELD_TEMPLATES.get(cls) is not None and len(tokens) > 0:
         template = FIELD_TEMPLATES.get(cls)
-        if template.get('') is not None:    # first token is a value
+        if template.get('') is not None:  # first token is a value
             attr[template.get('')[0]] = tokens.pop(0)
         while len(tokens) > 0:
             token = tokens.pop(0)
@@ -571,95 +691,54 @@ def parse_field_attributes(cls, tokens):
                 attr[key] = value.strip('"').strip()
     return attr, tokens
 
+
 def toc_fields(root, **params):
     """TOC fields usually have PAGEREF fields inside them, but the main text of each entry is not linked.
     Add a link to the main text of each entry that has a PAGEREF field but no link."""
     for toc in root.xpath("//pub:field[@class='TOC']", namespaces=NS):
-        for p in toc.xpath(".//html:p[.//pub:field[@class='PAGEREF'] and not(.//html:a[@href])]", namespaces=NS):
+        for p in toc.xpath(
+            ".//html:p[.//pub:field[@class='PAGEREF'] and not(.//html:a[@href])]", namespaces=NS
+        ):
             pageref = p.xpath(".//pub:field[@class='PAGEREF']", namespaces=NS)[0]
-            a = B.html.a({'href': "#"+pageref.get('anchor')})
+            a = B.html.a({'href': "#" + pageref.get('anchor')})
             # put content into a hyperlink, up to a pub:tab or pub:field[@class='PAGEREF']
             a.text, p.text = p.text, ''
             for ch in p.getchildren():
                 if ch.tag != '{%(pub)s}tab' % NS and (
-                        ch.tag != '{%(pub)s}field' % NS 
-                        or ch.get('class') != 'PAGEREF'):
+                    ch.tag != '{%(pub)s}field' % NS or ch.get('class') != 'PAGEREF'
+                ):
                     a.append(ch)
                 else:
                     break
             p.insert(0, a)
     return root
 
-FIELD_TAGS = {
-    'HYPERLINK': "{%(html)s}a" % NS
-}
+
+FIELD_TAGS = {'HYPERLINK': "{%(html)s}a" % NS}
 
 FIELD_TEMPLATES = {
     # date and time
-    'DATE': { 
-        r'\@': ['msdate'],
-        r'\s': ['saka', 'true']
-    },
-    'CREATEDATE': {
-        r'\@': ['msdate'],
-        r'\s': ['saka', 'true']
-    },
-    'PRINTDATE': {
-        r'\@': ['msdate'],
-        r'\s': ['saka', 'true']
-    },
-    'SAVEDATE': {
-        r'\@': ['msdate'],
-        r'\s': ['saka', 'true']
-    },
-    'TIME': {
-        r'\@': ['msdate']
-    },
-    'EDITTIME': {
-        r'\*': ['msformat']
-    },
-
+    'DATE': {r'\@': ['msdate'], r'\s': ['saka', 'true']},
+    'CREATEDATE': {r'\@': ['msdate'], r'\s': ['saka', 'true']},
+    'PRINTDATE': {r'\@': ['msdate'], r'\s': ['saka', 'true']},
+    'SAVEDATE': {r'\@': ['msdate'], r'\s': ['saka', 'true']},
+    'TIME': {r'\@': ['msdate']},
+    'EDITTIME': {r'\*': ['msformat']},
     # document information
-    'AUTHOR': {
-        r'\*': ['msformat'],
-    },
-    'TITLE': {
-        r'\*': ['msformat']
-    },
-    'FILENAME': {
-        r'\*': ['msformat'],
-        r'\p': ['path', 'true']
-    },
-    'FILESIZE': {
-        r'\#': ['msnumpic'],
-        r'\k': ['unit', 'KB'],
-        r'\m': ['unit', 'MB']
-    },
-    'DOCPROPERTY': {
-        '': ['name']
-    },
-    'INFO': {
-        '': ['name']
-    },
-    'KEYWORDS': {
-        r'\*': ['msformat']
-    },
-    'LASTSAVEDBY': {
-        r'\*': ['msformat']
-    },
+    'AUTHOR': {r'\*': ['msformat']},
+    'TITLE': {r'\*': ['msformat']},
+    'FILENAME': {r'\*': ['msformat'], r'\p': ['path', 'true']},
+    'FILESIZE': {r'\#': ['msnumpic'], r'\k': ['unit', 'KB'], r'\m': ['unit', 'MB']},
+    'DOCPROPERTY': {'': ['name']},
+    'INFO': {'': ['name']},
+    'KEYWORDS': {r'\*': ['msformat']},
+    'LASTSAVEDBY': {r'\*': ['msformat']},
     'NUMCHARS': {},
     'NUMWORDS': {},
     'NUMPAGES': {},
-    'SUBJECT': {
-        r'\*': ['msformat']
-    },
-    'TEMPLATE': {
-        r'\*': ['msformat'],
-        r'\p': ['path', 'true']        
-    },
-    
+    'SUBJECT': {r'\*': ['msformat']},
+    'TEMPLATE': {r'\*': ['msformat'], r'\p': ['path', 'true']},
     # equations and formulas
-
     # index and tables
     'Index': {
         r'\a': ['accented', 'true'],
@@ -674,50 +753,48 @@ FIELD_TEMPLATES = {
         r'\the_list': ['page-sep'],
         r'\p': ['letters'],
         r'\r': ['run-in', 'true'],
-        r'\y': ['yomi', 'true']
+        r'\y': ['yomi', 'true'],
     },
-    'RD': {     # reference document for tables/indexes
-        '': ['src']
-    },
-    'TA': {     # table of authorities entry
+    'RD': {'': ['src']},  # reference document for tables/indexes
+    'TA': {  # table of authorities entry
         r'\b': ['bold', 'true'],
         r'\c': ['catnum'],
         r'\i': ['ital', 'true'],
         r'\the_list': ['title'],
         r'\r': ['anchor'],
-        r'\s': ['name']
+        r'\s': ['name'],
     },
-    'TC': {     # table of contents entry
+    'TC': {  # table of contents entry
         '': ['title'],
         r'\f': ['kind'],
         r'\the_list': ['level'],
-        r'\n': ['page', 'false']
+        r'\n': ['page', 'false'],
     },
     'TOA': {
         r'\b': ['anchor'],
         r'\c': ['catnum'],
         r'\s': ['seq'],
-        r'\d': ['seq-sep'],     
+        r'\d': ['seq-sep'],
         r'\e': ['entry-sep'],
         r'\f': ['formatting', 'false'],
         r'\g': ['range-sep'],
         r'\h': ['headings', 'true'],
         r'\the_list': ['page-sep'],
-        r'\p': ['passim', '5']   
+        r'\p': ['passim', '5'],
     },
     'TOC': {
-        r'\a': ['figures', ''],     # table of figures w/o labels
-        r'\b': ['anchor'],        # anchor of document section to use
-        r'\c': ['figures'],         # table of figures of the given label
-        r'\d': ['seq-sep'],         # separator between sequence and page number
-        r'\f': ['use-tc', 'true'],      # TOC from TC fields
-        r'\the_list': ['tc-level'],        # TC entry field level to use
+        r'\a': ['figures', ''],  # table of figures w/o labels
+        r'\b': ['anchor'],  # anchor of document section to use
+        r'\c': ['figures'],  # table of figures of the given label
+        r'\d': ['seq-sep'],  # separator between sequence and page number
+        r'\f': ['use-tc', 'true'],  # TOC from TC fields
+        r'\the_list': ['tc-level'],  # TC entry field level to use
         r'\h': ['link', 'true'],
-        r'\n': ['numbers', 'false'],# don't show page numbers
-        r'\o': ['levels'],         # TOC from given outline levels
-        r'\p': ['entry-sep'],       # separator between entry and page number
-        r'\s': ['seq-type'],        # use sequence type
-        r'\t': ['styles'],          # TOC from styles
+        r'\n': ['numbers', 'false'],  # don't show page numbers
+        r'\o': ['levels'],  # TOC from given outline levels
+        r'\p': ['entry-sep'],  # separator between entry and page number
+        r'\s': ['seq-type'],  # use sequence type
+        r'\t': ['styles'],  # TOC from styles
         r'\w': ['preserve-tab', 'true'],
         r'\x': ['preserve-newline', 'true'],
     },
@@ -727,52 +804,34 @@ FIELD_TEMPLATES = {
         r'\i': ['ital', 'true'],
         r'\r': ['anchor'],
         r'\t': ['text'],
-        r'\y': ['yomi']
+        r'\y': ['yomi'],
     },
-    
     # links and references
-    'AUTOTEXT': {
-        '': ['name']
-    },
-    'AUTOTEXTLIST': {
-        r'\s': ['style'],
-        r'\t': ['tip'],
-        r'\*': ['msformat']
-    },
-    'HYPERLINK': {
-        '': ['href'],
-        r'\l': ['anchor']
-    },
-    'INCLUDEPICTURE': {
-        '': ['src'],
-        r'\c': ['filter'],
-        r'\d': ['embed', 'false']
-    },
+    'AUTOTEXT': {'': ['name']},
+    'AUTOTEXTLIST': {r'\s': ['style'], r'\t': ['tip'], r'\*': ['msformat']},
+    'HYPERLINK': {'': ['href'], r'\l': ['anchor']},
+    'INCLUDEPICTURE': {'': ['src'], r'\c': ['filter'], r'\d': ['embed', 'false']},
     'INCLUDETEXT': {
         '': ['src'],
         r'\c': ['converter'],
         r'\!': ['update', 'false'],
-        r'\*': ['msformat']
+        r'\*': ['msformat'],
     },
     'NOTEREF': {
         '': ['anchor'],
         r'\f': ['styled', 'true'],
         r'\h': None,
-        r'\p': ['position', 'relative']
+        r'\p': ['position', 'relative'],
     },
     'PAGEREF': {
         '': ['anchor'],
-        r'\h': None,                        # hyperlink flag, assumed
-        r'\p': ['position', 'relative'],    # show relative position
-        r'\*': ['msformat'],                # format switch
-        r'\#': ['msnumpic'],                # numeric picture
+        r'\h': None,  # hyperlink flag, assumed
+        r'\p': ['position', 'relative'],  # show relative position
+        r'\*': ['msformat'],  # format switch
+        r'\#': ['msnumpic'],  # numeric picture
     },
-    'PLACEHOLDER': {
-        '': ['text']
-    },
-    'QUOTE': {
-        '': ['text']
-    },
+    'PLACEHOLDER': {'': ['text']},
+    'QUOTE': {'': ['text']},
     'REF': {
         '': ['anchor'],
         r'\f': ['note-number', 'true'],
@@ -782,7 +841,7 @@ FIELD_TEMPLATES = {
         r'\r': ['para-number', 'relative'],
         r'\t': ['non-delimiters', 'false'],
         r'\w': ['para-number', 'absolute'],
-        r'\*': ['msformat']
+        r'\*': ['msformat'],
     },
     'STYLEREF': {
         '': ['style'],
@@ -791,36 +850,17 @@ FIELD_TEMPLATES = {
         r'\p': ['position', 'relative'],
         r'\r': ['para-number', 'relative'],
         r'\t': ['non-delimiters', 'false'],
-        r'\w': ['para-number', 'absolute'],        
+        r'\w': ['para-number', 'absolute'],
     },
-    
     # numbering
-    'AUTONUM': {
-        r'\s': ['sep'],
-        r'\*': ['msformat']
-    },
-    'AUTONUMLGL': {
-        r'\e': ['sep', ''],
-        r'\s': ['sep'],
-        r'\*': ['msformat']    
-    },
+    'AUTONUM': {r'\s': ['sep'], r'\*': ['msformat']},
+    'AUTONUMLGL': {r'\e': ['sep', ''], r'\s': ['sep'], r'\*': ['msformat']},
     'AUTONUMOUT': {},
-    'LISTNUM': {
-        r'\the_list': ['level'],
-        r'\s': ['start']
-    },
-    'PAGE': {
-        r'\*': ['msformat']
-    },
-    'REVNUM': {
-        r'\*': ['msformat']
-    },
-    'SECTION': {
-        r'\*': ['msformat']
-    },
-    'SECTIONPAGES': {
-        r'\*': ['msformat']
-    },
+    'LISTNUM': {r'\the_list': ['level'], r'\s': ['start']},
+    'PAGE': {r'\*': ['msformat']},
+    'REVNUM': {r'\*': ['msformat']},
+    'SECTION': {r'\*': ['msformat']},
+    'SECTIONPAGES': {r'\*': ['msformat']},
     'SEQ': {
         '': ['name'],
         r'\c': ['val', 'previous'],
@@ -828,18 +868,10 @@ FIELD_TEMPLATES = {
         r'\n': ['val', 'next'],
         r'\r': ['reset'],
         r'\s': ['heading'],
-        r'\*': ['msformat']
+        r'\*': ['msformat'],
     },
-
     # user information
-    'USERADDRESS': {
-        r'\*': ['msformat']
-    },
-    'USERINITIALS': {
-        r'\*': ['msformat']
-    },
-    'USERNAME': {
-        r'\*': ['msformat']
-    },
+    'USERADDRESS': {r'\*': ['msformat']},
+    'USERINITIALS': {r'\*': ['msformat']},
+    'USERNAME': {r'\*': ['msformat']},
 }
-
