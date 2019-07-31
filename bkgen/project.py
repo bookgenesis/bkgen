@@ -16,6 +16,8 @@ import json, os, re, shutil, subprocess, sys, tempfile, time, traceback, datetim
 from copy import deepcopy
 from glob import glob
 from itertools import chain
+import click
+
 from bl.dict import Dict
 from bl.file import File
 from bl.string import String
@@ -24,17 +26,21 @@ from bl.text import Text
 from bl.dict import Dict
 from bl.url import URL
 from bl.zip import ZIP
-from bf.pdf import PDF
+from bf.image import Image
+from bf.pdf import PDF, DEVICE_EXTENSIONS
 from bgs.gs import GS
 from bxml.xml import XML, etree
 from bxml.xslt import XSLT  # side-effect: registers lowercase and uppercase xpath functions
 from bxml.builder import Builder
 
-from bkgen import NS, config, mimetypes, PATH
-from bkgen.document import Document
-from bkgen.html import HTML
-from bkgen.source import Source
-from bkgen.css import CSS
+from . import NS, config, mimetypes, PATH
+from .css import CSS
+from .document import Document
+from .epub import EPUB
+from .html import HTML
+from .mobi import MOBI
+from .metadata import Metadata
+from .source import Source
 
 PUB = Builder.single(NS.pub)
 H = Builder.single(NS.html)
@@ -52,8 +58,10 @@ class Project(XML, Source):
 
     # the kinds of inputs that are currently supported
     ACCEPTED_EXTENSIONS = (
-        ['.docx', '.htm', '.html', '.xhtml', '.md', '.txt'
-         ] + ['.icml', '.idml', '.epub', '.jpg', '.jpeg'] + ['.png', '.bmp', '.tif', '.tiff'])
+        ['.docx', '.htm', '.html', '.xhtml', '.md', '.txt']
+        + ['.icml', '.idml', '.epub', '.jpg', '.jpeg']
+        + ['.png', '.bmp', '.tif', '.tiff']
+    )
 
     # the kinds of outputs that are currently supported
     OUTPUT_KIND_EXTS = Dict(**{'EPUB': '.epub', 'Kindle': '.mobi', 'HTML': '.zip'})
@@ -142,8 +150,9 @@ class Project(XML, Source):
 
     @property
     def cover_href(self):
-        return self.find(self.root,
-                         "pub:resources/pub:resource[contains(@class,'cover') and @href]/@href")
+        return self.find(
+            self.root, "pub:resources/pub:resource[contains(@class,'cover') and @href]/@href"
+        )
 
     def spine_items(self):
         """Returns a list of items in the spine"""
@@ -172,8 +181,6 @@ class Project(XML, Source):
     # SOURCE METHODS
     def metadata(self):
         """metadata is kept in the project.xml opf:metadata block."""
-        from .metadata import Metadata
-
         return Metadata(root=self.find(self.root, "opf:metadata", namespaces=NS))
 
     def resources(self):
@@ -190,16 +197,18 @@ class Project(XML, Source):
         from bf.image import Image
 
         images = [
-            Image(fn=fn) for fn in rglob(os.path.join(self.path, self.content_folder), '*.*')
-            if os.path.splitext(fn)[-1].lower() in
-            ['.jpg', '.jpeg', '.tiff', '.tif', '.png', '.pdf', '.bmp']
+            Image(fn=fn)
+            for fn in rglob(os.path.join(self.path, self.content_folder), '*.*')
+            if os.path.splitext(fn)[-1].lower()
+            in ['.jpg', '.jpeg', '.tiff', '.tif', '.png', '.pdf', '.bmp']
         ]
         return images
 
     def stylesheet(self):
         """the master .css for this project is the resource class="stylesheet"."""
         csshref = self.find(
-            self.root, "pub:resources/pub:resource[@class='stylesheet']/@href", namespaces=NS)
+            self.root, "pub:resources/pub:resource[@class='stylesheet']/@href", namespaces=NS
+        )
         if csshref is None:
             css = CSS(fn=os.path.join(PATH, 'templates', 'project.css'))
             css.fn = str(self.folder / 'project.css')
@@ -235,7 +244,8 @@ class Project(XML, Source):
 
     def files(self, depth=None, hidden=False):
         return [
-            f for f in File(fn=self.path).file_list(depth=depth)
+            f
+            for f in File(fn=self.path).file_list(depth=depth)
             if (hidden == True or os.path.basename(f.fn)[0] != '.')
         ]
 
@@ -259,15 +269,17 @@ class Project(XML, Source):
     # CLASSMETHODS
 
     @classmethod
-    def create(Class,
-               parent_path,
-               title,
-               name=None,
-               path=None,
-               basename='project',
-               refresh=False,
-               include_stylesheet=True,
-               **project_params):
+    def create(
+        Class,
+        parent_path,
+        title,
+        name=None,
+        path=None,
+        basename='project',
+        refresh=False,
+        include_stylesheet=True,
+        **project_params,
+    ):
         """create a new project.
             parent_path = the filesystem path to the parent folder that this project is in
             title = the title for the project
@@ -279,8 +291,10 @@ class Project(XML, Source):
         """
         name = name or String(title).nameify()
         if not (re.match(r"^[\w\-\_\.]+$", name or '', flags=re.U)):
-            raise ValueError('Please provide a project name containing letters, numbers, hyphens, '
-                             + 'underscores, and periods -- no whitespace or special characters.')
+            raise ValueError(
+                'Please provide a project name containing letters, numbers, hyphens, '
+                + 'underscores, and periods -- no whitespace or special characters.'
+            )
         if not os.path.exists(parent_path):
             os.makedirs(parent_path)
             # raise ValueError("Before creating the project, first create the parent folder, %s" % parent_path)
@@ -308,8 +322,7 @@ class Project(XML, Source):
 
         # make sure there is a base set of project folders
         for folder in [
-                project.get(k) for k in project.keys()
-                if '_folder' in k and project.get(k) is not None
+            project.get(k) for k in project.keys() if '_folder' in k and project.get(k) is not None
         ]:
             path = os.path.join(project_path, folder)
             if not os.path.exists(path):
@@ -318,10 +331,12 @@ class Project(XML, Source):
         # make sure there is a global content stylesheet for this project
         stylesheet_fn = None
         stylesheet_elem = project.find(
-            project.root, "pub:resources/pub:resource[@class='stylesheet']", namespaces=NS)
+            project.root, "pub:resources/pub:resource[@class='stylesheet']", namespaces=NS
+        )
         if stylesheet_elem is not None:
             stylesheet_fn = os.path.abspath(
-                os.path.join(project.path, str(URL(stylesheet_elem.get('href')))))
+                os.path.join(project.path, str(URL(stylesheet_elem.get('href'))))
+            )
             if not os.path.exists(stylesheet_fn):
                 stylesheet_elem.getparent().remove(stylesheet_elem)
                 stylesheet_elem = None
@@ -365,7 +380,8 @@ class Project(XML, Source):
         for fn in fns:
             src_file = File(fn=str(fn))
             font_file = File(
-                fn=str((self.folder / self.font_folder / src_file.basename).clean_filename()))
+                fn=str((self.folder / self.font_folder / src_file.basename).clean_filename())
+            )
             if src_file.fn != font_file.fn:
                 src_file.copy(font_file.fn)
             href = font_file.relpath(self.path)
@@ -401,14 +417,17 @@ class Project(XML, Source):
                     self.import_source_file(
                         manifest_fn,
                         fns=manifest_fns,
-                        **{k: v
-                           for k, v in args.items() if k not in ['fns']}))
+                        **{k: v for k, v in args.items() if k not in ['fns']},
+                    )
+                )
             result['fns'] = list(chain(*[source['fns'] for source in result['sources']]))
 
         # .DOCX files
-        elif (content_type ==
-              'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-              or ext == '.docx'):
+        elif (
+            content_type
+            == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            or ext == '.docx'
+        ):
             # write the content data to a temporary folder
             from .docx import DOCX
 
@@ -416,9 +435,9 @@ class Project(XML, Source):
 
         # .HTML files
         elif content_type in ['text/html', 'application/xhtml+xml'] or ext in [
-                '.htm',
-                '.html',
-                '.xhtml',
+            '.htm',
+            '.html',
+            '.xhtml',
         ]:
             # write the content data to a temporary folder
             from .html import HTML
@@ -460,18 +479,18 @@ class Project(XML, Source):
 
         # Images
         elif content_type in [
-                'image/jpeg',
-                'image/png',
-                'image/bmp',
-                'image/tiff',
-                'application/pdf',
+            'image/jpeg',
+            'image/png',
+            'image/bmp',
+            'image/tiff',
+            'application/pdf',
         ] or ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff', '.pdf']:
             result.fns += self.import_image(fn, gs=config.Lib and config.Lib.gs or None)
 
         # Fonts
         elif content_type in ['application/x-font-ttf', 'application/font-sfnt'] or ext in [
-                '.ttf',
-                '.otf',
+            '.ttf',
+            '.otf',
         ]:
             result.fns += self.import_font_files(fn)
 
@@ -487,15 +506,17 @@ class Project(XML, Source):
 
         return result
 
-    def import_source(self,
-                      source,
-                      documents=True,
-                      images=True,
-                      stylesheet=True,
-                      metadata=False,
-                      document_before_update_project=None,
-                      copy_to_source_folder=False,
-                      **params):
+    def import_source(
+        self,
+        source,
+        documents=True,
+        images=True,
+        stylesheet=True,
+        metadata=False,
+        document_before_update_project=None,
+        copy_to_source_folder=False,
+        **params,
+    ):
         """import a source into the project.
             source = a Source object that contains the content source [REQUIRED]
             documents = whether to import documents from the source (default=True)
@@ -510,7 +531,8 @@ class Project(XML, Source):
         common_prefix = os.path.commonprefix([self.path, source.fn])
         log.debug(
             "\n\tproject_path=%r\n\tsource.fn=%r\n\tcommon_prefix=%r\n\tproject path in common prefix? %r"
-            % (self.path, source.fn, common_prefix, self.path in common_prefix))
+            % (self.path, source.fn, common_prefix, self.path in common_prefix)
+        )
         if self.path not in common_prefix and copy_to_source_folder is True:
             fn = os.path.join(self.source_path, os.path.basename(source.fn))
             shutil.copy(source.fn, fn)
@@ -531,7 +553,7 @@ class Project(XML, Source):
             fns += docfns
         if metadata == True:
             try:
-            self.import_metadata(source.metadata())
+                self.import_metadata(source.metadata())
             except:
                 log.error(f'could not import_metadata for {source}')
         if stylesheet == True:
@@ -572,7 +594,8 @@ class Project(XML, Source):
         for doc in documents:
             # save the document, overwriting any existing document in that location
             if doc.fn is None or self.content_path not in os.path.commonprefix(
-                [self.content_path, doc.fn]):
+                [self.content_path, doc.fn]
+            ):
                 doc.fn = os.path.join(self.content_path, self.make_basename(doc.fn))
 
             # import referenced images, and update the image locations.
@@ -644,7 +667,7 @@ class Project(XML, Source):
 
             # make sure the element has an id
             if elem.get('id') is None:
-                ns = project_metadata.tag_namespace(elem.tag)
+                ns = project_metadata.tag_namespace(elem.tag or '')
                 if ns in NS.values():
                     prefix = NS.keys()[NS.values().index(ns)]
                     tag = elem.tag.replace("{%s}" % ns, prefix + ':')
@@ -697,8 +720,9 @@ class Project(XML, Source):
             if params.get('kind') is None or 'digital' in params.get('kind'):
                 existing_cover_digital = self.find(
                     self.root,
-                    "//pub:resource[contains(@class,'cover') and (@kind='%s' or not(@kind))]" %
-                    params.get('kind') or 'digital',
+                    "//pub:resource[contains(@class,'cover') and (@kind='%s' or not(@kind))]"
+                    % params.get('kind')
+                    or 'digital',
                     namespaces=NS,
                 )
                 if existing_cover_digital is not None:
@@ -716,32 +740,36 @@ class Project(XML, Source):
             self.root,
             """
             pub:resources/pub:resource[contains(@class, 'cover') and 
-                (not(@kind) or contains(@kind, '%s'))]/@href""" % kind,
+                (not(@kind) or contains(@kind, '%s'))]/@href"""
+            % kind,
             namespaces=NS,
         )
 
     def build_outputs(
-            self,
-            kind=None,
-            output_kinds=[],
-            cleanup=False,
-            before_compile=None,
-            doc_stylesheets=True,
-            singlepage=False,
+        self,
+        kind=None,
+        output_kinds=[],
+        cleanup=False,
+        before_compile=None,
+        doc_stylesheets=True,
+        singlepage=False,
     ):
         """build the project outputs
             kind=None:      which kind of output to build; if None, build all
         """
-        log.info("build_outputs: %s %r" % (
-            self.fn,
-            dict(
-                kind=kind,
-                cleanup=cleanup,
-                before_compile=before_compile,
-                doc_stylesheets=doc_stylesheets,
-                singlepage=singlepage,
-            ),
-        ))
+        log.info(
+            "build_outputs: %s %r"
+            % (
+                self.fn,
+                dict(
+                    kind=kind,
+                    cleanup=cleanup,
+                    before_compile=before_compile,
+                    doc_stylesheets=doc_stylesheets,
+                    singlepage=singlepage,
+                ),
+            )
+        )
         if kind is not None:
             output_kinds = [kind]
         elif output_kinds == []:
@@ -758,6 +786,7 @@ class Project(XML, Source):
                         cleanup=cleanup,
                         doc_stylesheets=doc_stylesheets,
                         before_compile=before_compile,
+                        **args,
                     )
                 elif output_kind == 'Kindle':
                     result = self.build_mobi(
@@ -767,16 +796,21 @@ class Project(XML, Source):
                     )
                 elif output_kind == 'HTML':
                     result = self.build_html(
-                        cleanup=cleanup, doc_stylesheets=doc_stylesheets, singlepage=singlepage)
+                        cleanup=cleanup, doc_stylesheets=doc_stylesheets, singlepage=singlepage
+                    )
                 elif output_kind == 'Archive':
                     result = self.build_archive()
                 result.size = File(fn=result.fn).size
                 result.status = 'completed'
             except:
-                msg = (str(String(sys.exc_info()[0].__name__).camelsplit()) + ' ' + str(
-                    sys.exc_info()[1])).strip()
+                msg = (
+                    str(String(sys.exc_info()[0].__name__).camelsplit())
+                    + ' '
+                    + str(sys.exc_info()[1])
+                ).strip()
                 result = Dict(
-                    kind=output_kind, status='error', message=msg, traceback=traceback.format_exc())
+                    kind=output_kind, status='error', message=msg, traceback=traceback.format_exc()
+                )
                 log.error(result.traceback)
             finally:
                 result.time = time.time() - start_time
@@ -798,30 +832,39 @@ class Project(XML, Source):
         result = Dict(fn=zipfn, format="pub")
         return result
 
-    def build_epub(self,
-                   clean=True,
-                   show_nav=False,
-                   doc_stylesheets=True,
-                   progress=None,
-                   name_kind=True,
-                   zip=True,
-                   check=True,
-                   cleanup=False,
-                   before_compile=None,
-                   lang=None,
-                   **image_args):
-        from .epub import EPUB
-
+    def build_epub(
+        self,
+        clean=True,
+        show_nav=False,
+        doc_stylesheets=True,
+        progress=None,
+        name_kind=True,
+        epub_name=None,
+        zip=True,
+        cleanup=False,
+        before_compile=None,
+        lang=None,
+        check=True,
+        ace=True,
+        image_args=None,
+    ):
+        if image_args is None:
+            image_args = config.EPUB.images
+        log.debug('build_epub(**%r):' % (image_args))
         epub_isbn = self.metadata().identifier(id_patterns=['epub', 'ebook', 'isbn'])
 
-        if epub_isbn is not None and epub_isbn.text is not None:
-            epub_name = str(
-                String(epub_isbn.text)
-                # remove any dashes or whitespace
-                .resub(r'[\s\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', ''))
-        else:
-            epub_name = self.name
+        if epub_name is None:
+            if epub_isbn is not None and epub_isbn.text is not None:
+                epub_name = str(
+                    String(epub_isbn.text)
+                    # remove any dashes or whitespace
+                    .resub(r'[\s\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', '')
+                )
+            else:
+                epub_name = self.name
+        print("epub_name =", epub_name)
         epub_path = os.path.join(self.path, str(self.output_folder), epub_name + '_EPUB')
+        print("epub_path =", epub_path)
         if name_kind == True:
             epub_name += '_EPUB'
 
@@ -831,7 +874,7 @@ class Project(XML, Source):
 
         if not os.path.isdir(epub_path):
             os.makedirs(epub_path)
-        resources = self.output_resources(output_path=epub_path, **image_args)
+        resources = self.output_resources(output_path=epub_path, image_args=image_args)
         if progress is not None:
             progress.report()
         metadata = self.find(self.root, "opf:metadata", namespaces=NS)
@@ -849,7 +892,8 @@ class Project(XML, Source):
             doc_stylesheets=doc_stylesheets,
             lang=lang,
             conditions='digital epub',
-            **image_args)
+            image_args=image_args,
+        )
         if progress is not None:
             progress.report()
         result = EPUB().build(
@@ -864,37 +908,44 @@ class Project(XML, Source):
             before_compile=before_compile,
             zip=zip,
             check=check,
+            ace=ace,
         )
         if cleanup == True:
             shutil.rmtree(epub_path, onerror=rmtree_warn)
         return result
 
-    def build_html(self,
-                   clean=True,
-                   singlepage=False,
-                   ext='.xhtml',
-                   doc_stylesheets=True,
-                   progress=None,
-                   before_compile=None,
-                   zip=True,
-                   cleanup=False,
-                   lang=None,
-                   **image_args):
+    def build_html(
+        self,
+        clean=True,
+        singlepage=False,
+        ext='.xhtml',
+        doc_stylesheets=True,
+        progress=None,
+        before_compile=None,
+        zip=True,
+        cleanup=False,
+        lang=None,
+        image_args=None,
+    ):
         """build html output of the project. 
         * singlepage=False  : whether to build the HTML in a single page
         * zip=True          : whether to zip the output
         * cleanup=False     : whether to cleanup the output folder (only if zip=True)
         """
-        from .epub import EPUB
-
-        log.debug("build_html: %r" % dict(
-            clean=clean,
-            singlepage=singlepage,
-            ext=ext,
-            doc_stylesheets=doc_stylesheets,
-            zip=zip,
-            cleanup=cleanup,
-            **image_args))
+        if image_args is None:
+            image_args = config.EPUB.images
+        log.debug(
+            "build_html: %r"
+            % dict(
+                clean=clean,
+                singlepage=singlepage,
+                ext=ext,
+                doc_stylesheets=doc_stylesheets,
+                zip=zip,
+                cleanup=cleanup,
+                image_args=image_args,
+            )
+        )
         html_path = os.path.join(self.output_path, self.name + '_HTML')
         log.info(html_path)
         if clean == True and os.path.isdir(html_path):
@@ -902,7 +953,7 @@ class Project(XML, Source):
         if not os.path.isdir(html_path):
             os.makedirs(html_path)
         result = Dict(format="html", reports=[])
-        resources = self.output_resources(output_path=html_path, **image_args)
+        resources = self.output_resources(output_path=html_path, image_args=image_args)
         if progress is not None:
             progress.report()
         if lang is None:
@@ -919,7 +970,8 @@ class Project(XML, Source):
             doc_stylesheets=doc_stylesheets,
             lang=lang,
             conditions='digital html',
-            **image_args)
+            image_args=image_args,
+        )
         if singlepage != True:
             EPUB.make_nav(html_path, spine_items, show_nav=True, nav_href="index.xhtml")
         if before_compile is not None:
@@ -936,26 +988,33 @@ class Project(XML, Source):
             progress.report()
         return result
 
-    def build_mobi(self,
-                   clean=True,
-                   cleanup=False,
-                   before_compile=None,
-                   progress=None,
-                   name_kind=True,
-                   doc_stylesheets=True,
-                   lang=None,
-                   **image_args):
-        from .mobi import MOBI
-
+    def build_mobi(
+        self,
+        clean=True,
+        cleanup=False,
+        mobi_name=None,
+        before_compile=None,
+        progress=None,
+        name_kind=True,
+        doc_stylesheets=True,
+        lang=None,
+        image_args=None,
+    ):
+        if image_args is None:
+            image_args = config.Kindle.images
         mobi_isbn = self.metadata().identifier(id_patterns=['mobi', 'ebook', 'isbn'])
-        if mobi_isbn is not None and mobi_isbn.text is not None:
-            mobi_name = str(
-                String(mobi_isbn.text)
-                # remove any dashes or whitespace
-                .resub(r'[\s\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', ''))
-        else:
-            mobi_name = self.name
+        if mobi_name is None:
+            if mobi_isbn is not None and mobi_isbn.text is not None:
+                mobi_name = str(
+                    String(mobi_isbn.text)
+                    # remove any dashes or whitespace
+                    .resub(r'[\s\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', '')
+                )
+            else:
+                mobi_name = self.name
+        print("mobi_name =", mobi_name)
         mobi_path = os.path.join(self.path, str(self.output_folder), mobi_name + '_Kindle')
+        print("mobi_path =", mobi_path)
         if name_kind == True:
             mobi_name += '_Kindle'
 
@@ -964,7 +1023,7 @@ class Project(XML, Source):
 
         if not os.path.isdir(mobi_path):
             os.makedirs(mobi_path)
-        resources = self.output_resources(output_path=mobi_path, **image_args)
+        resources = self.output_resources(output_path=mobi_path, image_args=image_args)
         if progress is not None:
             progress.report()
         metadata = self.root.find("{%(opf)s}metadata" % NS)
@@ -983,7 +1042,8 @@ class Project(XML, Source):
             doc_stylesheets=doc_stylesheets,
             lang=lang,
             conditions='digital mobi',
-            **image_args)
+            image_args=image_args,
+        )
         if progress is not None:
             progress.report()
         result = MOBI().build(
@@ -1001,12 +1061,15 @@ class Project(XML, Source):
             progress.report()
         return result
 
-    def output_resources(self, output_path=None, **image_args):
+    def output_resources(self, output_path=None, image_args=None):
         log.debug("project.output_resources()")
+        image_args = image_args or {}
         output_path = output_path or os.path.join(self.path, str(self.output_folder))
         resources = [
-            deepcopy(resource) for resource in self.root.xpath(
-                "pub:resources/pub:resource[not(@include='False')]", namespaces=NS)
+            deepcopy(resource)
+            for resource in self.root.xpath(
+                "pub:resources/pub:resource[not(@include='False')]", namespaces=NS
+            )
         ]
         for resource in resources:
             log.debug(resource.attrib)
@@ -1018,7 +1081,8 @@ class Project(XML, Source):
                     f.fn,
                     output_path=output_path,
                     gs=config.Lib and config.Lib.gs or None,
-                    **image_args)
+                    **image_args,
+                )
             else:  # other resource as-is
                 outfn = os.path.join(output_path, f.relpath(os.path.dirname(self.fn)))
                 f.write(fn=outfn)
@@ -1038,28 +1102,27 @@ class Project(XML, Source):
             Text(fn=fn).write(fn=outfn)
         return outfn
 
-    def output_image(self,
-                     fn,
-                     output_path=None,
-                     outfn=None,
-                     jpg=True,
-                     png=True,
-                     svg=True,
-                     gs=None,
-                     format='jpeg',
-                     ext='.jpg',
-                     res=300,
-                     quality=90,
-                     maxwh=None,
-                     maxpixels=4e6,
-                     **img_args):
-        from bf.image import Image
+    def output_image(
+        self,
+        fn,
+        output_path=None,
+        outfn=None,
+        jpg=True,
+        png=True,
+        svg=True,
+        gs=None,
+        format='png16m',
+        ext='.png',
+        res=300,
+        quality=90,
+        maxwh=None,
+        maxpixels=4e6,
+        **image_args,
+    ):
 
         f = File(fn=fn)
         mimetype = mimetypes.guess_type(fn)
         log.debug("srcfn: %s %r %r" % (fn, mimetype, os.path.exists(fn)))
-        if 'gs' in img_args:
-            gs = img_args.pop('gs')
         output_path = output_path or os.path.join(self.path, str(self.output_folder))
         outfn = outfn or os.path.splitext(os.path.join(output_path, f.relpath(self.path)))[0] + ext
         log.debug("outfn: %s" % outfn)
@@ -1098,18 +1161,19 @@ class Project(XML, Source):
                 log.debug("%s %r" % (outfn, os.path.exists(outfn)))
                 image = Image(fn=outfn)
 
-                img_args.update(density="%dx%d" % (res, res))
+                image_args.update(density="%dx%d" % (res, res))
                 if os.path.splitext(outfn)[-1].lower() == '.jpg':
-                    img_args.update(quality=quality)
+                    image_args.update(quality=quality)
 
                 if os.path.splitext(outfn)[-1].lower() != '.svg':
                     width, height = [int(i) for i in image.identify(format="%w,%h").split(',')]
-                    if (maxpixels is not None and
-                        (width * height) > maxpixels) or (maxwh is not None and
-                                                          (width > maxwh or height > maxwh)):
-                        if (maxpixels is not None and
-                                width * height > maxpixels):  # reduce dimension to fit maxpixels
-                            fraction = (maxpixels / (width * height))**0.5
+                    if (maxpixels is not None and (width * height) > maxpixels) or (
+                        maxwh is not None and (width > maxwh or height > maxwh)
+                    ):
+                        if (
+                            maxpixels is not None and width * height > maxpixels
+                        ):  # reduce dimension to fit maxpixels
+                            fraction = (maxpixels / (width * height)) ** 0.5
                             width *= fraction
                             height *= fraction
                         if maxwh is not None and width > maxwh:  # reduce dimensions to fit maxwh
@@ -1121,11 +1185,11 @@ class Project(XML, Source):
                         width, height = int(width), int(height)
 
                         log.debug("res=%r, width=%r, height=%r" % (res, width, height))
-                        img_args.update(geometry="%dx%d>" % (width, height))
+                        image_args.update(geometry="%dx%d>" % (width, height))
 
-                    # apply the img_args to the image -- only once, so that we don't lose quality in jpeg output
-                    image.mogrify(**img_args)
-                    log.debug("img: %r %r" % (outfn, img_args))
+                    # apply the image_args to the image -- only once, so that we don't lose quality in jpeg output
+                    log.debug("img: %r %r" % (outfn, image_args))
+                    image.mogrify(**image_args)
 
                 # here we compare the image_data from this write to what was done previously
                 image_data = open(outfn, 'rb').read()
@@ -1146,26 +1210,28 @@ class Project(XML, Source):
 
         return outfn
 
-    def output_spineitems(self,
-                          output_path=None,
-                          ext='.xhtml',
-                          resources=None,
-                          singlepage=False,
-                          http_equiv_content_type=False,
-                          doc_stylesheets=True,
-                          lang='en',
-                          conditions='digital',
-                          **image_args):
-        from bf.image import Image
-        from .document import Document
-
+    def output_spineitems(
+        self,
+        output_path=None,
+        ext='.xhtml',
+        resources=None,
+        singlepage=False,
+        http_equiv_content_type=False,
+        doc_stylesheets=True,
+        lang='en',
+        conditions='digital',
+        image_args=None,
+    ):
         log.debug("project.output_spineitems()")
         output_path = output_path or os.path.join(self.path, str(self.output_folder))
+        image_args = image_args or {}
         if resources is None:
-            resources = self.output_resources(output_path=output_path, **image_args)
+            resources = self.output_resources(output_path=output_path, image_args=image_args)
         spineitems = [
-            deepcopy(spineitem) for spineitem in self.root.xpath(
-                "pub:spine/pub:spineitem[not(@include='False')]", namespaces=NS)
+            deepcopy(spineitem)
+            for spineitem in self.root.xpath(
+                "pub:spine/pub:spineitem[not(@include='False')]", namespaces=NS
+            )
         ]
         outfns = []
         css_fns = glob(os.path.join(self.content_path, '*.css'))
@@ -1182,9 +1248,12 @@ class Project(XML, Source):
                 d = Document.load(fn=docfn, id=split_href[1])
             else:
                 d = Document.load(fn=docfn)
-            outfn = (os.path.splitext(
-                os.path.join(output_path,
-                             os.path.relpath(d.fn, self.path).replace('\\', '/')))[0] + ext)
+            outfn = (
+                os.path.splitext(
+                    os.path.join(output_path, os.path.relpath(d.fn, self.path).replace('\\', '/'))
+                )[0]
+                + ext
+            )
             if 'html' in ext:
                 # create the output html for this document
                 h = d.html(
@@ -1202,18 +1271,24 @@ class Project(XML, Source):
                     css_fns = []
                     head = h.find(h.root, "html:head", namespaces=NS)
                     for css_link in h.xpath(
-                            head, "html:link[@rel='stylesheet' and @href]", namespaces=NS):
+                        head, "html:link[@rel='stylesheet' and @href]", namespaces=NS
+                    ):
                         css_fns.append(
-                            os.path.abspath(os.path.join(h.path, str(URL(css_link.get('href'))))))
+                            os.path.abspath(os.path.join(h.path, str(URL(css_link.get('href')))))
+                        )
                         head.remove(
                             css_link
                         )  # we won't need the project stylesheets separately, because we're merging
                     for doc_css_fn in doc_css_fns:
-                        out_css_fn = (os.path.splitext(
-                            os.path.join(
-                                output_path,
-                                os.path.relpath(doc_css_fn, self.path).replace('\\', '/'),
-                            ))[0] + '.css')
+                        out_css_fn = (
+                            os.path.splitext(
+                                os.path.join(
+                                    output_path,
+                                    os.path.relpath(doc_css_fn, self.path).replace('\\', '/'),
+                                )
+                            )[0]
+                            + '.css'
+                        )
                         if not os.path.exists(out_css_fn):
                             merge_css_fns = css_fns + [doc_css_fn]
                             out_css = CSS.merge_stylesheets(merge_css_fns[0], *merge_css_fns[1:])
@@ -1222,19 +1297,20 @@ class Project(XML, Source):
                         log.debug("doc_css: %r" % out_css_fn)
                         href = os.path.relpath(out_css_fn, h.dirpath()).replace('\\', '/')
                         link = etree.Element(
-                            "{%(html)s}link" % NS, rel="stylesheet", href=href, type="text/css")
+                            "{%(html)s}link" % NS, rel="stylesheet", href=href, type="text/css"
+                        )
                         head.append(link)
 
                 # output any images that are referenced from the document and are locally available
                 for img in h.root.xpath("//html:img", namespaces=NS):
                     srcfn = os.path.join(d.path, str(URL(img.get('src'))))
                     if os.path.exists(srcfn):
-                        args = dict(**image_args)
                         outfn = self.output_image(
                             srcfn,
                             output_path=output_path,
                             gs=config.Lib and config.Lib.gs or None,
-                            **args)
+                            **image_args,
+                        )
                         img.set('src', os.path.relpath(outfn, h.path).replace('\\', '/'))
                     else:
                         log.error("IMAGE NOT FOUND: %s" % srcfn)
@@ -1247,7 +1323,8 @@ class Project(XML, Source):
         project_css_fn = os.path.join(
             output_path,
             self.find(
-                self.root, "pub:resources/pub:resource[@class='stylesheet']/@href", namespaces=NS)
+                self.root, "pub:resources/pub:resource[@class='stylesheet']/@href", namespaces=NS
+            )
             or 'project.css',
         )
 
@@ -1261,7 +1338,8 @@ class Project(XML, Source):
                         rel="stylesheet",
                         type="text/css",
                         href=os.path.relpath(project_css_fn, endnotes_html.path).replace('\\', '/'),
-                    ))
+                    )
+                )
             body = endnotes_html.find(endnotes_html.root, "//html:body")
             if body is None:
                 body = H.body('\n')
@@ -1292,7 +1370,8 @@ class Project(XML, Source):
             title = self.metadata().title.text if self.metadata().title is not None else ''
             spineitems = [
                 PUB.spineitem(
-                    href=os.path.relpath(html.fn, output_path).replace('\\', '/'), title=title)
+                    href=os.path.relpath(html.fn, output_path).replace('\\', '/'), title=title
+                )
             ]
             # head = H.head(
             #         H.title(title),
@@ -1311,7 +1390,8 @@ class Project(XML, Source):
                         type="text/css",
                         href=os.path.relpath(project_css_fn, html.path).replace('\\', '/'),
                     ),
-                ))
+                )
+            )
             body = H.body('\n')
             html.root.append(body)
             html.write()
@@ -1341,9 +1421,10 @@ class Project(XML, Source):
                 log.debug(outfn)
                 x = XML(fn=outfn)
                 for e in [
-                        e for e in x.root.xpath("//html:a[@href]", namespaces=NS)
-                        if len(e.get('href')) > 0 and (
-                            e.get('href')[0] == '#' or e.get('href').split('#')[0] not in basenames)
+                    e
+                    for e in x.root.xpath("//html:a[@href]", namespaces=NS)
+                    if len(e.get('href')) > 0
+                    and (e.get('href')[0] == '#' or e.get('href').split('#')[0] not in basenames)
                 ]:
                     hreflist = str(URL(e.get('href'))).split('#')
                     if len(hreflist) > 1:  # we have an id -- use it to resolve the link
@@ -1355,7 +1436,8 @@ class Project(XML, Source):
                             e.set('href', rp + '#' + id)
                     else:  # only a filename
                         outfb = os.path.splitext(
-                            os.path.abspath(os.path.join(os.path.dirname(outfn), hreflist[0])))[0]
+                            os.path.abspath(os.path.join(os.path.dirname(outfn), hreflist[0]))
+                        )[0]
                         for hfn in outfns:
                             if outfb in hfn:
                                 e.set(
@@ -1372,9 +1454,9 @@ class Project(XML, Source):
         for outfn in outfns:
             x = XML(fn=outfn)
             for pagebreak in x.xpath(
-                    x.root,
-                    "//html:span[@id and (@epub:type='pagebreak' or @role='doc-pagebreak')]",
-                    namespaces=NS,
+                x.root,
+                "//html:span[@id and (@epub:type='pagebreak' or @role='doc-pagebreak')]",
+                namespaces=NS,
             ):
                 if pagebreak.get('id') in pagebreak_ids:
                     x.remove(pagebreak, leave_tail=True)
@@ -1390,18 +1472,17 @@ class Project(XML, Source):
         resources=True: remove all non-referenced resources (non-xml) from the content folder
         exclude=None:   regexp pattern to exclude from cleanup
         """
-        log.debug("cleanup %s: %r" % (
-            self.name,
-            {
-                'resources': resources,
-                'outputs': outputs,
-                'logs': logs,
-                'exclude': exclude
-            },
-        ))
+        log.debug(
+            "cleanup %s: %r"
+            % (
+                self.name,
+                {'resources': resources, 'outputs': outputs, 'logs': logs, 'exclude': exclude},
+            )
+        )
         if outputs == True:
             dirs = [
-                d for d in glob(self.output_path + '/*')
+                d
+                for d in glob(self.output_path + '/*')
                 if os.path.isdir(d) and (exclude is None or re.search(exclude, d) is None)
             ]
             log.info("cleanup: removing %d output directories from %s" % (len(dirs), self.path))
@@ -1416,29 +1497,39 @@ class Project(XML, Source):
         if resources == True:
             # Get all the resource filenames that don't match the exclusion pattern
             resourcefns = list(
-                set([
-                    File(fn=fn).splitext()[0] for fn in rglob(self.content_path, "*.*")
-                    if os.path.splitext(fn)[-1].lower() != '.xml' and (
-                        exclude is None or re.search(exclude, fn) is None)
-                ]))
+                set(
+                    [
+                        File(fn=fn).splitext()[0]
+                        for fn in rglob(self.content_path, "*.*")
+                        if os.path.splitext(fn)[-1].lower() != '.xml'
+                        and (exclude is None or re.search(exclude, fn) is None)
+                    ]
+                )
+            )
             log.debug('%d content resources' % len(resourcefns))
             # pop from the list those that are referenced from the content
             xmlfns = [self.fn] + rglob(self.content_path, '*.xml')
             for xmlfn in xmlfns:
                 x = XML(fn=xmlfn)
                 hreffns = list(
-                    set([
-                        File(fn=os.path.abspath(os.path.join(x.path,
-                                                             href.split('#')[0]))).splitext()[0]
-                        for href in Document.xpath(x.root, "//@href|//@src|//@altimg")
-                    ]))
+                    set(
+                        [
+                            File(
+                                fn=os.path.abspath(os.path.join(x.path, href.split('#')[0]))
+                            ).splitext()[0]
+                            for href in Document.xpath(x.root, "//@href|//@src|//@altimg")
+                        ]
+                    )
+                )
                 log.debug('%d hrefs in %s' % (len(hreffns), x.fn))
                 for hreffn in hreffns:
                     if hreffn in resourcefns:
                         log.debug('retain: %s' % hreffn)
                         resourcefns.pop(resourcefns.index(hreffn))
-            log.info('cleanup: removing %d orphaned content resources from %s' % (len(resourcefns),
-                                                                                  self.path))
+            log.info(
+                'cleanup: removing %d orphaned content resources from %s'
+                % (len(resourcefns), self.path)
+            )
             # delete those that remain -- not excluded, not referenced
             for resourcefn in resourcefns:
                 fns = glob(resourcefn + '.*')
@@ -1543,15 +1634,17 @@ def import_all(project_path):
         project.import_source_file(fn, fns=fns, with_metadata=False)
 
     # import metadata.xml
-    fns = [fn for fn in rglob(project.path, '*metadata.xml')
-           if '.itmsp' not in fn]  # not inside an iTunes Producer package
+    fns = [
+        fn for fn in rglob(project.path, '*metadata.xml') if '.itmsp' not in fn
+    ]  # not inside an iTunes Producer package
     log.info('-- %d metadata.xml files' % len(fns))
     for fn in fns:
         project.import_metadata(fn)
 
     # images
     fns = [
-        fn for fn in rglob(interior_path + '/Links', "*.*")
+        fn
+        for fn in rglob(interior_path + '/Links', "*.*")
         if os.path.splitext(fn)[-1].lower() in ['.pdf', '.jpg', '.png', '.tif', '.tiff', '.eps']
     ]
     log.info('-- %d image files' % len(fns))
@@ -1562,19 +1655,17 @@ def import_all(project_path):
     fns = rglob(cover_path, "*.jpg")
     for fn in fns:
         project.import_image(
-            fn, gs=config.Lib and config.Lib.gs or None, **{
-                'class': 'cover',
-                'kind': 'digital'
-            })
+            fn, gs=config.Lib and config.Lib.gs or None, **{'class': 'cover', 'kind': 'digital'}
+        )
 
 
 def build_project(
-        project_path,
-        format=None,
-        check=None,
-        doc_stylesheets=True,
-        singlepage=False,
-        before_compile=None,
+    project_path,
+    format=None,
+    check=None,
+    doc_stylesheets=True,
+    singlepage=False,
+    before_compile=None,
 ):
     if os.path.isfile(project_path):
         project_fn = project_path
@@ -1589,16 +1680,18 @@ def build_project(
     # default formats
     if format is None or 'epub' in format:
         image_args = config.EPUB.images or {}
-        project.build_epub(check=check, before_compile=before_compile, **image_args)
+        project.build_epub(check=check, before_compile=before_compile, image_args=image_args)
     if format is None or 'mobi' in format:
         image_args = config.Kindle.images or {}
-        project.build_mobi(before_compile=before_compile, **image_args)
+        project.build_mobi(before_compile=before_compile, image_args=image_args)
 
     # non-default formats
     if format is not None:
         if 'html' in format:
             image_args = config.EPUB.images or {}
-            project.build_html(singlepage=singlepage, before_compile=before_compile, **image_args)
+            project.build_html(
+                singlepage=singlepage, before_compile=before_compile, image_args=image_args
+            )
         if 'archive' in format:
             project.build_archive()
 
@@ -1619,17 +1712,17 @@ def remove_project(project_path):
 
 
 if __name__ == '__main__':
-    from bkgen import config
-
     logging.basicConfig(**config.Logging)
     if len(sys.argv) < 2:
-        log.warn("Usage: python -m bkgen.project command project_path [project_path] ...")
+        log.warn("Usage: python -m bkgen.project [command] project_path [project_path] ...")
+    elif len(sys.argv) == 2:
+        project = Project(fn=sys.argv[1])
     else:
         project_path = File(os.path.abspath(sys.argv[2])).fn  # normalize by all means!
         fns = [File(fn=fn).fn for fn in sys.argv[3:]]
         if os.path.isdir(project_path):
             project_fn = os.path.join(project_path, 'project.xml')
-        elif project_path[-len('project.xml'):] == 'project.xml':
+        elif project_path[-len('project.xml') :] == 'project.xml':
             project_fn = project_path
             project_path = os.path.dirname(project_path)
         else:
@@ -1646,13 +1739,15 @@ if __name__ == '__main__':
 
         if 'create' in sys.argv[1]:
             Project.create(
-                os.path.dirname(project_path), os.path.basename(project_path), path=project_path)
+                os.path.dirname(project_path), os.path.basename(project_path), path=project_path
+            )
 
         if 'import-all' in sys.argv[1]:
             import_all(project_path)
         elif 'import-cover' in sys.argv[1]:
             project.import_image(
-                fns[0], gs=config.Lib and config.Lib.gs or None, **{'class': 'cover'})
+                fns[0], gs=config.Lib and config.Lib.gs or None, **{'class': 'cover'}
+            )
         elif 'import' in sys.argv[1]:
             project = Project(fn=project_fn)
             for fn in fns:
@@ -1668,19 +1763,18 @@ if __name__ == '__main__':
         if 'build' in sys.argv[1]:
             if sys.argv[1] == 'build':
                 project.build_outputs()
-            if '-epub' in sys.argv[1]:
+            if 'epub' in sys.argv[1]:
                 project.build_outputs(kind='EPUB')
-            if '-mobi' in sys.argv[1]:
+            if 'mobi' in sys.argv[1]:
                 project.build_outputs(kind='Kindle')
-            if '-html' in sys.argv[1]:
-                project.build_outputs(kind='HTML', singlepage='-single' in sys.argv[1])
-            if '-archive' in sys.argv[1]:
+            if 'html' in sys.argv[1]:
+                project.build_outputs(kind='HTML', singlepage='html-single' in sys.argv[1])
+            if 'archive' in sys.argv[1]:
                 project.build_outputs(kind='archive')
         if 'clean' in sys.argv[1]:
             cleanup_project(
-                project_path,
-                outputs='outputs' in sys.argv[1],
-                resources='resources' in sys.argv[1])
+                project_path, outputs='outputs' in sys.argv[1], resources='resources' in sys.argv[1]
+            )
         if 'zip' in sys.argv[1]:
             zip_project(project_path)
         if 'remove' in sys.argv[1]:
