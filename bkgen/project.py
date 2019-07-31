@@ -530,7 +530,10 @@ class Project(XML, Source):
             )
             fns += docfns
         if metadata == True:
+            try:
             self.import_metadata(source.metadata())
+            except:
+                log.error(f'could not import_metadata for {source}')
         if stylesheet == True:
             ss = source.stylesheet()
             if ss is not None:
