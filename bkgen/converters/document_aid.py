@@ -60,7 +60,7 @@ def get_includes(root, **params):
             incl.remove(ch)
         srcfn = os.path.join(document.path, str(URL(incl.get('src'))).split('#')[0])
         log.debug(srcfn)
-        assert os.path.exists(srcfn)
+        assert os.path.exists(srcfn), f"NOT FOUND: {srcfn}"
         src = Document(fn=srcfn)
         if '#' in incl.get('src'):
             srcid = str(URL(incl.get('src'))).split('#')[-1]

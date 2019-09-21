@@ -857,15 +857,16 @@ class Project(XML, Source):
         log.debug('build_epub(**%r):' % (image_args))
         epub_isbn = self.metadata().identifier(id_patterns=['epub', 'ebook', 'isbn'])
 
-        if epub_name is None:
-            if epub_isbn is not None and epub_isbn.text is not None:
-                epub_name = str(
-                    String(epub_isbn.text)
-                    # remove any dashes or whitespace
-                    .resub(r'[\s\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', '')
-                )
-            else:
-                epub_name = self.name
+        if epub_name is None and epub_isbn is not None and epub_isbn.text not in [None, '']:
+            epub_name = str(
+                String(epub_isbn.text)
+                # remove any dashes or whitespace
+                .resub(r'[\s\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', '')
+            ).strip()
+        if epub_name not in [None, '']:
+            epub_name = (
+                self.name or self.root.get('name') or os.path.basename(os.path.dirname(self.fn))
+            )
         print("epub_name =", epub_name)
         epub_path = os.path.join(self.path, str(self.output_folder), epub_name + '_EPUB')
         print("epub_path =", epub_path)
@@ -973,7 +974,7 @@ class Project(XML, Source):
             singlepage=singlepage,
             doc_stylesheets=doc_stylesheets,
             lang=lang,
-            conditions='digital html',
+            # conditions='digital html',
             image_args=image_args,
         )
         if singlepage is not True:
@@ -1244,14 +1245,23 @@ class Project(XML, Source):
             split_href = str(URL(spineitem.get('href'))).split('#')
             log.debug(split_href)
             docfn = os.path.join(self.path, split_href[0])
+            if not os.path.exists(docfn):
+                log.error("spineitem: FILE NOT FOUND: %s" % docfn)
+                continue
+
             if os.path.dirname(docfn) == self.content_path:
                 doc_css_fns = glob(os.path.splitext(docfn)[0] + '.css')
             else:
                 doc_css_fns = glob(os.path.dirname(docfn) + '.css')
+
             if len(split_href) > 1:
                 d = Document.load(fn=docfn, id=split_href[1])
             else:
                 d = Document.load(fn=docfn)
+
+            if d is None:
+                continue
+
             outfn = (
                 os.path.splitext(
                     os.path.join(output_path, os.path.relpath(d.fn, self.path).replace('\\', '/'))
@@ -1717,29 +1727,23 @@ def remove_project(project_path):
 
 if __name__ == '__main__':
     logging.basicConfig(**config.Logging)
+
     if len(sys.argv) < 2:
         log.warn("Usage: python -m bkgen.project [command] project_path [project_path] ...")
     elif len(sys.argv) == 2:
         project = Project(fn=sys.argv[1])
     else:
         project_path = File(os.path.abspath(sys.argv[2])).fn  # normalize by all means!
+
         fns = [File(fn=fn).fn for fn in sys.argv[3:]]
+
         len_project_xml = len('project.xml')
         if os.path.isdir(project_path):
             project_fn = os.path.join(project_path, 'project.xml')
-        elif project_path[-len_project_xml:] == 'project.xml':
+        else:
             project_fn = project_path
             project_path = os.path.dirname(project_path)
-        else:
-            # in this case, we probably have a file under the project path.
-            fns = [project_path] + fns
-            path_elems = project_path.split('/')
-            while len(path_elems) > 0:
-                project_fn = '/'.join(path_elems + ['project.xml'])
-                if os.path.exists(project_fn):
-                    log.info(project_fn)
-                    break
-                path_elems.pop(-1)
+
         project = Project(fn=project_fn)
 
         if 'create' in sys.argv[1]:

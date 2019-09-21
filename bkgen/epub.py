@@ -363,82 +363,86 @@ class EPUB(ZIP, Source):
         nav_page_list=None,
         lang='en',
     ):
-        # If the spine includes a toc landmark, then use it as the base nav document,
+        # If the spine includes a toc landmark not toc="false",
+        # then use it as the base nav document,
         # and add to it spine items that have titles
         H = Builder(default=C.NS.html, **{'html': C.NS.html, 'epub': C.NS.epub})._
         landmarks = [spineitem.get('landmark') for spineitem in spine_items]
         if nav_toc is None and 'toc' in landmarks:
             toc_item = spine_items[landmarks.index('toc')]
-            nav = XML(fn=os.path.join(output_path, str(URL(toc_item.get('href')))))
-            if lang is not None:
-                nav.root.set('lang', lang)
-                nav.root.set('{%(xml)s}lang' % NS, lang)
-            nav_elem = nav.find(nav.root, "//html:nav", namespaces=NS)
-            if nav_elem is None:
-                log.error(
-                    "No '<nav>' element found in the 'toc' landmark document; "
-                    + f"creating one from links in {nav.fn}."
-                )
-                nav_toc = H.nav(
-                    '\n',
-                    H.h1('Contents'),
-                    '\n',
-                    H.ol(
-                        *[
-                            H.li(deepcopy(a))
-                            for a in nav.xpath(nav.root, ".//html:a[@href]", namespaces=NS)
-                        ]
-                    ),
-                )
-            else:
-                nav_toc = deepcopy(nav_elem)
-                h1 = H.h1('Contents')
-                h1.tail = '\n'
-                nav_toc.insert(0, h1)
-
-            nav_toc.set('{%(epub)s}type' % NS, 'toc')
-            if show_nav is not True:
-                nav_toc.set('hidden', "")
-
-            # remove any p and span elements in the nav -- replace with content
-            # (this also removes empty spans such as pagebreaks and index entries)
-            for e in XML.xpath(nav_toc, ".//html:p", namespaces=NS):
-                XML.replace_with_contents(e)
-            for e in XML.xpath(nav_toc, ".//html:span", namespaces=NS):
-                XML.replace_with_contents(e)
-
-            # must update hrefs and srcs to the nav_href location.
-            for element in XML.xpath(nav_toc, ".//*[@href or @src]"):
-                href = element.get('href')
-                if href is not None:
-                    element.set(
-                        'href',
-                        str(
-                            URL(
-                                os.path.relpath(
-                                    os.path.abspath(os.path.join(os.path.dirname(nav.fn), href)),
-                                    os.path.dirname(os.path.join(output_path, nav_href)),
-                                )
-                            )
+            if toc_item.get('as-toc') != "false":
+                nav = XML(fn=os.path.join(output_path, str(URL(toc_item.get('href')))))
+                if lang is not None:
+                    nav.root.set('lang', lang)
+                    nav.root.set('{%(xml)s}lang' % NS, lang)
+                nav_elem = nav.find(nav.root, "//html:nav", namespaces=NS)
+                if nav_elem is None:
+                    log.error(
+                        "No '<nav>' element found in the 'toc' landmark document; "
+                        + f"creating one from links in {nav.fn}."
+                    )
+                    nav_toc = H.nav(
+                        '\n',
+                        H.h1('Contents'),
+                        '\n',
+                        H.ol(
+                            *[
+                                H.li(deepcopy(a))
+                                for a in nav.xpath(nav.root, ".//html:a[@href]", namespaces=NS)
+                            ]
                         ),
                     )
-                src = element.get('src')
-                if src is not None:
-                    element.set(
-                        'src',
-                        str(
-                            URL(
-                                os.path.relpath(
-                                    os.path.abspath(os.path.join(os.path.dirname(nav.fn), src)),
-                                    os.path.dirname(os.path.join(output_path, nav_href)),
-                                )
-                            )
-                        ),
-                    )
+                else:
+                    nav_toc = deepcopy(nav_elem)
+                    h1 = H.h1('Contents')
+                    h1.tail = '\n'
+                    nav_toc.insert(0, h1)
 
-            nav.fn = os.path.join(output_path, nav_href)
-            nav.write(doctype="<!DOCTYPE html>", canonicalized=False)
-            navfn = nav.fn
+                nav_toc.set('{%(epub)s}type' % NS, 'toc')
+                if show_nav is not True:
+                    nav_toc.set('hidden', "")
+
+                # remove any p and span elements in the nav -- replace with content
+                # (this also removes empty spans such as pagebreaks and index entries)
+                for e in XML.xpath(nav_toc, ".//html:p", namespaces=NS):
+                    XML.replace_with_contents(e)
+                for e in XML.xpath(nav_toc, ".//html:span", namespaces=NS):
+                    XML.replace_with_contents(e)
+
+                # must update hrefs and srcs to the nav_href location.
+                for element in XML.xpath(nav_toc, ".//*[@href or @src]"):
+                    href = element.get('href')
+                    if href is not None:
+                        element.set(
+                            'href',
+                            str(
+                                URL(
+                                    os.path.relpath(
+                                        os.path.abspath(
+                                            os.path.join(os.path.dirname(nav.fn), href)
+                                        ),
+                                        os.path.dirname(os.path.join(output_path, nav_href)),
+                                    )
+                                )
+                            ),
+                        )
+                    src = element.get('src')
+                    if src is not None:
+                        element.set(
+                            'src',
+                            str(
+                                URL(
+                                    os.path.relpath(
+                                        os.path.abspath(os.path.join(os.path.dirname(nav.fn), src)),
+                                        os.path.dirname(os.path.join(output_path, nav_href)),
+                                    )
+                                )
+                            ),
+                        )
+
+                nav.fn = os.path.join(output_path, nav_href)
+                nav.write(doctype="<!DOCTYPE html>", canonicalized=False)
+                navfn = nav.fn
 
         if nav_toc is None:
             nav_toc = C.nav_toc_from_spine_items(output_path, spine_items)
@@ -623,7 +627,7 @@ class EPUB(ZIP, Source):
             item_title = (
                 spine_item.get('title') or String(spine_item.get('landmark') or '').titleify()
             )
-            if item_title not in [None, '']:
+            if item_title and not spine_item.get('in-toc') == "false":
                 nav_item = Dict(href=str(URL(spine_item.get('href'))), title=item_title)
                 nav_items.append(nav_item)
         if len(nav_items) > 0:

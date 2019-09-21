@@ -81,13 +81,18 @@ class Document(XML, Source):
         x.fn = fn
         if id not in [None, '']:
             section = x.find(x.root, "//*[@id='%s']" % id, namespaces=C.NS)
+            if section is None:
+                log.error("ID NOT FOUND: %s#%s" % (fn, id))
+                return
         else:
             section = None
+
         log.debug("Load %r" % section.attrib if section is not None else None)
         if section is not None:
             body_elem = B._.body('\n', section)
             x.root = B.pub.document('\n\t', body_elem, '\n')
             x.fn = os.path.splitext(x.fn)[0] + '_' + (section.get('id') or '') + '.xml'
+
         return x
 
     def icml(self, **params):

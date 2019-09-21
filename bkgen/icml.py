@@ -42,7 +42,7 @@ class ICML(XML, Source):
             fn=fn or self.clean_filename(os.path.splitext(self.fn)[0] + '.xml'),
             DocClass=Document,
             styles=styles or self.styles(),
-            **params
+            **params,
         )
         return x
 
@@ -99,11 +99,14 @@ class ICML(XML, Source):
     @classmethod
     def classname(C, stylename):
         """convert an Indesign style name into an HTML class name"""
-        name = stylename.strip('/').split(':')[-1].split('/')[-1].replace('[', '').replace(']', '')
+        name = (
+            stylename.strip('/').split('/')[-1].replace('[', '').replace(']', '').replace(':', '__')
+        )
         name = str(String(name).camelsplit().strip())
         name = re.sub(r'[^0-9A-Za-z_\-]+', '-', name)
         if re.search(r"^\d", name[0:1]) is not None:
             name = '_' + name
+        log.debug(f"{stylename!r} => {name!r}")
         return name
 
     # query the style element for each supported attribute and build
@@ -237,7 +240,9 @@ class ICML(XML, Source):
                 style['font-weight:'] = '800'
             elif 'Black' in fs:
                 style['font-weight:'] = '900'
-            elif 'Medium' in fs or 'Regular' in fs or 'Roman' in fs:
+            elif (
+                'Medium' in fs or 'Regular' in fs or 'Roman' in fs or 'Book' in fs or 'Normal' in fs
+            ):
                 style['font-weight:'] = 'normal'
             elif 'Extralight' in fs or 'Thin' in fs:
                 style['font-weight:'] = '100'
@@ -245,7 +250,7 @@ class ICML(XML, Source):
                 style['font-weight:'] = '200'
             elif re.match(r'^\d+$', fs):
                 style['font-weight'] = fs
-            elif fs in ['Italic', 'Oblique']:
+            elif fs in ['Italic', 'Oblique', 'Book Italic']:
                 style['font-weight:'] = 'normal'
                 style['font-style:'] = 'italic'
             elif fs in ['Nothing']:
