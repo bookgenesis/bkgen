@@ -20,6 +20,7 @@ from lxml import etree
 
 from bkgen import NS, config
 from bkgen.css import CSS
+from bkgen.html import HTML
 from bkgen.source import Source
 
 DEBUG = False
@@ -95,8 +96,6 @@ class EPUB(ZIP, Source):
         """return a list of pub:document containing the content in the EPUB
         path = the output path for the documents.
         """
-        from .html import HTML
-
         if path is None:
             path = os.path.dirname(os.path.abspath(self.fn))
         if opf is None:
@@ -402,12 +401,14 @@ class EPUB(ZIP, Source):
                 if show_nav is not True:
                     nav_toc.set('hidden', "")
 
-                # remove any p and span elements in the nav -- replace with content
+                # remove any p elements in the nav -- replace with content
                 # (this also removes empty spans such as pagebreaks and index entries)
-                for e in XML.xpath(nav_toc, ".//html:p", namespaces=NS):
-                    XML.replace_with_contents(e)
-                for e in XML.xpath(nav_toc, ".//html:span", namespaces=NS):
-                    XML.replace_with_contents(e)
+                for element in HTML.xpath(
+                    nav_toc, ".//html:p[html:span or html:a] | .//html:span[not(text() or node())]"
+                ):
+                    HTML.replace_with_contents(element)
+                for element in XML.xpath(nav_toc, ".//html:p", namespaces=NS):
+                    XML.remove(element, leave_tail=False)
 
                 # must update hrefs and srcs to the nav_href location.
                 for element in XML.xpath(nav_toc, ".//*[@href or @src]"):
