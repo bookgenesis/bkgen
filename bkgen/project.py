@@ -1147,7 +1147,6 @@ class Project(XML, Source):
 
                 if mimetype == 'application/pdf' or f.ext.lower() in ['.pdf', '.eps']:
                     PDF(fn=fn).gswrite(fn=outfn, device=format, res=res, gs=gs)
-                    Image(fn=outfn).mogrify(trim="")
                 elif (mimetype == 'image/jpeg' or f.ext == '.jpg') and jpg is True:
                     outfn = os.path.splitext(outfn)[0] + '.jpg'
                     f.write(fn=outfn)
