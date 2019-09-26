@@ -186,3 +186,4 @@ class Document(XML, Source):
             _ = val.getparent().attrib.pop(val.attrname)
             cleaned['attributes'].append(data)
         return cleaned
+

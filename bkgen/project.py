@@ -758,6 +758,8 @@ class Project(XML, Source):
         before_compile=None,
         doc_stylesheets=True,
         singlepage=False,
+        epub_check=True,
+        epub_ace=True,
     ):
         """build the project outputs
             kind=None:      which kind of output to build; if None, build all
@@ -791,6 +793,8 @@ class Project(XML, Source):
                         cleanup=cleanup,
                         doc_stylesheets=doc_stylesheets,
                         before_compile=before_compile,
+                        check=epub_check,
+                        ace=epub_ace,
                     )
                 elif output_kind == 'Kindle':
                     result = self.build_mobi(
@@ -1772,7 +1776,9 @@ if __name__ == '__main__':
             if sys.argv[1] == 'build':
                 project.build_outputs()
             if 'epub' in sys.argv[1]:
-                project.build_outputs(kind='EPUB')
+                project.build_outputs(
+                    kind='EPUB', epub_check='check' in sys.argv[1], epub_ace='ace' in sys.argv[1]
+                )
             if 'mobi' in sys.argv[1]:
                 project.build_outputs(kind='Kindle')
             if 'html' in sys.argv[1]:
