@@ -54,8 +54,11 @@ def import_resources(resource_map_filename, postprocess=None):
     content_filenames = [str(path / 'content' / name) for name in content_documents.keys()]
     
     if postprocess is not None:
+        if not isinstance(postprocess, list):
+            postprocess = [postprocess]
         for content_filename in content_filenames:
-            postprocess(content_filename)
+            for fn in postprocess: 
+                fn(content_filename)
 
     return content_filenames
 
