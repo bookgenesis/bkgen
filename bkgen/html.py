@@ -2,6 +2,7 @@ import logging
 import os
 
 from bl.dict import Dict
+from bl.file import File
 from bl.url import URL
 from bxml import XML
 
@@ -27,7 +28,10 @@ class HTML(XML, Source):
 
     def documents(self, path=None, **params):
         path = path or self.path
-        fn = os.path.splitext(os.path.join(path, self.clean_filename(self.basename)))[0] + '.xml'
+        fn = (
+            os.path.splitext(os.path.join(path, self.clean_filename(self.basename)))[0]
+            + '.xml'
+        )
         return [self.document(fn=fn, **params)]
 
     def images(self):
@@ -49,7 +53,9 @@ class HTML(XML, Source):
 
         styles = Styles()
         if tags is None:
-            tags = self.element_map(include_attribs=['class'], attrib_vals=True, hierarchy=False)
+            tags = self.element_map(
+                include_attribs=['class'], attrib_vals=True, hierarchy=False
+            )
         for tag in [tag for tag in tags if NS.html in tag]:
             tagname = XML.tag_name(tag)
             styles[tagname] = {}
@@ -59,32 +65,42 @@ class HTML(XML, Source):
         css = CSS(fn=os.path.splitext(self.fn)[0] + '.css', styles=styles)
         return css
 
-    def audit_links(self):
+    @classmethod
+    def audit_links(cls, filenames):
         # document cache, to avoid repeatedly parsing the same document.
         documents = {}
-        for a in self.xpath(self.root, "//html:a[@href]"):
-            url = URL(a.get('href'))
-            if url.scheme in ['', 'file']:
-                if bool(url.path) is False:
-                    fn = self.fn
-                else:
-                    fn = os.path.abspath(os.path.join(self.path, url.path))
-                if not os.path.exists(fn):
-                    log.warn('%s: link target file not found: %s' % (self.basename, url))
-                elif url.fragment not in [None, '']:
-                    if os.path.splitext(fn)[-1].lower() not in ['.htm', '.html', '.xhtml', '.xml']:
-                        log.warn(
-                            '%s: link target id in non-HTML/-XML file: %s'
-                            % (self.basename, url)
-                        )
+        allowed_exts = {'.htm', '.html', '.xhtml', '.xml'}
+        for filename in [os.path.abspath(filename) for filename in filenames]:
+            document = documents.setdefault(filename, cls(fn=filename))
+            for a in document.xpath(document.root, "//html:a[@href]"):
+                url = URL(a.get('href'))
+                if url.scheme in ['', 'file']:
+                    if not url.path:
+                        target_file = File(fn=document.fn)
                     else:
-                        if fn not in documents.keys():
-                            log.debug('cacheing document fn=%r' % fn)
-                            documents[fn] = HTML(fn=fn)
-                        h = documents[fn]
-                        elem = h.find(h.root, "//*[@id='%s']" % url.fragment)
-                        if elem is None:
-                            log.warn(
+                        target_file = File(
+                            fn=os.path.abspath(os.path.join(document.path, url.path))
+                        )
+
+                    if not target_file.exists:
+                        log.warning(
+                            '%s: link target file not found: %s'
+                            % (document.fn, target_file.fn)
+                        )
+                    elif target_file.ext.lower() not in allowed_exts:
+                        log.warning(
+                            '%s: link target id in non-HTML/XML file: %s'
+                            % (document.fn, target_file.fn)
+                        )
+                    elif url.fragment:
+                        target_document = documents.setdefault(
+                            target_file.fn, cls(fn=target_file.fn)
+                        )
+                        target_element = target_document.find(
+                            target_document.root, "//*[@id='%s']" % url.fragment
+                        )
+                        if target_element is None:
+                            log.warning(
                                 '%s: link target id="%s" not found in target file: %s'
-                                % (self.basename, url.fragment, url)
+                                % (document.fn, url.fragment, target_file.fn)
                             )
