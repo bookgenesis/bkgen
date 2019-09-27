@@ -10,7 +10,7 @@ from lxml import etree
 
 from bkgen.document import Document
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 B = Builder(**Document.NS)
 
 
@@ -19,7 +19,7 @@ def import_resources(resource_map_filename, postprocess=None):
     resource_map = yaml.safe_load(open(resource_map_filename).read())
     content_documents = {}
     for source_def in resource_map.get('sources') or []:
-        logger.debug(source_def)
+        log.debug(source_def)
         source_filenames = sorted(
             glob(str(path / source_def['source-path'] / source_def['file-glob']))
         )
@@ -30,12 +30,12 @@ def import_resources(resource_map_filename, postprocess=None):
                 content_documents[source_path.name] = Document()
                 content_documents[source_path.name].fn = str(path / 'content' / source_path.name)
             content_document = content_documents[source_path.name]
-            logger.info("content_document.fn = %s" % content_document.fn)
+            log.info("content_document.fn = %s" % content_document.fn)
             content_document_body = content_document.find(content_document.root, "html:body")
             assert content_document_body is not None
             for item in resource_items(source_document, source_def):
                 content_document_body.append(item)
-                logger.debug(item.attrib)
+                log.debug(item.attrib)
             content_document.write()
 
     for document_def in resource_map.get('documents') or []:
@@ -43,12 +43,12 @@ def import_resources(resource_map_filename, postprocess=None):
             content_document = Document()
             content_document.fn = str(path / 'content' / document_def['name'])
         content_document = content_documents[document_def['name']]
-        logger.info("content_document.fn = %s" % content_document.fn)
+        log.info("content_document.fn = %s" % content_document.fn)
         content_document_body = content_document.find(content_document.root, "html:body")
         assert content_document_body is not None
         for item in document_definition_items(document_def):
             content_document_body.append(item)
-            logger.debug(item.attrib)
+            log.debug(item.attrib)
         content_document.write()
 
     content_filenames = [str(path / 'content' / name) for name in content_documents.keys()]
@@ -70,7 +70,7 @@ def resource_items(source_document, source_def):
 
 
 def resource_definition_items(source_document, resource_items_def):
-    logger.debug("resource_items_def['xpath'] = %r" % resource_items_def['xpath'])
+    log.debug("resource_items_def['xpath'] = %r" % resource_items_def['xpath'])
     for element in source_document.xpath(source_document.root, resource_items_def['xpath']):
         if element.tag == "{%(html)s}section" % Document.NS:
             section_item = deepcopy(element)
@@ -98,7 +98,7 @@ def resource_definition_items(source_document, resource_items_def):
         # collect next matches
         if resource_items_def.get('collect-next-matches'):
             collect_next_matches = resource_items_def['collect-next-matches']
-            logger.debug('collect_next_matches = %r' % collect_next_matches)
+            log.debug('collect_next_matches = %r' % collect_next_matches)
             next_elem = element.getnext()
             while (
                 next_elem is not None

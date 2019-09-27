@@ -6,7 +6,7 @@ from bxml import XML
 
 from bkgen import NS
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
 class CSS(bf.css.CSS):
@@ -22,7 +22,7 @@ class CSS(bf.css.CSS):
         selectors = list(set(selectors))
         for sel in self.styles.keys():
             if sel not in selectors:
-                logger.debug("%s %r" % (sel, self.styles[sel]))
+                log.debug("%s %r" % (sel, self.styles[sel]))
                 self.styles.pop(sel)
 
     def add_undefined_styles(self, xmlfns):
@@ -37,5 +37,5 @@ class CSS(bf.css.CSS):
         selectors = list(set(selectors))
         for sel in selectors:
             if sel not in self.styles.keys():
-                logger.info("adding: %r" % sel)
+                log.info("adding: %r" % sel)
                 self.styles[sel] = Dict()
