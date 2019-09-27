@@ -7,7 +7,7 @@ from bxml.builder import Builder
 from bxml.xt import XT
 
 from bkgen import NS
-from bkgen.converters import Converter
+from ._converter import Converter
 from bkgen.document import Document
 
 log = logging.getLogger(__name__)

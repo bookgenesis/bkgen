@@ -14,7 +14,7 @@ from bxml.xt import XT
 from lxml import etree
 
 from bkgen import NS, config
-from bkgen.converters import Converter
+from ._converter import Converter
 from bkgen.document import Document
 
 B = Builder(**NS)

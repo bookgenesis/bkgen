@@ -16,7 +16,7 @@ from bxml.xt import XT
 from lxml import etree
 
 import bkgen
-from bkgen.converters import Converter
+from ._converter import Converter
 from bkgen.document import Document
 from bkgen.icml import ICML
 
