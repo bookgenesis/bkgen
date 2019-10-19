@@ -45,6 +45,7 @@ class MOBI(Dict):
         progress=None,
         nav_href='nav.html',
         nav_title="Navigation",
+        mobi7=False,
     ):
         """build MOBI (Kindle ebook) output of the given project"""
 
@@ -77,15 +78,15 @@ class MOBI(Dict):
         opffn = EPUB.get_opf_fn(build_path)
         self.strip_header_elements(build_path, opffn)
 
-        # # == MOBI 7 adjustments (for Amazon.com page previewer, primarily) ==
-        # self.move_anchors_before_paragraphs(build_path, opffn)
-        # self.direct_styles(opffn)
-        # self.size_images(opffn)
-        # self.list_style_type_none_divs(opffn)
-
-        # .mobi doesn't support "display: none;" so we have to remove that from the CSS,
-        # and remove those elements from the interior.
         self.remove_display_none(opffn)
+        self.remove_details(opffn)
+
+        # == MOBI 7 adjustments (for Amazon.com page previewer, primarily) ==
+        if mobi7 is True:
+            self.move_anchors_before_paragraphs(build_path, opffn)
+            self.direct_styles(opffn)
+            self.size_images(opffn)
+            self.list_style_type_none_divs(opffn)
 
         if before_compile is not None:
             before_compile(build_path)
