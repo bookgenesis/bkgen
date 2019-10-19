@@ -40,7 +40,9 @@ def document(elem, **params):
     root = embed_notes(root, **params)
 
     # Transform
-    xsl_params = {'source': os.path.relpath(params['docx'].fn, os.path.dirname(params['fn']))}
+    xsl_params = {
+        'source': os.path.relpath(params['docx'].fn, os.path.dirname(params['fn']))
+    }
     xsl_params = {k: etree.XSLT.strparam(xsl_params[k]) for k in xsl_params.keys()}
     root = transformer_XSLT(root, **xsl_params).getroot()
 
@@ -67,7 +69,7 @@ def document(elem, **params):
     # -- cleanup notes (footnotes, endnotes) --
     root = cleanup_notes(root, **params)
     # -- fields --
-    root = nest_fields(root, **params)
+    root = field_elements(root, **params)
     root = field_attributes(root, **params)
     root = toc_fields(root, **params)
     # -- lists --
@@ -129,12 +131,15 @@ def cleanup_notes(root, **params):
 
         # Replace footnote-reference and endnote-reference spans with content
         for span in Document.xpath(
-            note, ".//html:span[@class='footnote-reference' or @class='endnote-reference']"
+            note,
+            ".//html:span[@class='footnote-reference' or @class='endnote-reference']",
         ):
             XML.replace_with_contents(span)
 
         # Make sure any note reference in the footnote is followed by a tab, not a space
-        for note_ref in Document.xpath(note, ".//pub:footnote-ref | .//pub:endnote-ref"):
+        for note_ref in Document.xpath(
+            note, ".//pub:footnote-ref | .//pub:endnote-ref"
+        ):
             parent = note_ref.getparent()
             if parent.tag != "{%(html)s}span" % NS:
                 span = B.html.span({'class': XML.tag_name(note) + '-text-reference'})
@@ -243,7 +248,9 @@ def split_level_sections(root, levels=1, **params):
         section_end.tail = '\n'
         parent.insert(parent.index(elem), section_end)
         # give the section the attributes of the section it is in.
-        next_section_end = XML.find(section_end, "following::pub:section_end", namespaces=NS)
+        next_section_end = XML.find(
+            section_end, "following::pub:section_end", namespaces=NS
+        )
         if next_section_end is not None:
             for key in next_section_end.attrib.keys():
                 section_end.set(key, next_section_end.get(key))
@@ -269,7 +276,9 @@ def make_section_title(section):
                 namespaces=NS,
             )
         )
-        title = String(etree.tounicode(xslt(p).getroot(), method='text').strip()).resub(r'\s+', ' ')
+        title = String(etree.tounicode(xslt(p).getroot(), method='text').strip()).resub(
+            r'\s+', ' '
+        )
     return title
 
 
@@ -338,7 +347,9 @@ def section_note_numbering(root, **params):
         if note_options['endnote-restart'] != 'continuous':
             enum = int(note_options['endnote-start'])
         for footnote in section.xpath('.//pub:footnote', namespaces=NS):
-            footnote.set('title', formatted_number(fnum, note_options['footnote-format']))
+            footnote.set(
+                'title', formatted_number(fnum, note_options['footnote-format'])
+            )
             fnum += 1
         for endnote in section.xpath('.//pub:endnote', namespaces=NS):
             endnote.set('title', formatted_number(enum, note_options['endnote-format']))
@@ -389,9 +400,13 @@ def number_lists(root, **params):
             li.getchildren()[-1].tail = ''
             lists[level].append(li)
             prev_num_params = num_params
-            numbered_p = XML.find(lists[level], "following::html:p[w:numPr]", namespaces=DOCX.NS)
+            numbered_p = XML.find(
+                lists[level], "following::html:p[w:numPr]", namespaces=DOCX.NS
+            )
         else:
-            numbered_p = XML.find(numbered_p, "following::html:p[w:numPr]", namespaces=DOCX.NS)
+            numbered_p = XML.find(
+                numbered_p, "following::html:p[w:numPr]", namespaces=DOCX.NS
+            )
     return root
 
 
@@ -408,7 +423,10 @@ def map_para_styles_levels(root, **params):
 
         # outline level
         level = None
-        if style.properties.outlineLvl is not None and int(style.properties.outlineLvl.val) < 9:
+        if (
+            style.properties.outlineLvl is not None
+            and int(style.properties.outlineLvl.val) < 9
+        ):
             level = int(style.properties.outlineLvl.val) + 1  # 1-based
         else:
             # look for outlineLvl in the ancestry
@@ -493,10 +511,14 @@ def get_images(root, **params):
     imgs = root.xpath("//html:img", namespaces=DOCX.NS)
     for img in imgs:
         embed_rel = XML.find(
-            rels, "//rels:Relationship[@Id='%s']" % img.get('data-embed-id'), namespaces=DOCX.NS
+            rels,
+            "//rels:Relationship[@Id='%s']" % img.get('data-embed-id'),
+            namespaces=DOCX.NS,
         )
         link_rel = XML.find(
-            rels, "//rels:Relationship[@Id='%s']" % img.get('data-link-id'), namespaces=DOCX.NS
+            rels,
+            "//rels:Relationship[@Id='%s']" % img.get('data-link-id'),
+            namespaces=DOCX.NS,
         )
         # source image
         if embed_rel is not None:
@@ -514,7 +536,9 @@ def get_images(root, **params):
         elif link_rel is not None:
             img.set('src', link_rel.get('Target'))
         if img.get('src') is not None:
-            srcfn = os.path.join(os.path.dirname(params['docx'].fn), str(URL(img.get('src'))))
+            srcfn = os.path.join(
+                os.path.dirname(params['docx'].fn), str(URL(img.get('src')))
+            )
             outfn = os.path.join(output_path, str(URL(img.get('src'))))
             if os.path.exists(srcfn) and not os.path.exists(outfn):
                 shutil.copy(srcfn, outfn)
@@ -609,16 +633,25 @@ def anchors_in_paragraphs(root):
 # == FIELDS ==
 
 
-def nest_fields(root, **params):
+def field_elements(root, **params):
     """fields need to be converted from a series of milestones to properly nested form
     """
+    # unnest pub:field_* elements so that html:p is their direct parent
+    for field_elem in root.xpath(
+        ".//pub:*[ancestor::html:p and contains(name(), 'field_')]", namespaces=NS
+    ):
+        while field_elem.getparent().tag != '{%(html)s}p' % NS:
+            XML.unnest(field_elem)
+
     # move TOC, ..., field_end out of parent paragraph when it's the first thing
     for field in root.xpath(
-        ".//pub:field_start[starts-with(@instr,'TOC')] | .//pub:field_end", namespaces=NS
+        ".//pub:field_start[starts-with(@instr,'TOC')] | .//pub:field_end",
+        namespaces=NS,
     ):
         parent = field.getparent()
         if (
-            XML.tag_name(parent.tag) in ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'h9']
+            XML.tag_name(parent.tag)
+            in ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'h9']
             and parent[0] == field
             and parent.text in [None, '']
         ):
@@ -627,25 +660,37 @@ def nest_fields(root, **params):
             parent.text = (parent.text or '') + (field.tail or '')
             field.tail = '\n'
 
-    # nest fields -- this assumes fields will nest
-    field_starts = root.xpath("//pub:field_start", namespaces=NS)
-    while len(field_starts) > 0:
-        field = field_starts[0]
-        log.debug("FIELD: %r, %r, %r" % (field.attrib, field.text, field.tail))
+    # compile fields -- this assumes fields will compile
+    fields = root.xpath("//pub:field_start", namespaces=NS)
+    for field in fields:
         field.tag = "{%(pub)s}field" % NS
         field.text, field.tail = (field.tail or ''), ''
+        field.set('instr', (field.get('instr') or ''))
         nxt = field.getnext()
         while nxt is not None and nxt.tag != "{%(pub)s}field_end" % NS:
-            nxt = field.getnext()
-            if nxt is not None:
+            if nxt.tag == '{%(pub)s}field_instr' % NS:
+                field.set(
+                    'instr', field.get('instr') + (nxt.text or '') + (nxt.tail or '')
+                )
+                XML.remove(nxt)
+            elif nxt.tag == '{%(pub)s}field_sep' % NS:
+                field.text = (field.text or '') + (nxt.tail or '')
+                XML.remove(nxt)
+            elif XML.find(nxt, './/pub:field_instr', namespaces=NS) is not None:
+                XML.replace_with_contents(nxt)
+            else:
                 field.append(nxt)
+            nxt = field.getnext()
         if nxt is None:
-            log.error("unclosed field: %r")
+            log.error("unclosed field: %r %r", field.attrib, field.text)
         elif nxt.tag == "{%(pub)s}field_end" % NS:
             XML.remove(nxt, leave_tail=True)
         else:
             log.warn("UNDEFINED FIELD END: %r %r" % (XML.tag_name(nxt), nxt.attrib))
-        field_starts = root.xpath("//pub:field_start", namespaces=NS)
+
+        if field.get('instr'):
+            field.set('instr', field.get('instr').strip())
+
     return root
 
 
@@ -671,7 +716,9 @@ def field_attributes(root, **params):
         # -- Field Post-Processing
         # <a href="file#anchor">
         if Document.tag_name(field) == 'a' and field.get('anchor') is not None:
-            field.set('href', (field.get('href') or '') + '#' + field.attrib.pop('anchor'))
+            field.set(
+                'href', (field.get('href') or '') + '#' + field.attrib.pop('anchor')
+            )
 
     return root
 
@@ -702,7 +749,8 @@ def toc_fields(root, **params):
     """
     for toc in root.xpath("//pub:field[@class='TOC']", namespaces=NS):
         for p in toc.xpath(
-            ".//html:p[.//pub:field[@class='PAGEREF'] and not(.//html:a[@href])]", namespaces=NS
+            ".//html:p[.//pub:field[@class='PAGEREF'] and not(.//html:a[@href])]",
+            namespaces=NS,
         ):
             pageref = p.xpath(".//pub:field[@class='PAGEREF']", namespaces=NS)[0]
             a = B.html.a({'href': "#" + pageref.get('anchor')})
@@ -804,6 +852,7 @@ FIELD_TEMPLATES = {
         r'\x': ['preserve-newline', 'true'],
     },
     'XE': {
+        '': ['text'],
         r'\b': ['bold', 'true'],
         r'\f': ['kind'],
         r'\i': ['ital', 'true'],

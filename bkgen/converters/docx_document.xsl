@@ -528,18 +528,20 @@
 
     <xsl:template match="w:fldChar[@w:fldCharType='begin']">
         <pub:field_start>
-            <xsl:attribute name="instr">
-                <xsl:value-of select="normalize-space(following::w:instrText[1])"/>
-            </xsl:attribute>
         	<xsl:apply-templates/>
         </pub:field_start>
     </xsl:template>
 
-    <!-- remove the w:instrText because it is captured by the preceding w:fldChar @instr -->
-    <xsl:template match="w:instrText"/>
+    <xsl:template match="w:instrText">
+        <pub:field_instr>
+            <xsl:apply-templates/>
+        </pub:field_instr>
+    </xsl:template>
 
     <xsl:template match="w:fldChar[@w:fldCharType='separate']">
-        <!-- <pub:field_sep/> -->
+        <pub:field_sep>
+            <xsl:apply-templates/>
+        </pub:field_sep>
     </xsl:template>
 
     <xsl:template match="w:fldChar[@w:fldCharType='end']">
