@@ -154,11 +154,15 @@ class MOBI(Dict):
             if item.get('href')[-4:].lower() == 'html'
         ]:
             x = XML(os.path.join(os.path.dirname(opffn), str(URL(item.get('href')))))
-            for img in x.root.xpath("//html:img[@width or @height or @style]", namespaces=self.NS):
+            for img in x.root.xpath(
+                "//html:img[@width or @height or @style]", namespaces=self.NS
+            ):
                 srcfn = os.path.join(os.path.dirname(x.fn), str(URL(img.get('src'))))
                 if os.path.splitext(srcfn)[-1] in ['.svg']:
                     continue
-                w, h = [int(i) for i in Image(fn=srcfn).identify(format="%w,%h").split(',')]
+                w, h = [
+                    int(i) for i in Image(fn=srcfn).identify(format="%w,%h").split(',')
+                ]
                 width, height = w, h
                 styles = {
                     k: v
@@ -171,40 +175,68 @@ class MOBI(Dict):
                 log.debug(img.attrib)
                 log.debug(styles)
                 if img.get('width') is not None:
-                    width = int(re.sub(r'\D', '', img.attrib.pop('width')))  # treat as pixels
+                    width = int(
+                        re.sub(r'\D', '', img.attrib.pop('width'))
+                    )  # treat as pixels
                     if img.get('height') is None:
                         height = int(h * (width / w))
                 elif styles.get('width') is not None:
-                    vv = [i for i in re.split(r'([a-z%]+)', styles.get('width')) if i != '']
+                    vv = [
+                        i
+                        for i in re.split(r'([a-z%]+)', styles.get('width'))
+                        if i != ''
+                    ]
                     if len(vv) == 2:
                         width, unit = vv
                         if unit in CSS.units.keys():
-                            width = int((float(width) * CSS.units[unit]).asUnit(CSS.px) / CSS.px)
+                            width = int(
+                                (float(width) * CSS.units[unit]).asUnit(CSS.px) / CSS.px
+                            )
                             height = int(height * width / w)
                             styles.pop('width')
                 if img.get('height') is not None:
-                    height = int(re.sub(r'\D', '', img.attrib.pop('height')))  # treat as pixels
+                    height = int(
+                        re.sub(r'\D', '', img.attrib.pop('height'))
+                    )  # treat as pixels
                     if img.get('width') is None:
                         width = int(w * (height / h))
                 elif styles.get('height') is not None:
-                    vv = [i for i in re.split(r'([a-z%]+)', styles.get('height')) if i != '']
+                    vv = [
+                        i
+                        for i in re.split(r'([a-z%]+)', styles.get('height'))
+                        if i != ''
+                    ]
                     if len(vv) == 2:
                         height, unit = vv
                         if unit in CSS.units.keys():
-                            height = int((float(height) * CSS.units[unit]).asUnit(CSS.px) / CSS.px)
+                            height = int(
+                                (float(height) * CSS.units[unit]).asUnit(CSS.px)
+                                / CSS.px
+                            )
                             width = int(width * height / h)
                             styles.pop('height')
                 log.debug("%d x %d\t%d x %d" % (w, h, width, height))
                 image = Image(fn=srcfn)
                 if width < w and height < h:
                     try:
-                        image.convert(outfn=srcfn, resize="%dx%d>" % (width, height), sharpen="1")
+                        image.convert(
+                            outfn=srcfn, resize="%dx%d>" % (width, height), sharpen="1"
+                        )
                         log.debug(
                             "%dx%d\t%dx%d\t%s"
-                            % (w, h, width, height, os.path.relpath(srcfn, os.path.dirname(opffn)))
+                            % (
+                                w,
+                                h,
+                                width,
+                                height,
+                                os.path.relpath(srcfn, os.path.dirname(opffn)),
+                            )
                         )
                     except:
-                        log.error("image %s: %s" % (image.relpath(opf.path), sys.exc_info()[1]))
+                        log.error(
+                            "image %s: %s"
+                            % (image.relpath(opf.path), sys.exc_info()[1])
+                        )
                 img.set('style', ';'.join('%s:%s' % (k, v) for k, v in styles.items()))
             x.write(canonicalized=False)
 
@@ -220,17 +252,22 @@ class MOBI(Dict):
                 namespaces=self.NS,
             )
         ]:
-            h = HTML(fn=os.path.join(os.path.dirname(opffn), str(URL(item.get('href')))))
+            h = HTML(
+                fn=os.path.join(os.path.dirname(opffn), str(URL(item.get('href'))))
+            )
             log.debug(h.fn)
             css = CSS.merge_stylesheets(
                 *[
                     os.path.join(h.path, ss.get('href'))
                     for ss in h.xpath(
-                        h.root, "html:head/html:link[@rel='stylesheet' and @type='text/css']"
+                        h.root,
+                        "html:head/html:link[@rel='stylesheet' and @type='text/css']",
                     )
                 ]
             )
-            for sel, style in [[sel, style] for sel, style in css.styles.items() if sel[0] != '@']:
+            for sel, style in [
+                [sel, style] for sel, style in css.styles.items() if sel[0] != '@'
+            ]:
                 # floats
                 if style.get('float:') in ['left', 'right']:
                     xpath = '//' + CSS.selector_to_xpath(sel, xmlns={'html': h.NS.html})
@@ -248,7 +285,8 @@ class MOBI(Dict):
                         if 'float' not in styles.keys():
                             styles['float'] = style.get('float:')
                         elem.set(
-                            'style', ';'.join('%s:%s' % (k, v) for k, v in styles.items()) + ';'
+                            'style',
+                            ';'.join('%s:%s' % (k, v) for k, v in styles.items()) + ';',
                         )
                         log.debug(elem.attrib)
             h.write()
@@ -263,12 +301,15 @@ class MOBI(Dict):
                 namespaces=self.NS,
             )
         ]:
-            h = HTML(fn=os.path.join(os.path.dirname(opffn), str(URL(item.get('href')))))
+            h = HTML(
+                fn=os.path.join(os.path.dirname(opffn), str(URL(item.get('href'))))
+            )
             css = CSS.merge_stylesheets(
                 *[
                     os.path.join(h.path, ss.get('href'))
                     for ss in h.xpath(
-                        h.root, "html:head/html:link[@rel='stylesheet' and @type='text/css']"
+                        h.root,
+                        "html:head/html:link[@rel='stylesheet' and @type='text/css']",
                     )
                 ]
             )
@@ -305,7 +346,9 @@ class MOBI(Dict):
             )
         ]
         for item in html_items:
-            h = HTML(fn=os.path.join(os.path.dirname(opffn), str(URL(item.get('href')))))
+            h = HTML(
+                fn=os.path.join(os.path.dirname(opffn), str(URL(item.get('href'))))
+            )
             for link in h.xpath(
                 h.root, "html:head/html:link[@rel='stylesheet' and @type='text/css']"
             ):
@@ -321,7 +364,9 @@ class MOBI(Dict):
                     for elem in h.xpath(h.root, xpath):
                         parent = elem.getparent()
                         # preserve pagebreaks in the removed content
-                        for pagebreak in h.xpath(elem, ".//html:span[@epub:type='pagebreak']"):
+                        for pagebreak in h.xpath(
+                            elem, ".//html:span[@epub:type='pagebreak']"
+                        ):
                             parent.insert(parent.index(elem), pagebreak)
                         h.remove(elem, leave_tail=True)
                         log.debug(etree.tounicode(elem, with_tail=False))
@@ -353,9 +398,32 @@ class MOBI(Dict):
             )
         ]:
             css = CSS(fn=os.path.join(opf.path, css_item.get('href')))
-            for sel in [sel for sel in css.styles.keys() if "::before" in sel or "::after" in sel]:
+            for sel in [
+                sel
+                for sel in css.styles.keys()
+                if "::before" in sel or "::after" in sel
+            ]:
                 css.styles.pop(sel)
             css.write()
+
+    def remove_details(self, opffn):
+        """Kindle doesn't like <details> elements; so remove those elements. 
+        """
+        opf = XML(fn=opffn)
+        html_items = [
+            item
+            for item in opf.root.xpath(
+                "//opf:manifest/opf:item[not(@properties='nav') and @media-type='text/html']",
+                namespaces=self.NS,
+            )
+        ]
+        for item in html_items:
+            html = HTML(
+                fn=os.path.join(os.path.dirname(opffn), str(URL(item.get('href'))))
+            )
+            for details in html.xpath(html.root, "//html:details"):
+                html.remove(details)
+            html.write()
 
     def compile_mobi(self, build_path, opffn, mobifn=None, config=config):
         """generate .mobi file using kindlegen"""
@@ -366,7 +434,13 @@ class MOBI(Dict):
         logfn = mobifn + '.kindlegen.txt'
         logf = open(logfn, 'wb')
         log.info("mobi: %s" % mobifn)
-        cmd = [config.Resources.kindlegen, opffn, '-o', os.path.basename(mobifn), '-verbose']
+        cmd = [
+            config.Resources.kindlegen,
+            opffn,
+            '-o',
+            os.path.basename(mobifn),
+            '-verbose',
+        ]
         subprocess.call(cmd, stdout=logf, stderr=logf)
         logf.close()
         log.info("kindlegen log: %s" % logfn)

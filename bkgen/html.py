@@ -1,3 +1,4 @@
+import importlib
 import logging
 import os
 
@@ -39,8 +40,7 @@ class HTML(XML, Source):
 
     def metadata(self):
         """return a Metadata object with the metadata in the document"""
-        from .metadata import Metadata
-
+        Metadata = importlib.import_module('bkgen.metadata').Metadata
         m = Metadata()
         return m
 
@@ -48,8 +48,8 @@ class HTML(XML, Source):
         return self.css_template()
 
     def css_template(self, tags=None):
-        from .css import CSS
-        from bf.styles import Styles
+        CSS = importlib.import_module('bkgen.css').CSS
+        Styles = importlib.import_module('bf.styles').Styles
 
         styles = Styles()
         if tags is None:

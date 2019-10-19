@@ -88,7 +88,9 @@ class EPUB(ZIP, Source):
     def get_opf(self):
         """return the opf as an XML document"""
         container = XML(root=self.zipfile.read('META-INF/container.xml'))
-        zf_path = container.find(container.root, "//container:rootfile/@full-path", namespaces=NS)
+        zf_path = container.find(
+            container.root, "//container:rootfile/@full-path", namespaces=NS
+        )
         opf = XML(root=self.zipfile.read(zf_path), fn=os.path.join(self.fn, zf_path))
         return opf
 
@@ -108,9 +110,9 @@ class EPUB(ZIP, Source):
                 "opf:manifest/opf:item[@id='%s']/@href" % itemref.get('idref'),
                 namespaces=NS,
             )
-            zf_path = os.path.relpath(os.path.join(os.path.dirname(opf.fn), href), self.fn).replace(
-                '\\', '/'
-            )
+            zf_path = os.path.relpath(
+                os.path.join(os.path.dirname(opf.fn), href), self.fn
+            ).replace('\\', '/')
             html = HTML(root=self.zipfile.read(zf_path), fn=os.path.join(path, href))
             docpath = os.path.join(path, os.path.dirname(href)).rstrip('/')
             fn = self.clean_filename(
@@ -124,7 +126,9 @@ class EPUB(ZIP, Source):
         opf = self.get_opf()
         images = []
         for item in opf.xpath(
-            opf.root, "opf:manifest/opf:item[contains(@media-type,'image')]", namespaces=NS
+            opf.root,
+            "opf:manifest/opf:item[contains(@media-type,'image')]",
+            namespaces=NS,
         ):
             zf_path = os.path.relpath(
                 os.path.join(os.path.dirname(opf.fn), item.get('href')), self.fn
@@ -155,9 +159,9 @@ class EPUB(ZIP, Source):
         found_cover = False
         for item in items:
             href = str(URL(item.get('href')))
-            zf_path = os.path.relpath(os.path.join(os.path.dirname(opf.fn), href), self.fn).replace(
-                '\\', '/'
-            )
+            zf_path = os.path.relpath(
+                os.path.join(os.path.dirname(opf.fn), href), self.fn
+            ).replace('\\', '/')
             fn = os.path.join(path, href)
             fd = self.zipfile.read(zf_path)
             f = File(fn=fn, mediatype=item.get('media-type'))
@@ -174,7 +178,9 @@ class EPUB(ZIP, Source):
             )
             if cover_id is not None:
                 item = opf.find(
-                    opf.root, "opf:manifest/opf:item[@id='%s']" % cover_id, namespaces=NS
+                    opf.root,
+                    "opf:manifest/opf:item[@id='%s']" % cover_id,
+                    namespaces=NS,
                 )
                 if item is not None:
                     fn = os.path.join(path, str(URL(item.get('href'))))
@@ -195,7 +201,9 @@ class EPUB(ZIP, Source):
     def stylesheet(self):
         opf = self.get_opf()
         css_texts = []
-        for css_item in opf.xpath(opf.root, "//opf:item[@media-type='text/css']", namespaces=NS):
+        for css_item in opf.xpath(
+            opf.root, "//opf:item[@media-type='text/css']", namespaces=NS
+        ):
             zf_path = os.path.relpath(
                 os.path.join(os.path.dirname(opf.fn), css_item.get('href')), self.fn
             ).replace('\\', '/')
@@ -266,7 +274,9 @@ class EPUB(ZIP, Source):
             cover_html_fn = C.make_cover_html(output_path, cover_src, lang=lang)
             cover_html_relpath = str(URL(File(cover_html_fn).relpath(output_path)))
             log.debug("cover_html_relpath: %r" % cover_html_relpath)
-            spine_items.insert(0, Dict(href=cover_html_relpath, landmark='cover', linear='no'))
+            spine_items.insert(
+                0, Dict(href=cover_html_relpath, landmark='cover', linear='no')
+            )
         else:
             cover_html_relpath = None
 
@@ -284,7 +294,9 @@ class EPUB(ZIP, Source):
 
         # ncx file
         ncx_fn = C.make_ncx_file(output_path, navfn, opf_metadata)
-        ncx_href = os.path.normpath(os.path.relpath(ncx_fn, output_path)).replace('\\', '/')
+        ncx_href = os.path.normpath(os.path.relpath(ncx_fn, output_path)).replace(
+            '\\', '/'
+        )
 
         # manifest
         if manifest is None:
@@ -324,7 +336,9 @@ class EPUB(ZIP, Source):
         mimetype_fn = C.make_mimetype_file(output_path)
         container_fn = C.make_container_file(output_path, opffn)
 
-        result = Dict(fn=C.epub_fn(output_path, epub_name=epub_name), format='epub', reports=[])
+        result = Dict(
+            fn=C.epub_fn(output_path, epub_name=epub_name), format='epub', reports=[]
+        )
         if before_compile is not None:
             before_compile(output_path)
 
@@ -387,7 +401,9 @@ class EPUB(ZIP, Source):
                         H.ol(
                             *[
                                 H.li(deepcopy(a))
-                                for a in nav.xpath(nav.root, ".//html:a[@href]", namespaces=NS)
+                                for a in nav.xpath(
+                                    nav.root, ".//html:a[@href]", namespaces=NS
+                                )
                             ]
                         ),
                     )
@@ -404,7 +420,8 @@ class EPUB(ZIP, Source):
                 # remove any p elements in the nav -- replace with content
                 # (this also removes empty spans such as pagebreaks and index entries)
                 for element in HTML.xpath(
-                    nav_toc, ".//html:p[html:span or html:a] | .//html:span[not(text() or node())]"
+                    nav_toc,
+                    ".//html:p[html:span or html:a] | .//html:span[not(text() or node())]",
                 ):
                     HTML.replace_with_contents(element)
                 for element in XML.xpath(nav_toc, ".//html:p", namespaces=NS):
@@ -413,33 +430,28 @@ class EPUB(ZIP, Source):
                 # must update hrefs and srcs to the nav_href location.
                 for element in XML.xpath(nav_toc, ".//*[@href or @src]"):
                     href = element.get('href')
+                    url = URL(element.get('href'))
+                    if not url.path:
+                        url.path = nav.basename
+                    url.path = os.path.relpath(
+                        os.path.abspath(os.path.join(nav.path, url.path)),
+                        os.path.dirname(os.path.join(output_path, nav_href)),
+                    )
                     if href is not None:
-                        element.set(
-                            'href',
-                            str(
-                                URL(
-                                    os.path.relpath(
-                                        os.path.abspath(
-                                            os.path.join(os.path.dirname(nav.fn), href)
-                                        ),
-                                        os.path.dirname(os.path.join(output_path, nav_href)),
-                                    )
-                                )
-                            ),
-                        )
+                        element.set('href', str(url))
+                        log.debug(f"{href} => {element.get('href')}")
+                    
                     src = element.get('src')
+                    url = URL(element.get('src'))
+                    if not url.path:
+                        url.path = nav.basename
+                    url.path = os.path.relpath(
+                        os.path.abspath(os.path.join(nav.path, url.path)),
+                        os.path.dirname(os.path.join(output_path, nav_href)),
+                    )
                     if src is not None:
-                        element.set(
-                            'src',
-                            str(
-                                URL(
-                                    os.path.relpath(
-                                        os.path.abspath(os.path.join(os.path.dirname(nav.fn), src)),
-                                        os.path.dirname(os.path.join(output_path, nav_href)),
-                                    )
-                                )
-                            ),
-                        )
+                        element.set('src', str(url))
+                        log.debug(f"{src} => {element.get('src')}")
 
                 nav.fn = os.path.join(output_path, nav_href)
                 nav.write(doctype="<!DOCTYPE html>", canonicalized=False)
@@ -469,7 +481,9 @@ class EPUB(ZIP, Source):
 
     @classmethod
     def make_cover_html(C, output_path, cover_src, lang='en'):
-        cover_html = XML(fn=os.path.join(os.path.dirname(FILENAME), 'templates', 'cover.xhtml'))
+        cover_html = XML(
+            fn=os.path.join(os.path.dirname(FILENAME), 'templates', 'cover.xhtml')
+        )
         if lang is not None:
             cover_html.root.set('lang', lang)
             cover_html.root.set('{%(xml)s}lang' % NS, lang)
@@ -525,7 +539,9 @@ class EPUB(ZIP, Source):
                 fn = os.path.normpath(os.path.join(dirpath, fp))
                 if fn in excludefns:
                     continue
-                href = os.path.normpath(os.path.relpath(fn, opf_path)).replace('\\', '/')
+                href = os.path.normpath(os.path.relpath(fn, opf_path)).replace(
+                    '\\', '/'
+                )
                 item = C.opf_manifest_item(opf_path, href)
                 if href == nav_href:
                     item.set('properties', 'nav')
@@ -553,7 +569,9 @@ class EPUB(ZIP, Source):
     def spine_items_from_manifest(C, output_path, manifest):
         """A list of spine_item dicts (see spec above under EPUB.build())"""
         spine_items = []
-        for item in [item for item in manifest.getchildren() if item.get('href')[-4:] == 'html']:
+        for item in [
+            item for item in manifest.getchildren() if item.get('href')[-4:] == 'html'
+        ]:
             spine_item = Dict(href=str(URL(item.get('href'))), idref=item.get('id'))
             # transfer relevant properties to the spine
             if 'cover-image' in item.get('properties'):
@@ -578,7 +596,10 @@ class EPUB(ZIP, Source):
         sections = [
             H.section(
                 nav_elem,
-                {'id': nav_elem.get('class') or 'toc', 'class': nav_elem.get('class') or 'toc'},
+                {
+                    'id': nav_elem.get('class') or 'toc',
+                    'class': nav_elem.get('class') or 'toc',
+                },
             )
             for nav_elem in nav_elems
         ]
@@ -590,7 +611,10 @@ class EPUB(ZIP, Source):
                     h1.set('class', 'title')
                 h1.set('{%s}type' % NS['epub'], 'title')
                 if h1.get('id') is None:
-                    h1.set('id', String(f"{nav_href} {etree.tounicode(h1)}").digest(alg='md5'))
+                    h1.set(
+                        'id',
+                        String(f"{nav_href} {etree.tounicode(h1)}").digest(alg='md5'),
+                    )
                 header = H.header('\n\t\t', h1)
                 h1.tail = '\n\t'
                 section.insert(0, header)
@@ -626,16 +650,21 @@ class EPUB(ZIP, Source):
         for spine_item in spine_items:
             # either a title or a landmark in the spine item qualifies it for inclusion in the TOC
             item_title = (
-                spine_item.get('title') or String(spine_item.get('landmark') or '').titleify()
+                spine_item.get('title')
+                or String(spine_item.get('landmark') or '').titleify()
             )
             if item_title and not spine_item.get('in-toc') == "false":
                 nav_item = Dict(href=str(URL(spine_item.get('href'))), title=item_title)
                 nav_items.append(nav_item)
         if len(nav_items) > 0:
-            return C.nav_elem(*nav_items, epub_type="toc", title=nav_title, hidden=hidden)
+            return C.nav_elem(
+                *nav_items, epub_type="toc", title=nav_title, hidden=hidden
+            )
 
     @classmethod
-    def nav_landmarks_from_spine_items(C, output_path, spine_items, title="Landmarks", hidden=""):
+    def nav_landmarks_from_spine_items(
+        C, output_path, spine_items, title="Landmarks", hidden=""
+    ):
         """build nav landmarks from spine_items. Each spine_item can have an optional landmark attribute,
             which if given is the epub_type of that landmark.
         """
@@ -671,7 +700,9 @@ class EPUB(ZIP, Source):
         return C.nav_elem(*landmarks, epub_type='landmarks', title=title, hidden=hidden)
 
     @classmethod
-    def nav_page_list_from_spine_items(C, output_path, spine_items, title="Page List", hidden=""):
+    def nav_page_list_from_spine_items(
+        C, output_path, spine_items, title="Page List", hidden=""
+    ):
         """builds a page-list nav element from the content listed in the manifest."""
         page_list_items = []
         for spine_item in spine_items:
@@ -680,16 +711,22 @@ class EPUB(ZIP, Source):
             if os.path.splitext(fn)[1] not in ['.html', '.xhtml']:
                 continue
             for pagebreak in XML(fn=fn).root.xpath(
-                "//*[(@epub:type='pagebreak' or @role='doc-pagebreak') and @title]", namespaces=C.NS
+                "//*[(@epub:type='pagebreak' or @role='doc-pagebreak') and @title]",
+                namespaces=C.NS,
             ):
                 if pagebreak.get('id') is None:
                     log.warn('pagebreak without id: %r' % pagebreak.attrib)
                     continue
                 page_list_items.append(
-                    {'href': href + '#' + pagebreak.get('id'), 'title': pagebreak.get('title')}
+                    {
+                        'href': href + '#' + pagebreak.get('id'),
+                        'title': pagebreak.get('title'),
+                    }
                 )
         if len(page_list_items) > 0:
-            return C.nav_elem(*page_list_items, epub_type='page-list', title=title, hidden=hidden)
+            return C.nav_elem(
+                *page_list_items, epub_type='page-list', title=title, hidden=hidden
+            )
 
     @classmethod
     def nav_elem(C, *nav_items, epub_type=None, title=None, hidden=""):
@@ -820,14 +857,22 @@ class EPUB(ZIP, Source):
         guide = C.OPF.guide('\n\t\t')
         guide.tail = '\n\n'
         for key in [key for key in references.keys() if references[key] is not None]:
-            ref = C.OPF.reference(type=key, title=String(key).titleify(), href=references[key])
+            ref = C.OPF.reference(
+                type=key, title=String(key).titleify(), href=references[key]
+            )
             ref.tail = '\n\t\t'
             guide.append(ref)
         return guide
 
     @classmethod
     def make_opf_file(
-        C, output_path, opf_name=None, metadata=None, manifest=None, spine=None, guide=None
+        C,
+        output_path,
+        opf_name=None,
+        metadata=None,
+        manifest=None,
+        spine=None,
+        guide=None,
     ):
         """create an opf file in output_path, return the filename to it
         output_path   = the filesystem path in which the epub is being built (required)
@@ -856,7 +901,9 @@ class EPUB(ZIP, Source):
                 {
                     'version': '3.0',
                     '{%(xml)s}lang' % C.NS: xml_lang,
-                    'prefix': ' '.join(["%s: %s" % (k, v) for k, v in prefixes.items()]),
+                    'prefix': ' '.join(
+                        ["%s: %s" % (k, v) for k, v in prefixes.items()]
+                    ),
                 },
                 '\n\t',
                 metadata,
@@ -869,7 +916,8 @@ class EPUB(ZIP, Source):
         # make sure unique-identifier is set
         if metadata.find("{%(dc)s}identifier" % C.NS) is not None:
             opfdoc.root.set(
-                'unique-identifier', metadata.find("{%(dc)s}identifier" % C.NS).get('id')
+                'unique-identifier',
+                metadata.find("{%(dc)s}identifier" % C.NS).get('id'),
             )
 
         # make sure there are dc:rights
@@ -910,7 +958,11 @@ class EPUB(ZIP, Source):
                 metadata_elem.remove(date_elem)
             else:
                 popped = Dict()
-                for k in [k for k in date_elem.attrib.keys() if k not in ALLOWED_DATE_PROPERTIES]:
+                for k in [
+                    k
+                    for k in date_elem.attrib.keys()
+                    if k not in ALLOWED_DATE_PROPERTIES
+                ]:
                     popped[k] = date_elem.attrib.pop(k)
                 # if len(popped.keys()) > 0:
                 #     log.warn("attributes removed from dc:date:", popped)
@@ -925,7 +977,9 @@ class EPUB(ZIP, Source):
                 #     % (meta_elem.get('property'), meta_elem.text or ''))
 
         # opf:meta @property="dcterms:modified" is required; set to the current time UTC
-        modified_elem = metadata_elem.find("{%(opf)s}meta[@property='dcterms:modified']" % C.NS)
+        modified_elem = metadata_elem.find(
+            "{%(opf)s}meta[@property='dcterms:modified']" % C.NS
+        )
         if modified_elem is None:
             modified_elem = C.OPF.meta({'property': 'dcterms:modified'})
             modified_elem.tail = '\n\t\t'
@@ -935,14 +989,19 @@ class EPUB(ZIP, Source):
         # include a <meta name="cover"...> element if cover_src is given
         if cover_src is not None and metadata_elem.find("meta[@name='cover']") is None:
             cover_elem = C.OPF.meta(
-                {'name': 'cover', 'content': C.href_to_id(os.path.splitext(cover_src)[0] + '.jpg')}
+                {
+                    'name': 'cover',
+                    'content': C.href_to_id(os.path.splitext(cover_src)[0] + '.jpg'),
+                }
             )
             cover_elem.tail = '\n\t\t'
             metadata_elem.append(cover_elem)
 
         # add the ibooks specified fonts instruction to the end of the metadata section
         if metadata_elem.find("meta[@property='ibooks:specified-fonts']") is None:
-            ibook_fonts_elem = C.OPF.meta({'property': 'ibooks:specified-fonts'}, 'true')
+            ibook_fonts_elem = C.OPF.meta(
+                {'property': 'ibooks:specified-fonts'}, 'true'
+            )
             ibook_fonts_elem.tail = '\n\t\t'
             metadata_elem.append(ibook_fonts_elem)
 
@@ -958,11 +1017,15 @@ class EPUB(ZIP, Source):
         """
         if spine_items is not None:
             spine = C.OPF.spine(
-                '\n\t\t', *[C.opf_spine_itemref(spine_item) for spine_item in spine_items]
+                '\n\t\t',
+                *[C.opf_spine_itemref(spine_item) for spine_item in spine_items],
             )
         elif manifest is not None:
             spine = C.OPF.spine(
-                *[C.OPF.itemref(idref=item.get('id')) for item in manifest.getchildren()]
+                *[
+                    C.OPF.itemref(idref=item.get('id'))
+                    for item in manifest.getchildren()
+                ]
             )
         else:
             raise ValueError(
@@ -1004,7 +1067,9 @@ class EPUB(ZIP, Source):
         """create a mimetype file in output_path"""
         if mimetype is None:
             mimetype = C.MEDIATYPES.get('.epub')
-        t = Text(fn=os.path.join(output_path, 'mimetype'), text=mimetype, encoding='ascii')
+        t = Text(
+            fn=os.path.join(output_path, 'mimetype'), text=mimetype, encoding='ascii'
+        )
         t.write()
         return t.fn
 
@@ -1038,7 +1103,9 @@ class EPUB(ZIP, Source):
     def unhide_toc(C, navfn):
         """the toc in the nav_toc.xhtml file should NOT be hidden"""
         toc = XML(fn=navfn)
-        nav = XML.find(toc.root, "html:body//html:nav[@epub:type='toc']", namespaces=C.NS)
+        nav = XML.find(
+            toc.root, "html:body//html:nav[@epub:type='toc']", namespaces=C.NS
+        )
         if nav is not None and 'hidden' in nav.attrib:
             _ = nav.attrib.pop('hidden')
         toc.write(canonicalized=False)
@@ -1051,7 +1118,9 @@ class EPUB(ZIP, Source):
         x = XML(fn=opffn)
         nav_id = EPUB.href_to_id(nav_href)
         spine = XML.find(x.root, "opf:spine", namespaces=C.NS)
-        spine_item = XML.find(spine, "opf:itemref[@idref='%s']" % nav_id, namespaces=C.NS)
+        spine_item = XML.find(
+            spine, "opf:itemref[@idref='%s']" % nav_id, namespaces=C.NS
+        )
         if spine_item is None:
             itemref = etree.Element("{%(opf)s}itemref" % C.NS, idref=nav_id)
             itemref.tail = '\n\t\t'
@@ -1071,7 +1140,9 @@ class EPUB(ZIP, Source):
     ):
         """zip the epub and return its filename"""
         # set up the .zip file
-        epub = ZIP(fn=epubfn or C.epub_fn(output_path), mode='w', compression=compression)
+        epub = ZIP(
+            fn=epubfn or C.epub_fn(output_path), mode='w', compression=compression
+        )
         log.info("epub: %s" % epub.fn)
 
         # mimetype must be first, and not be compressed
@@ -1085,7 +1156,9 @@ class EPUB(ZIP, Source):
 
         if opf_fn is None:
             opf_fn = C.get_opf_fn(output_path)
-        epub.zipfile.write(opf_fn, os.path.relpath(opf_fn, output_path).replace('\\', '/'))
+        epub.zipfile.write(
+            opf_fn, os.path.relpath(opf_fn, output_path).replace('\\', '/')
+        )
 
         if container_fn is None:
             container_fn = C.make_container_file(output_path, opf_fn)
@@ -1102,7 +1175,9 @@ class EPUB(ZIP, Source):
 
         # write other_fns, such as special contents of META-INF
         for other_fn in other_fns:
-            epub.zipfile.write(other_fn, os.path.relpath(fn, output_path).replace('\\', '/'))
+            epub.zipfile.write(
+                other_fn, os.path.relpath(fn, output_path).replace('\\', '/')
+            )
 
         epub.close()
         the_epub = C(fn=epub.fn)
