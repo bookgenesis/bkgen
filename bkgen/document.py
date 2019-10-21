@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import sys
 
 from bl.dict import Dict
 from bl.url import URL
@@ -187,3 +188,13 @@ class Document(XML, Source):
             cleaned['attributes'].append(data)
         return cleaned
 
+
+if __name__=='__main__':
+    for fn in sys.argv[2:]:
+        doc = Document(fn=fn)
+        if 'icml' in sys.argv[1]:
+            doc.icml(fn=os.path.splitext(doc.fn)[0] + '.icml').write()
+        if 'aid' in sys.argv[1]:
+            doc.aid(fn=os.path.splitext(doc.fn)[0] + '.aid.xml').write()
+        if 'html' in sys.argv[1]:
+            doc.html().write()
