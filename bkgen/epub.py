@@ -893,7 +893,8 @@ class EPUB(ZIP, Source):
         metadata.tail = '\n\n\t'
         manifest.tail = '\n\n\t'
         prefixes = {
-            'ibooks': 'http://vocabulary.itunes.apple.com/rdf/ibooks/vocabulary-extensions-1.0/'
+            'ibooks': 'http://vocabulary.itunes.apple.com/rdf/ibooks/vocabulary-extensions-1.0/',
+            'a11y': 'http://www.idpf.org/epub/vocab/package/a11y/#',
         }
         opfdoc = XML(
             fn=opffn,
