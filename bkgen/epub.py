@@ -37,6 +37,7 @@ ALLOWED_META_PROPERTIES = [  # allowed on opf:meta
     'identifier-type',
     'meta-auth',
     'role',
+    'source-of',
 ]
 
 
