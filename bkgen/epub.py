@@ -606,9 +606,9 @@ class EPUB(ZIP, Source):
         ]
         # h1s at beginning of nav
         for section in sections:
+            nav_elem = XML.find(section, "html:nav", namespaces=NS)
             h1 = XML.find(section, ".//html:h1", namespaces=NS)
             if h1 is not None:
-                nav_elem = XML.find(h1, "html:nav", namespaces=NS)
                 nav_elem.insert(0, h1)
                 if h1.get('class') is None:
                     h1.set('class', nav_elem.get('class') or section.get('class'))
