@@ -225,7 +225,7 @@ class EPUB(ZIP, Source):
         cover_html=True,
         nav_href='nav.xhtml',
         nav_title="Navigation",
-        show_nav=True,
+        show_nav=False,
         nav_toc=None,
         nav_landmarks=None,
         nav_page_list=None,
@@ -331,7 +331,6 @@ class EPUB(ZIP, Source):
         )
 
         if show_nav is True:
-            C.unhide_toc(os.path.join(output_path, nav_href))
             C.append_toc_to_spine(opffn, nav_href)
 
         mimetype_fn = C.make_mimetype_file(output_path)
@@ -371,7 +370,7 @@ class EPUB(ZIP, Source):
         spine_items,
         nav_href='nav.xhtml',
         nav_title="Navigation",
-        show_nav=True,
+        show_nav=False,
         nav_toc=None,
         nav_landmarks=None,
         nav_page_list=None,
@@ -415,8 +414,6 @@ class EPUB(ZIP, Source):
                     nav_toc.insert(0, h1)
 
                 nav_toc.set('{%(epub)s}type' % NS, 'toc')
-                if show_nav is not True:
-                    nav_toc.set('hidden', "")
 
                 # remove any p elements in the nav -- replace with content
                 # (this also removes empty spans such as pagebreaks and index entries)
@@ -474,9 +471,6 @@ class EPUB(ZIP, Source):
             title=nav_title,
             lang=lang,
         )
-
-        if show_nav is True:
-            C.unhide_toc(navfn)
 
         return navfn
 
@@ -645,7 +639,7 @@ class EPUB(ZIP, Source):
 
     @classmethod
     def nav_toc_from_spine_items(
-        C, output_path, spine_items, nav_title="Table of Contents", hidden=""
+        C, output_path, spine_items, nav_title="Table of Contents"
     ):
         nav_items = []
         for spine_item in spine_items:
@@ -659,12 +653,12 @@ class EPUB(ZIP, Source):
                 nav_items.append(nav_item)
         if len(nav_items) > 0:
             return C.nav_elem(
-                *nav_items, epub_type="toc", title=nav_title, hidden=hidden
+                *nav_items, epub_type="toc", title=nav_title
             )
 
     @classmethod
     def nav_landmarks_from_spine_items(
-        C, output_path, spine_items, title="Landmarks", hidden=""
+        C, output_path, spine_items, title="Landmarks"
     ):
         """build nav landmarks from spine_items. Each spine_item can have an optional landmark attribute,
             which if given is the epub_type of that landmark.
@@ -679,10 +673,10 @@ class EPUB(ZIP, Source):
             if spine_item.get('landmark') is not None
         ]
         if len(landmarks) > 0:
-            return C.nav_landmarks(*landmarks, title=title, hidden=hidden)
+            return C.nav_landmarks(*landmarks, title=title)
 
     @classmethod
-    def nav_landmarks(C, *landmarks, title='Landmarks', hidden=""):
+    def nav_landmarks(C, *landmarks, title='Landmarks'):
         """
         Builds a landmarks nav element from the given landmarks parameters. 
         Each parameter is a dict:
@@ -698,11 +692,11 @@ class EPUB(ZIP, Source):
             preface, bibliography, index, glossary, acknowledgments 
         (see http://www.idpf.org/accessibility/guidelines/content/nav/landmarks.php)
         """
-        return C.nav_elem(*landmarks, epub_type='landmarks', title=title, hidden=hidden)
+        return C.nav_elem(*landmarks, epub_type='landmarks', title=title)
 
     @classmethod
     def nav_page_list_from_spine_items(
-        C, output_path, spine_items, title="Page List", hidden=""
+        C, output_path, spine_items, title="Page List"
     ):
         """builds a page-list nav element from the content listed in the manifest."""
         page_list_items = []
@@ -726,11 +720,11 @@ class EPUB(ZIP, Source):
                 )
         if len(page_list_items) > 0:
             return C.nav_elem(
-                *page_list_items, epub_type='page-list', title=title, hidden=hidden
+                *page_list_items, epub_type='page-list', title=title
             )
 
     @classmethod
-    def nav_elem(C, *nav_items, epub_type=None, title=None, hidden=""):
+    def nav_elem(C, *nav_items, epub_type=None, title=None):
         """create and return an html:nav element.
 
         nav_items   = a list of dict-type elements with the following attributes:
@@ -740,7 +734,6 @@ class EPUB(ZIP, Source):
 
         epub_type   = the epub:type attribute of the nav element
         title       = the optional title text to display on this nav
-        hidden      = whether or not the nav element should be hidden; default not specified (None)
         """
         H = Builder(default=C.NS.html, **{'html': C.NS.html, 'epub': C.NS.epub})._
         if title is not None:
@@ -752,8 +745,6 @@ class EPUB(ZIP, Source):
         if epub_type is not None:
             nav_elem.set('{%(epub)s}type' % C.NS, epub_type)
         nav_elem.set('class', epub_type or 'nav')
-        if hidden is not None:
-            nav_elem.set('hidden', hidden)
         ol_elem = nav_elem.find("{%(html)s}ol" % C.NS)
         ol_elem.set('class', nav_elem.get('class'))
         for nav_item in nav_items:
@@ -1100,17 +1091,6 @@ class EPUB(ZIP, Source):
         )
         x.write(canonicalized=False)
         return x.fn
-
-    @classmethod
-    def unhide_toc(C, navfn):
-        """the toc in the nav_toc.xhtml file should NOT be hidden"""
-        toc = XML(fn=navfn)
-        nav = XML.find(
-            toc.root, "html:body//html:nav[@epub:type='toc']", namespaces=C.NS
-        )
-        if nav is not None and 'hidden' in nav.attrib:
-            _ = nav.attrib.pop('hidden')
-        toc.write(canonicalized=False)
 
     @classmethod
     def append_toc_to_spine(C, opffn, nav_href):

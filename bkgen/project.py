@@ -843,7 +843,7 @@ class Project(XML, Source):
     def build_epub(
         self,
         clean=True,
-        show_nav=True,
+        show_nav=False,
         doc_stylesheets=True,
         progress=None,
         name_kind=True,
@@ -982,7 +982,7 @@ class Project(XML, Source):
             image_args=image_args,
         )
         if singlepage is not True:
-            EPUB.make_nav(html_path, spine_items, show_nav=True, nav_href="index.xhtml")
+            EPUB.make_nav(html_path, spine_items, nav_href="index.xhtml")
         if before_compile is not None:
             before_compile(html_path)
         if zip is True:
