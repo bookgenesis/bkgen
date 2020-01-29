@@ -5,6 +5,8 @@ import subprocess
 import zipfile
 from copy import deepcopy
 from datetime import datetime
+from glob import glob
+from pathlib import PurePosixPath as Path
 from uuid import uuid4
 
 from bl.dict import Dict
@@ -269,10 +271,13 @@ class EPUB(ZIP, Source):
             epub_name = C.epub_name_from_path(output_path)
 
         opf_metadata = C.opf_package_metadata(metadata, cover_src=cover_src)
+        title = ''.join(XML.find(opf_metadata, "dc:title//text()", namespaces=NS))
 
         log.debug("cover_src: %r" % cover_src)
         if cover_src is not None and cover_html is True:
-            cover_html_fn = C.make_cover_html(output_path, cover_src, lang=lang)
+            cover_html_fn = C.make_cover_html(
+                output_path, cover_src, lang=lang, title=title
+            )
             cover_html_relpath = str(URL(File(cover_html_fn).relpath(output_path)))
             log.debug("cover_html_relpath: %r" % cover_html_relpath)
             spine_items.insert(
@@ -409,19 +414,22 @@ class EPUB(ZIP, Source):
                     )
                 else:
                     nav_toc = deepcopy(nav_elem)
-                    h1 = H.h1('Contents')
-                    h1.tail = '\n'
-                    nav_toc.insert(0, h1)
 
                 nav_toc.set('{%(epub)s}type' % NS, 'toc')
+                nav_toc.set('role', 'doc-toc')
 
                 # remove any p elements in the nav -- replace with content
                 # (this also removes empty spans such as pagebreaks and index entries)
                 for element in HTML.xpath(
                     nav_toc,
-                    ".//html:p[html:span or html:a] | .//html:span[not(text() or node())]",
+                    """
+                    .//html:p[html:span or html:a] 
+                    | .//html:span[not(text() or node()) or @epub:type="pagebreak"]
+                    """,
+                    namespaces=NS,
                 ):
                     HTML.replace_with_contents(element)
+
                 for element in XML.xpath(nav_toc, ".//html:p", namespaces=NS):
                     XML.remove(element, leave_tail=False)
 
@@ -475,17 +483,38 @@ class EPUB(ZIP, Source):
         return navfn
 
     @classmethod
-    def make_cover_html(C, output_path, cover_src, lang='en'):
+    def make_cover_html(C, output_path, cover_src, lang='en', title=None):
         cover_html = XML(
             fn=os.path.join(os.path.dirname(FILENAME), 'templates', 'cover.xhtml')
         )
         if lang is not None:
             cover_html.root.set('lang', lang)
             cover_html.root.set('{%(xml)s}lang' % NS, lang)
+
         cover_html_relpath = os.path.splitext(str(URL(cover_src)))[0] + '.xhtml'
         cover_html.fn = os.path.join(output_path, cover_html_relpath)
-        img = XML.find(cover_html.root, "//html:img", namespaces=EPUB.NS)
-        img.set('src', os.path.basename(cover_src))
+
+        stylesheets = rglob(output_path, "*.css")
+        if len(stylesheets) > 0:
+            stylesheet_filename = stylesheets[0]
+            link_elem = cover_html.find(
+                cover_html.root, "html:head/html:link[@rel='stylesheet']", namespaces=NS
+            )
+            link_elem.set(
+                'href', URL(os.path.relpath(stylesheet_filename, cover_html.path)).path
+            )
+
+        img_elem = XML.find(cover_html.root, "//html:img", namespaces=EPUB.NS)
+        img_elem.set('src', os.path.basename(cover_src))
+
+        if bool(title) is True:
+            img_elem.set('alt', f'Cover: {title}')
+
+            title_elem = cover_html.find(
+                cover_html.root, "html:head/html:title", namespaces=NS
+            )
+            title_elem.text = f'Cover: {title}'
+
         cover_html.write(doctype="<!DOCTYPE html>", canonicalized=False)
         return cover_html.fn
 
@@ -600,12 +629,18 @@ class EPUB(ZIP, Source):
         ]
         # h1s at beginning of nav
         for section in sections:
+            section.text = '\n'
+
             nav_elem = XML.find(section, "html:nav", namespaces=NS)
+            if nav_elem.get('{%(epub)s}type' % NS) is not None:
+                section.set('{%(epub)s}type' % NS, nav_elem.get('{%(epub)s}type' % NS))
+            if nav_elem.get('role') is not None:
+                section.set('role', nav_elem.get('role'))
+
             h1 = XML.find(section, ".//html:h1", namespaces=NS)
             if h1 is not None:
                 nav_elem.insert(0, h1)
-                if h1.get('class') is None:
-                    h1.set('class', nav_elem.get('class') or section.get('class'))
+                h1.set('class', nav_elem.get('class') or section.get('class'))
                 h1.set('{%s}type' % NS['epub'], 'title')
                 if h1.get('id') is None:
                     h1.set(
@@ -613,8 +648,8 @@ class EPUB(ZIP, Source):
                         String(f"{nav_href} {etree.tounicode(h1)}").digest(alg='md5'),
                     )
                 h1.tail = '\n'
-                section.insert(0, h1)
                 section.set('aria-labelledby', h1.get('id'))
+
         nav = XML(
             root=H.html(
                 {'lang': lang, '{%(xml)s}lang' % NS: lang},
@@ -634,6 +669,24 @@ class EPUB(ZIP, Source):
             )
         )
         nav.fn = os.path.join(output_path, nav_href)
+
+        stylesheets = rglob(output_path, "*.css")
+        if len(stylesheets) > 0:
+            stylesheet_filename = stylesheets[0]
+            link_elem = H.link(
+                {
+                    'rel': 'stylesheet',
+                    'type': 'text/css',
+                    'href': URL(os.path.relpath(stylesheet_filename, nav.path)).path,
+                }
+            )
+            head_elem = nav.find(nav.root, "html:head", namespaces=NS)
+            style_elem = nav.find(head_elem, "html:style", namespaces=NS)
+            if style_elem is not None:
+                head_elem.replace(style_elem, link_elem)
+            else:
+                head_elem.append(link_elem)
+
         nav.write(doctype="<!DOCTYPE html>", canonicalized=False)
         return nav.fn
 
@@ -652,14 +705,10 @@ class EPUB(ZIP, Source):
                 nav_item = Dict(href=str(URL(spine_item.get('href'))), title=item_title)
                 nav_items.append(nav_item)
         if len(nav_items) > 0:
-            return C.nav_elem(
-                *nav_items, epub_type="toc", title=nav_title
-            )
+            return C.nav_elem(*nav_items, epub_type="toc", title=nav_title)
 
     @classmethod
-    def nav_landmarks_from_spine_items(
-        C, output_path, spine_items, title="Landmarks"
-    ):
+    def nav_landmarks_from_spine_items(C, output_path, spine_items, title="Landmarks"):
         """build nav landmarks from spine_items. Each spine_item can have an optional landmark attribute,
             which if given is the epub_type of that landmark.
         """
@@ -695,9 +744,7 @@ class EPUB(ZIP, Source):
         return C.nav_elem(*landmarks, epub_type='landmarks', title=title)
 
     @classmethod
-    def nav_page_list_from_spine_items(
-        C, output_path, spine_items, title="Page List"
-    ):
+    def nav_page_list_from_spine_items(C, output_path, spine_items, title="Page List"):
         """builds a page-list nav element from the content listed in the manifest."""
         page_list_items = []
         for spine_item in spine_items:
@@ -719,9 +766,7 @@ class EPUB(ZIP, Source):
                     }
                 )
         if len(page_list_items) > 0:
-            return C.nav_elem(
-                *page_list_items, epub_type='page-list', title=title
-            )
+            return C.nav_elem(*page_list_items, epub_type='page-list', title=title)
 
     @classmethod
     def nav_elem(C, *nav_items, epub_type=None, title=None):
