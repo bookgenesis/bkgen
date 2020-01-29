@@ -463,24 +463,76 @@ class EPUB(ZIP, Source):
                 nav.write(doctype="<!DOCTYPE html>", canonicalized=False)
                 navfn = nav.fn
 
+        nav_elems = []
+
         if nav_toc is None:
             nav_toc = C.nav_toc_from_spine_items(output_path, spine_items)
+        nav_elems.append(nav_toc)
 
         if nav_landmarks is None:
             nav_landmarks = C.nav_landmarks_from_spine_items(output_path, spine_items)
+            nav_elems.append(nav_landmarks)
+
+        # nav_loi_lot_etc.
+        nav_elems += C.make_nav_loi_lot_loa_lov(output_path, spine_items)
 
         if nav_page_list is None:
             nav_page_list = C.nav_page_list_from_spine_items(output_path, spine_items)
+            nav_elems.append(nav_page_list)
 
         navfn = C.make_nav_file(
-            output_path,
-            *[e for e in [nav_toc, nav_landmarks, nav_page_list] if e is not None],
-            nav_href=nav_href,
-            title=nav_title,
-            lang=lang,
+            output_path, *nav_elems, nav_href=nav_href, title=nav_title, lang=lang
         )
 
         return navfn
+
+    @classmethod
+    def make_nav_loi_lot_loa_lov(C, output_path, spine_items):
+        """
+        For each of epub:type={loi, lot, loa, lov}, if they exist in the book, then they 
+        should:
+
+        1. exist in the nav document, and
+        2. include the same entries as the interior document
+
+        assume that the nav document is going to be directly under the output_path,
+        while the spine_items might be elsewhere -- so adjust all hrefs accordingly
+        """
+        nav_elems = []
+        for spine_item in spine_items:
+            html = HTML(fn=os.path.join(output_path, spine_item.get('href')))
+            for nav_elem in html.xpath(
+                html.root,
+                "//html:nav[@epub:type='loi' or @epub:type='lot' or @epub:type='loa' "
+                "or @epub:type='lov']",
+            ):
+                nav_elem = deepcopy(nav_elem)
+
+                # relink for output_path location
+                for a in html.xpath(nav_elem, ".//html:a[@href]"):
+                    url = URL(a.get('href'))
+                    if url.scheme not in ['', 'file']:
+                        continue
+                    filename = os.path.abspath(os.path.join(html.path, url.path))
+                    url.path = os.path.relpath(filename, output_path)
+                    a.set('href', str(url))
+
+                # remove disallowed elements from nav
+                for element in html.xpath(
+                    nav_elem,
+                    """
+                    .//html:p[html:span or html:a] 
+                    | .//html:span[not(text() or node()) or @epub:type="pagebreak"]
+                    """,
+                ):
+                    HTML.replace_with_contents(element)
+
+                for element in html.xpath(nav_elem, ".//html:p"):
+                    HTML.remove(element, leave_tail=False)
+
+                nav_elems.append(nav_elem)
+
+        return nav_elems
 
     @classmethod
     def make_cover_html(C, output_path, cover_src, lang='en', title=None):
