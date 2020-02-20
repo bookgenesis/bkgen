@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import shutil
 import subprocess
 
 from bf.css import CSS
@@ -51,9 +52,6 @@ class MOBI(Dict):
 
         from .epub import EPUB
 
-        if mobi_name is None:
-            mobi_name = EPUB.epub_name_from_path(build_path)
-        mobifn = self.mobi_fn(build_path, mobi_name=mobi_name)
         if nav_landmarks is None:
             nav_landmarks = EPUB.nav_landmarks(
                 {'href': nav_href, 'title': 'Table of Contents', 'epub_type': 'toc'}
@@ -75,6 +73,42 @@ class MOBI(Dict):
             show_nav=True,
             zip=False,
         )
+        result = self.from_epub(
+            build_path,
+            mobi_name=mobi_name,
+            before_compile=before_compile,
+            progress=progress,
+            mobi7=mobi7,
+            result=result,
+        )
+        return result
+
+    def from_epub(
+        self,
+        epub_path,
+        build_path=None,
+        mobi_name=None,
+        before_compile=None,
+        progress=None,
+        mobi7=False,
+        result=None,
+    ):
+        if mobi_name is None:
+            mobi_name = EPUB.epub_name_from_path(build_path)
+
+        mobifn = self.mobi_fn(build_path, mobi_name=mobi_name)
+
+        result = result or {'reports': []}
+        if build_path is not None and os.path.normpath(build_path) != os.path.normpath(
+            epub_path
+        ):
+            # copy the files from the epub_path to the build_path
+            if os.path.exists(build_path):
+                shutil.rmtree(build_path)
+            shutil.copytree(epub_path, build_path)
+        else:
+            build_path = epub_path
+
         opffn = EPUB.get_opf_fn(build_path)
         self.strip_header_elements(build_path, opffn)
 
@@ -95,10 +129,13 @@ class MOBI(Dict):
             progress.report()
 
         self.compile_mobi(build_path, opffn, mobifn=mobifn)
+
         result.update(fn=mobifn, format='mobi')
-        result.reports.append({'kindlegen': mobifn + '.kindlegen.txt'})
+        result['reports'].append({'kindlegen': mobifn + '.kindlegen.txt'})
+
         if progress is not None:
             progress.report()
+
         return result
 
     @classmethod
@@ -248,7 +285,7 @@ class MOBI(Dict):
         for item in [
             item
             for item in opf.root.xpath(
-                "//opf:manifest/opf:item[not(@properties='nav') and @media-type='text/html']",
+                "//opf:manifest/opf:item[not(@properties='nav') and (@media-type='text/html' or @media-type='application/xhtml+xml')]",
                 namespaces=self.NS,
             )
         ]:
@@ -297,7 +334,7 @@ class MOBI(Dict):
         for item in [
             item
             for item in opf.root.xpath(
-                "//opf:manifest/opf:item[not(@properties='nav') and @media-type='text/html']",
+                "//opf:manifest/opf:item[not(@properties='nav') and (@media-type='text/html' or @media-type='application/xhtml+xml')]",
                 namespaces=self.NS,
             )
         ]:
@@ -341,7 +378,7 @@ class MOBI(Dict):
         html_items = [
             item
             for item in opf.root.xpath(
-                "//opf:manifest/opf:item[not(@properties='nav') and @media-type='text/html']",
+                "//opf:manifest/opf:item[not(@properties='nav') and (@media-type='text/html' or @media-type='application/xhtml+xml')]",
                 namespaces=self.NS,
             )
         ]
@@ -412,8 +449,12 @@ class MOBI(Dict):
         opf = XML(fn=opffn)
         html_items = [
             item
-            for item in opf.root.xpath(
-                "//opf:manifest/opf:item[not(@properties='nav') and @media-type='text/html']",
+            for item in opf.xpath(
+                opf.root,
+                """//opf:manifest/opf:item[
+                    not(@properties='nav') and 
+                    (@media-type='text/html' or @media-type='application/xhtml+xml')
+                ]""",
                 namespaces=self.NS,
             )
         ]
@@ -422,6 +463,7 @@ class MOBI(Dict):
                 fn=os.path.join(os.path.dirname(opffn), str(URL(item.get('href'))))
             )
             for details in html.xpath(html.root, "//html:details"):
+                log.info('<details> in %s', html.path)
                 html.remove(details)
             html.write()
 
@@ -462,5 +504,9 @@ if __name__ == '__main__':
         if sys.argv[1] == 'compile':
             opffn = EPUB.get_opf_fn(build_path)
             MOBI().compile_mobi(build_path, opffn)
+        elif 'from-epub=' in sys.argv[1]:
+            epub_path = sys.argv[1].split('=')[-1]
+            result = MOBI().from_epub(epub_path, build_path=build_path)
+            print(result)
         else:
             print("unknown command: %s" % sys.argv[1])
