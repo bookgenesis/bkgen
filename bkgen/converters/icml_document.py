@@ -141,8 +141,7 @@ def CharacterStyleRange(elem, **params):
 
         elif bool(elem.get('MathToolsML')) is True:
             # MathML that should be used
-            mml_text = elem.get('MathToolsML').replace('&quot;', '"').strip()
-            mml_text = re.sub("&lt;((?!&[lg]t;).*?)&gt;", r"<\1>", mml_text)
+            mml_text = html.unescape(elem.get('MathToolsML'))
             log.debug(mml_text)
             mml = etree.fromstring(mml_text)
 
