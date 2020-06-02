@@ -607,9 +607,16 @@ class Project(XML, Source):
             if source_path is not None:
                 for img in doc.root.xpath("//html:img[@src]", namespaces=NS):
                     srcfn = os.path.join(source_path, str(URL(img.get('src'))))
+                    # SPECIAL CASE: srcfn + '.jpg' exists => use that instead, because it indicates
+                    # that the user has exported the image as cropped from InDesign and wants to use
+                    # that instead of the typesetting source image file.
+                    if os.path.exists(srcfn + '.jpg'):
+                        srcfn += '.jpg'
                     log.debug("img srcfn=%r exists? %r" % (srcfn, os.path.exists(srcfn)))
                     imgfn = os.path.join(self.image_path, self.make_basename(srcfn))
-                    if os.path.exists(srcfn) and imgfn != srcfn:
+                    if os.path.exists(srcfn) and imgfn != srcfn and (
+                        not os.path.exists(imgfn) or File(imgfn).mtime < File(srcfn).mtime
+                    ):
                         if not os.path.exists(os.path.dirname(imgfn)):
                             os.makedirs(os.path.dirname(imgfn))
                         if os.path.exists(imgfn):
