@@ -607,6 +607,11 @@ class Project(XML, Source):
             if source_path is not None:
                 for img in doc.root.xpath("//html:img[@src]", namespaces=NS):
                     srcfn = os.path.join(source_path, str(URL(img.get('src'))))
+                    # SPECIAL CASE: srcfn + '.jpg' exists => use that instead, because it indicates
+                    # that the user has exported the image as cropped from InDesign and wants to use
+                    # that instead of the typesetting source image file.
+                    if os.path.exists(srcfn + '.jpg'):
+                        srcfn += '.jpg'
                     log.debug("img srcfn=%r exists? %r" % (srcfn, os.path.exists(srcfn)))
                     imgfn = os.path.join(self.image_path, self.make_basename(srcfn))
                     if os.path.exists(srcfn) and imgfn != srcfn:
@@ -1488,11 +1493,9 @@ class Project(XML, Source):
         exclude=None:   regexp pattern to exclude from cleanup
         """
         log.debug(
-            "cleanup %s: %r"
-            % (
-                self.name,
-                {'resources': resources, 'outputs': outputs, 'logs': logs, 'exclude': exclude},
-            )
+            "cleanup %s: %r",
+            self.name,
+            {'resources': resources, 'outputs': outputs, 'logs': logs, 'exclude': exclude}
         )
         if outputs is True:
             dirs = [
