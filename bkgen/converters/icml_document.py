@@ -131,6 +131,7 @@ def CharacterStyleRange(elem, **params):
                 c.replace('Condition/', '').replace('%20', '_')
                 for c in elem.get('AppliedConditions').split(' ')
             ]
+            # space-separated list
             attribs['{%(pub)s}cond' % NS] = ' '.join(conditions)
 
         result = []
