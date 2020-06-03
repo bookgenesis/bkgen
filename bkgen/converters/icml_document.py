@@ -1,6 +1,5 @@
 # XT .icml to pub:document
 
-import html
 import logging
 import os
 import re
@@ -139,7 +138,8 @@ def CharacterStyleRange(elem, **params):
         # use regular spans, and MathML embedded in MathTools MathZones
         if bool(elem.get('MathToolsML')) is True:
             # MathML
-            mml_text = html.unescape(elem.get('MathToolsML'))
+            mml_text = elem.get('MathToolsML').replace('&quot;', '"').strip()
+            mml_text = re.sub("&lt;((?!&[lg]t;).*?)&gt;", r"<\1>", mml_text)
             log.debug(mml_text)
             mml = etree.fromstring(mml_text)
 
