@@ -148,15 +148,17 @@ def CharacterStyleRange(elem, **params):
 
             # add preceeding and trailing whitespace that might be embedded in the
             # MathML, because we're going to trim the math
-            mml_text = etree.tounicode(mml, method='text', with_tail=False)
-            if re.search(r'^\s+', mml_text) is not None:
+            mml_string = etree.tounicode(mml, method='text', with_tail=False)
+            if re.search(r'^\s+', mml_string) is not None:
                 result = [' '] + result
-            if re.search(r'\s+$', mml_text) is not None:
+            if re.search(r'\s+$', mml_string) is not None:
                 result += [' ']
+
         elif bool(elem.get('MTMathZone')) is False:
             # regular span
             span = B.html.span(attribs, transformer(elem.getchildren(), **params))
             result += [span]
+
         # else MTMathZone but not MathToolsML, so skip
 
         return result
