@@ -1243,9 +1243,9 @@ class Project(XML, Source):
         if resources is None:
             resources = self.output_resources(output_path=output_path, image_args=image_args)
 
-        # if the spine itself has a `@pub:cond` attribute, add them to the list of 
+        # if the spine itself has a `@cond` attribute, add them to the list of 
         # conditions to include
-        spine_cond = self.find(self.root, "pub:spine/@pub:cond", namespaces=NS)
+        spine_cond = self.find(self.root, "pub:spine/@cond", namespaces=NS)
         if bool(spine_cond) is True:
             conditions = ' '.join(set(conditions.split() + spine_cond.split()))
 
