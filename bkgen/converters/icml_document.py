@@ -502,7 +502,7 @@ def graphic_geometry(elem):
         resize_x = item_transform[0]
         resize_y = item_transform[3]
         geometry['width'] = "%.2fpt" % (size_x * resize_x)
-        geometry['height'] = "%.2fpt" % (size_y * resize_y)
+        # geometry['height'] = "%.2fpt" % (size_y * resize_y)
 
     # otherwise, if there are ActualPpi and EffectivePpi, use that to get the width & height
     elif elem.get('ActualPpi') is not None and elem.get('EffectivePpi') is not None:
@@ -512,7 +512,7 @@ def graphic_geometry(elem):
         resize_x = actual_ppi[0] / effective_ppi[0]
         resize_y = actual_ppi[1] / effective_ppi[1]
         geometry['width'] = "%.2fpt" % (size_x * resize_x)
-        geometry['height'] = "%.2fpt" % (size_y * resize_y)
+        # geometry['height'] = "%.2fpt" % (size_y * resize_y)
 
     return geometry
 
