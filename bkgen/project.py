@@ -614,7 +614,9 @@ class Project(XML, Source):
                         srcfn += '.jpg'
                     log.debug("img srcfn=%r exists? %r" % (srcfn, os.path.exists(srcfn)))
                     imgfn = os.path.join(self.image_path, self.make_basename(srcfn))
-                    if os.path.exists(srcfn) and imgfn != srcfn:
+                    if os.path.exists(srcfn) and imgfn != srcfn and (
+                        not os.path.exists(imgfn) or File(imgfn).mtime < File(srcfn).mtime
+                    ):
                         if not os.path.exists(os.path.dirname(imgfn)):
                             os.makedirs(os.path.dirname(imgfn))
                         if os.path.exists(imgfn):
