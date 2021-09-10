@@ -310,6 +310,7 @@ def HyperlinkTextOrCrossReferenceSource(elem, **params):
         {'id': make_element_id(elem, **params)}, transformer(elem.getchildren(), **params)
     )
     cc = hyperlink.getchildren()
+    result = None
     if len(cc) == 1 and cc[0].tag == "{%(pub)s}cref" % NS:
         for k in hyperlink.attrib.keys():
             cc[0].set(k, hyperlink.get(k))
