@@ -3,6 +3,7 @@
 import logging
 import os
 import re
+import tempfile
 import urllib.parse
 
 from bl.dict import Dict
@@ -694,11 +695,11 @@ def convert_tabs(root):
     txt = etree.tounicode(root)
     txt = txt.replace("<?ACE 8?>", "<pub:tab align='right' xmlns:pub='%(pub)s'/>" % NS)
     txt = txt.replace("<?ACE 7?>", "")  # align "here" tab
-    tfn = os.path.join(os.path.dirname(__file__), random_id())
-    with open(tfn, 'wb') as tf:
-        tf.write(txt.encode('utf-8'))
-    d = etree.parse(tfn).getroot()
-    os.remove(tfn)
+    with tempfile.TemporaryDirectory() as td:
+        tfn = td + '/doc.xml'
+        with open(tfn, 'wb') as tf:
+            tf.write(txt.encode('utf-8'))
+        d = etree.parse(tfn).getroot()
     return d
 
 
