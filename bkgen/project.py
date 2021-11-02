@@ -839,7 +839,7 @@ class Project(XML, Source):
     def build_epub(
         self,
         clean=True,
-        show_nav=False,
+        show_nav=True,
         doc_stylesheets=True,
         progress=None,
         name_kind=True,
