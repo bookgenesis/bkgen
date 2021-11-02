@@ -14,7 +14,7 @@ config.Resources = Dict(
     path=RESOURCES_PATH,
     publishingxml=os.path.join(RESOURCES_PATH, 'publishing-xml'),
     schemas=os.path.join(RESOURCES_PATH, 'publishing-xml', 'schemas'),
-    epubcheck=os.path.join(RESOURCES_PATH, 'epubcheck-4.0.2/epubcheck.jar'),
+    epubcheck=os.path.join(RESOURCES_PATH, 'epubcheck-4.2.6/epubcheck.jar'),
     kindlegen=os.path.join(
         RESOURCES_PATH,
         ('darwin' in sys.platform and 'KindleGen_Mac_i386_v2_9/kindlegen')

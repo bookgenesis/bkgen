@@ -52,7 +52,7 @@ H = Builder.single(NS.html)
 
 class Project(XML, Source):
     """Every project has a project.xml file that holds information about the project.
-    The root element is pub:project, where ``pub:`` is the Publishing XML namespace 
+    The root element is pub:project, where ``pub:`` is the Publishing XML namespace
     (see `publishingxml.org <http://publishingxml.org>`_).
     """
 
@@ -233,7 +233,7 @@ class Project(XML, Source):
         precedence to the project stylesheet(s). (Precedence to the project stylesheet(s) allows the
         content stylesheet to be auto-generated, and then for its styles to be pulled into the
         project stylesheet and edited there. Then when the content stylesheet is re-generated, the
-        edits to those styles are not lost.)        
+        edits to those styles are not lost.)
         """
         css = self.stylesheet()
         log.debug("href = %r" % href)
@@ -375,7 +375,7 @@ class Project(XML, Source):
                 resource.set('kind', kind)
             resources.append(resource)
         else:
-            log.warn("resource with that href already exists: %r" % resource.attrib)
+            log.warning("resource with that href already exists: %r" % resource.attrib)
         return resource
 
     def import_font_files(self, *fns):
@@ -395,7 +395,7 @@ class Project(XML, Source):
         return result_fns
 
     def import_source_file(self, fn, SourceClass=None, **args):
-        """import the source fn. 
+        """import the source fn.
         fn = the filesystem path to the file (such as a temporary file location)
         args = arguments that will be passed to Project.import_source()
         """
@@ -522,12 +522,12 @@ class Project(XML, Source):
         **params,
     ):
         """import a source into the project.
-            source = a Source object that contains the content source [REQUIRED]
-            documents = whether to import documents from the source (default=True)
-            images = whether to import images from the source (default=True)
-            stylesheet = whether to import a stylesheet from the source (default=True)
-            metadata = whether to import metadata from the source (default=False)
-            **params = passed to the Source.documents(**params) method
+        source = a Source object that contains the content source [REQUIRED]
+        documents = whether to import documents from the source (default=True)
+        images = whether to import images from the source (default=True)
+        stylesheet = whether to import a stylesheet from the source (default=True)
+        metadata = whether to import metadata from the source (default=False)
+        **params = passed to the Source.documents(**params) method
         """
         # If the source file is not already in the project folder and copy_to_source_folder is True,
         # copy the source file into the "canonical" source file location for this project.
@@ -575,8 +575,8 @@ class Project(XML, Source):
         return fns
 
     def import_documents(self, documents, source_path=None, document_before_update_project=None):
-        """import the given document collection. This includes 
-        (1) storing the document in the project.content_folder 
+        """import the given document collection. This includes
+        (1) storing the document in the project.content_folder
         (2) adding sections of the document to the spine, if not present
         (3) importing referenced images, if available
         """
@@ -760,7 +760,7 @@ class Project(XML, Source):
         singlepage=False,
     ):
         """build the project outputs
-            kind=None:      which kind of output to build; if None, build all
+        kind=None:      which kind of output to build; if None, build all
         """
         log.info(
             "build_outputs: %s %r"
@@ -1203,7 +1203,7 @@ class Project(XML, Source):
                 if len(image_data_tries) > 2:
                     log.info("try %d for %s" % (len(image_data_tries) + 1, outfn))
                 if len(image_data_tries) >= 5:
-                    log.warn("continuing with inconsistent image results for %s" % outfn)
+                    log.warning("continuing with inconsistent image results for %s" % outfn)
                     break
             except KeyboardInterrupt:
                 raise
@@ -1596,7 +1596,7 @@ class Project(XML, Source):
 
 
 def rmtree_warn(function, path, excinfo):
-    log.warn("%s: Could not remove %s: %s" % (function.__name__, path, excinfo()[1]))
+    log.warning("%s: Could not remove %s: %s" % (function.__name__, path, excinfo[1]))
 
 
 # == COMMAND INTERFACE METHODS ==
@@ -1718,7 +1718,7 @@ def remove_project(project_path):
 if __name__ == '__main__':
     logging.basicConfig(**config.Logging)
     if len(sys.argv) < 2:
-        log.warn("Usage: python -m bkgen.project [command] project_path [project_path] ...")
+        log.warning("Usage: python -m bkgen.project [command] project_path [project_path] ...")
     elif len(sys.argv) == 2:
         project = Project(fn=sys.argv[1])
     else:

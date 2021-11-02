@@ -81,6 +81,8 @@ class Document(XML, Source):
         x.fn = fn
         if id not in [None, '']:
             section = x.find(x.root, "//*[@id='%s']" % id, namespaces=C.NS)
+            if section is None: 
+                log.warn('SECTION NOT FOUND: %s#%s', fn, id)
         else:
             section = None
         log.debug("Load %r" % section.attrib if section is not None else None)
@@ -143,8 +145,15 @@ class Document(XML, Source):
                     incl_elems = XML.xpath(src.root, "//*[@id='%s']" % srcid)
                 else:
                     incl_elems = XML.xpath(src.root, "html:body/*", namespaces=NS)
+                
+                if len(incl_elems)==0:
+                    log.warn('NO ELEMENTS TO INCLUDE: %s', incl.get('src'))
+
                 for ie in incl_elems:
                     incl.append(ie)
+            else:
+                log.error('INCLUDE SRC FILE NOT FOUND: %s', incl.get('src'))
+
             if strip is True:
                 self.replace_with_contents(incl)
 

@@ -101,6 +101,8 @@ def fill_head(root, **params):
         # if we found a title, insert it
         if title is not None:  # new or existing title in <head>
             head.insert(0, title)
+        else:
+            log.warn('NO TITLE: %s', params.get('fn'))
 
     return root
 
