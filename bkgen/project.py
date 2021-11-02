@@ -849,7 +849,7 @@ class Project(XML, Source):
         before_compile=None,
         lang=None,
         check=True,
-        ace=True,
+        ace=False,
         image_args=None,
     ):
         if image_args is None:
