@@ -3,6 +3,7 @@
 import logging
 import os
 import re
+import tempfile
 import urllib.parse
 
 from bl.dict import Dict
@@ -309,6 +310,7 @@ def HyperlinkTextOrCrossReferenceSource(elem, **params):
         {'id': make_element_id(elem, **params)}, transformer(elem.getchildren(), **params)
     )
     cc = hyperlink.getchildren()
+    result = None
     if len(cc) == 1 and cc[0].tag == "{%(pub)s}cref" % NS:
         for k in hyperlink.attrib.keys():
             cc[0].set(k, hyperlink.get(k))
@@ -694,11 +696,11 @@ def convert_tabs(root):
     txt = etree.tounicode(root)
     txt = txt.replace("<?ACE 8?>", "<pub:tab align='right' xmlns:pub='%(pub)s'/>" % NS)
     txt = txt.replace("<?ACE 7?>", "")  # align "here" tab
-    tfn = os.path.join(os.path.dirname(__file__), random_id())
-    with open(tfn, 'wb') as tf:
-        tf.write(txt.encode('utf-8'))
-    d = etree.parse(tfn).getroot()
-    os.remove(tfn)
+    with tempfile.TemporaryDirectory() as td:
+        tfn = td + '/doc.xml'
+        with open(tfn, 'wb') as tf:
+            tf.write(txt.encode('utf-8'))
+        d = etree.parse(tfn).getroot()
     return d
 
 
