@@ -1253,10 +1253,18 @@ class Project(XML, Source):
             else:
                 d = Document.load(fn=docfn)
             outfn = (
-                os.path.splitext(
-                    os.path.join(output_path, os.path.relpath(d.fn, self.path).replace('\\', '/'))
-                )[0]
-                + ext
+                (
+                    os.path.splitext(
+                        os.path.join(
+                            output_path, os.path.relpath(d.fn, self.path).replace('\\', '/')
+                        )
+                    )[0]
+                    + ext
+                )
+                .encode('ascii', 'xmlcharrefreplace')
+                .replace(b';', b'_')
+                .replace(b'&#', b'_')
+                .decode()
             )
             if 'html' in ext:
                 # create the output html for this document
