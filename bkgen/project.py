@@ -13,6 +13,7 @@ import logging
 import os
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 import time
@@ -482,13 +483,17 @@ class Project(XML, Source):
             result.fns += self.import_source(Document(fn=fn), **args)
 
         # Images
-        elif content_type in [
-            'image/jpeg',
-            'image/png',
-            'image/bmp',
-            'image/tiff',
-            'application/pdf',
-        ] or ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff', '.pdf']:
+        elif (
+            content_type
+            in [
+                'image/jpeg',
+                'image/png',
+                'image/bmp',
+                'image/tiff',
+                'application/pdf',
+            ]
+            or ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff', '.pdf']
+        ):
             result.fns += self.import_image(fn, gs=config.Lib and config.Lib.gs or None)
 
         # Fonts
