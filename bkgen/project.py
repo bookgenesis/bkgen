@@ -931,7 +931,7 @@ class Project(XML, Source):
         lang=None,
         image_args=None,
     ):
-        """build html output of the project. 
+        """build html output of the project.
         * singlepage=False  : whether to build the HTML in a single page
         * zip=True          : whether to zip the output
         * cleanup=False     : whether to cleanup the output folder (only if zip=True)
@@ -1123,12 +1123,13 @@ class Project(XML, Source):
         maxpixels=4e6,
         **image_args,
     ):
-
+        fn = os.path.normpath(os.path.abspath(fn))
         f = File(fn=fn)
         mimetype = mimetypes.guess_type(fn)
         log.debug("srcfn: %s %r %r" % (fn, mimetype, os.path.exists(fn)))
         output_path = output_path or os.path.join(self.path, str(self.output_folder))
         outfn = outfn or os.path.splitext(os.path.join(output_path, f.relpath(self.path)))[0] + ext
+        outfn = os.path.normpath(os.path.abspath(outfn))
         log.debug("outfn: %s" % outfn)
 
         if os.path.exists(outfn):
