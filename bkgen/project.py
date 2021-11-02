@@ -807,6 +807,7 @@ class Project(XML, Source):
                 result.size = File(fn=result.fn).size
                 result.status = 'completed'
             except:
+                raise
                 msg = (
                     str(String(sys.exc_info()[0].__name__).camelsplit())
                     + ' '
