@@ -11,36 +11,23 @@
     #   -r req/install.txt
     #   bgs
 bf==1.11.0
-    # via
-    #   -r req/install.txt
-    #   bxml
+    # via bxml
 bl==2.4.0
     # via
-    #   -r req/install.txt
     #   bf
     #   bxml
 bxml==2.6.1
     # via -r req/install.txt
 cssselect==1.1.0
-    # via
-    #   -r req/install.txt
-    #   bf
+    # via bf
 cssutils==2.4.0
-    # via
-    #   -r req/install.txt
-    #   bf
+    # via bf
 importlib-metadata==4.11.1
-    # via
-    #   -r req/install.txt
-    #   markdown
+    # via markdown
 libsass==0.21.0
-    # via
-    #   -r req/install.txt
-    #   bf
+    # via bf
 lxml==4.8.0
-    # via
-    #   -r req/install.txt
-    #   bxml
+    # via bxml
 markdown==3.3.6
     # via
     #   -r req/install.txt
@@ -48,14 +35,8 @@ markdown==3.3.6
 pycountry==19.7.15
     # via -r req/install.txt
 six==1.16.0
-    # via
-    #   -r req/install.txt
-    #   libsass
+    # via libsass
 unum==4.2.1
-    # via
-    #   -r req/install.txt
-    #   bf
+    # via bf
 zipp==3.7.0
-    # via
-    #   -r req/install.txt
-    #   importlib-metadata
+    # via importlib-metadata
