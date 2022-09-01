@@ -3,6 +3,6 @@
 -e git+https://github.com/BlackEarth/bl.git@af2d151bc145ff08b3ad7b39a9e215ff1219f148#egg=bl
 -e git+https://github.com/BlackEarth/bmagick.git@61d216db3438de82b1e7616f8769846f8fe91aa1#egg=bmagick
 -e git+https://github.com/BlackEarth/bxml.git@99d9cc529290696ceefed716cedb292f9ca26a6e#egg=bxml
-lxml==4.4.0
-Markdown==3.1.1
-pycountry==19.7.15
+lxml~=4.7.1
+Markdown~=3.1.1
+pycountry~=19.7.15

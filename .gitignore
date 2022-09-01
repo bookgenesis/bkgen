@@ -12,3 +12,4 @@ venv
 _bkgen/
 .bkgen
 src
+.envrc
