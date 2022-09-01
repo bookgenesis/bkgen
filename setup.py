@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 
 config = {
     "name": "bkgen",
-    "version": "0.17.1",
+    "version": "0.19.0",
     "description": "Core functionality for bookgenesis",
     "url": "https://gitlab.com/bookgenesis/bkgen",
     "author": "Sean Harrison",
