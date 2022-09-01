@@ -13,6 +13,7 @@ import logging
 import os
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 import time
@@ -52,7 +53,7 @@ H = Builder.single(NS.html)
 
 class Project(XML, Source):
     """Every project has a project.xml file that holds information about the project.
-    The root element is pub:project, where ``pub:`` is the Publishing XML namespace 
+    The root element is pub:project, where ``pub:`` is the Publishing XML namespace
     (see `publishingxml.org <http://publishingxml.org>`_).
     """
 
@@ -233,7 +234,7 @@ class Project(XML, Source):
         precedence to the project stylesheet(s). (Precedence to the project stylesheet(s) allows the
         content stylesheet to be auto-generated, and then for its styles to be pulled into the
         project stylesheet and edited there. Then when the content stylesheet is re-generated, the
-        edits to those styles are not lost.)        
+        edits to those styles are not lost.)
         """
         css = self.stylesheet()
         log.debug("href = %r" % href)
@@ -375,7 +376,7 @@ class Project(XML, Source):
                 resource.set('kind', kind)
             resources.append(resource)
         else:
-            log.warn("resource with that href already exists: %r" % resource.attrib)
+            log.warning("resource with that href already exists: %r" % resource.attrib)
         return resource
 
     def import_font_files(self, *fns):
@@ -395,7 +396,7 @@ class Project(XML, Source):
         return result_fns
 
     def import_source_file(self, fn, SourceClass=None, **args):
-        """import the source fn. 
+        """import the source fn.
         fn = the filesystem path to the file (such as a temporary file location)
         args = arguments that will be passed to Project.import_source()
         """
@@ -482,13 +483,17 @@ class Project(XML, Source):
             result.fns += self.import_source(Document(fn=fn), **args)
 
         # Images
-        elif content_type in [
-            'image/jpeg',
-            'image/png',
-            'image/bmp',
-            'image/tiff',
-            'application/pdf',
-        ] or ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff', '.pdf']:
+        elif (
+            content_type
+            in [
+                'image/jpeg',
+                'image/png',
+                'image/bmp',
+                'image/tiff',
+                'application/pdf',
+            ]
+            or ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff', '.pdf']
+        ):
             result.fns += self.import_image(fn, gs=config.Lib and config.Lib.gs or None)
 
         # Fonts
@@ -522,12 +527,12 @@ class Project(XML, Source):
         **params,
     ):
         """import a source into the project.
-            source = a Source object that contains the content source [REQUIRED]
-            documents = whether to import documents from the source (default=True)
-            images = whether to import images from the source (default=True)
-            stylesheet = whether to import a stylesheet from the source (default=True)
-            metadata = whether to import metadata from the source (default=False)
-            **params = passed to the Source.documents(**params) method
+        source = a Source object that contains the content source [REQUIRED]
+        documents = whether to import documents from the source (default=True)
+        images = whether to import images from the source (default=True)
+        stylesheet = whether to import a stylesheet from the source (default=True)
+        metadata = whether to import metadata from the source (default=False)
+        **params = passed to the Source.documents(**params) method
         """
         # If the source file is not already in the project folder and copy_to_source_folder is True,
         # copy the source file into the "canonical" source file location for this project.
@@ -575,8 +580,8 @@ class Project(XML, Source):
         return fns
 
     def import_documents(self, documents, source_path=None, document_before_update_project=None):
-        """import the given document collection. This includes 
-        (1) storing the document in the project.content_folder 
+        """import the given document collection. This includes
+        (1) storing the document in the project.content_folder
         (2) adding sections of the document to the spine, if not present
         (3) importing referenced images, if available
         """
@@ -769,7 +774,7 @@ class Project(XML, Source):
         epub_ace=True,
     ):
         """build the project outputs
-            kind=None:      which kind of output to build; if None, build all
+        kind=None:      which kind of output to build; if None, build all
         """
         log.info(
             "build_outputs: %s %r"
@@ -818,6 +823,7 @@ class Project(XML, Source):
                 result.size = File(fn=result.fn).size
                 result.status = 'completed'
             except:
+                raise
                 msg = (
                     str(String(sys.exc_info()[0].__name__).camelsplit())
                     + ' '
@@ -850,7 +856,7 @@ class Project(XML, Source):
     def build_epub(
         self,
         clean=True,
-        show_nav=False,
+        show_nav=True,
         doc_stylesheets=True,
         progress=None,
         name_kind=True,
@@ -860,7 +866,7 @@ class Project(XML, Source):
         before_compile=None,
         lang=None,
         check=True,
-        ace=True,
+        ace=False,
         image_args=None,
     ):
         if image_args is None:
@@ -943,7 +949,7 @@ class Project(XML, Source):
         lang=None,
         image_args=None,
     ):
-        """build html output of the project. 
+        """build html output of the project.
         * singlepage=False  : whether to build the HTML in a single page
         * zip=True          : whether to zip the output
         * cleanup=False     : whether to cleanup the output folder (only if zip=True)
@@ -1135,12 +1141,13 @@ class Project(XML, Source):
         maxpixels=4e6,
         **image_args,
     ):
-
+        fn = os.path.normpath(os.path.abspath(fn))
         f = File(fn=fn)
         mimetype = mimetypes.guess_type(fn)
         log.debug("srcfn: %s %r %r" % (fn, mimetype, os.path.exists(fn)))
         output_path = output_path or os.path.join(self.path, str(self.output_folder))
         outfn = outfn or os.path.splitext(os.path.join(output_path, f.relpath(self.path)))[0] + ext
+        outfn = os.path.normpath(os.path.abspath(outfn))
         log.debug("outfn: %s" % outfn)
 
         if os.path.exists(outfn):
@@ -1214,7 +1221,7 @@ class Project(XML, Source):
                 if len(image_data_tries) > 2:
                     log.info("try %d for %s" % (len(image_data_tries) + 1, outfn))
                 if len(image_data_tries) >= 5:
-                    log.warn("continuing with inconsistent image results for %s" % outfn)
+                    log.warning("continuing with inconsistent image results for %s" % outfn)
                     break
             except KeyboardInterrupt:
                 raise
@@ -1280,10 +1287,18 @@ class Project(XML, Source):
                 continue
 
             outfn = (
-                os.path.splitext(
-                    os.path.join(output_path, os.path.relpath(d.fn, self.path).replace('\\', '/'))
-                )[0]
-                + ext
+                (
+                    os.path.splitext(
+                        os.path.join(
+                            output_path, os.path.relpath(d.fn, self.path).replace('\\', '/')
+                        )
+                    )[0]
+                    + ext
+                )
+                .encode('ascii', 'xmlcharrefreplace')
+                .replace(b';', b'_')
+                .replace(b'&#', b'_')
+                .decode()
             )
             if 'html' in ext:
                 # create the output html for this document
@@ -1621,7 +1636,7 @@ class Project(XML, Source):
 
 
 def rmtree_warn(function, path, excinfo):
-    log.warn("%s: Could not remove %s: %s" % (function.__name__, path, excinfo()[1]))
+    log.warning("%s: Could not remove %s: %s" % (function.__name__, path, excinfo[1]))
 
 
 # == COMMAND INTERFACE METHODS ==
@@ -1744,7 +1759,7 @@ if __name__ == '__main__':
     logging.basicConfig(**config.Logging)
 
     if len(sys.argv) < 2:
-        log.warn("Usage: python -m bkgen.project [command] project_path [project_path] ...")
+        log.warning("Usage: python -m bkgen.project [command] project_path [project_path] ...")
     elif len(sys.argv) == 2:
         project = Project(fn=sys.argv[1])
     else:

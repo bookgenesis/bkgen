@@ -1,15 +1,16 @@
-docs/_build
-tests/Projects/Exemplar/sources/Naïve Styles
-tests/Projects/Exemplar/outputs/Exemplar_EPUB
-Exemplar_EPUB.epub
-*.egg-info
-*.ini
 __pycache__
-build
-dist
-venv
-*.pyc
 _bkgen/
 .bkgen
-src
+.envrc
+*.egg-info
+*.ini
+*.pyc
+build
+dist
+docs/_build
+Exemplar_EPUB.epub
 pip-wheel-metadata
+src
+tests/Projects/Exemplar/outputs/Exemplar_EPUB
+tests/Projects/Exemplar/sources/Naïve Styles
+venv

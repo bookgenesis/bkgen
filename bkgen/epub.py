@@ -469,6 +469,8 @@ class EPUB(ZIP, Source):
             nav_toc = C.nav_toc_from_spine_items(output_path, spine_items)
         nav_elems.append(nav_toc)
 
+        nav_toc.set('role', 'doc-toc')
+
         if nav_landmarks is None:
             nav_landmarks = C.nav_landmarks_from_spine_items(output_path, spine_items)
             nav_elems.append(nav_landmarks)

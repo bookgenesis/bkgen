@@ -142,7 +142,7 @@ class ICML(XML, Source):
 
         key = 'AppliedLanguage'
         if elem.get(key) is not None:
-            lang = pycountry.languages.lookup(elem.get(key).split('/')[-1].split(':')[0])
+            lang = pycountry.languages.lookup(elem.get(key).split('/')[-1].split(':')[0].split('_')[0])
             if lang is not None:
                 return lang.alpha_2
             else:
