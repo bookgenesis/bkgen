@@ -19,12 +19,8 @@ class Markdown(Text, Source):
     EXTENSIONS = [
         'markdown.extensions.extra',
         'markdown.extensions.admonition',
-        # 'markdown.extensions.codehilite',
-        'markdown.extensions.headerid',
-        # 'markdown.extensions.meta',
         'markdown.extensions.nl2br',
         'markdown.extensions.sane_lists',
-        # 'markdown.extensions.smarty',
         'markdown.extensions.toc',
         markdown.extensions.wikilinks.WikiLinkExtension(base_url='', end_url='.html'),
     ]
