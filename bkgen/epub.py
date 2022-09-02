@@ -5,8 +5,6 @@ import subprocess
 import zipfile
 from copy import deepcopy
 from datetime import datetime
-from glob import glob
-from pathlib import PurePosixPath as Path
 from uuid import uuid4
 
 from bl.dict import Dict
@@ -241,14 +239,14 @@ class EPUB(ZIP, Source):
 
         REQUIRED parameters:
             output_path   = where the build files are to be located
-            metadata    = a metadata element to be used in building the EPUB 
+            metadata    = a metadata element to be used in building the EPUB
 
         OPTIONAL parameters:
             epub_name   = the base filename for the build; or = output_path basename
             manifest    = the opf:manifest to use; or built from crawling the output_path
             spine_items = a list of dicts that have the following attributes:
 
-                'href'      : REQUIRED relative file path from output_path 
+                'href'      : REQUIRED relative file path from output_path
                 'idref'     : opf:itemref/@idref (default generated from href)
                 'linear'    : opf:itemref/@linear (="yes"|"no", default "yes")
                 'properties': opf:itemref/@properties
@@ -491,7 +489,7 @@ class EPUB(ZIP, Source):
     @classmethod
     def make_nav_loi_lot_loa_lov(C, output_path, spine_items):
         """
-        For each of epub:type={loi, lot, loa, lov}, if they exist in the book, then they 
+        For each of epub:type={loi, lot, loa, lov}, if they exist in the book, then they
         should:
 
         1. exist in the nav document, and
@@ -763,8 +761,9 @@ class EPUB(ZIP, Source):
 
     @classmethod
     def nav_landmarks_from_spine_items(C, output_path, spine_items, title="Landmarks"):
-        """build nav landmarks from spine_items. Each spine_item can have an optional landmark attribute,
-            which if given is the epub_type of that landmark.
+        """
+        Build nav landmarks from spine_items. Each spine_item can have an optional
+        landmark attribute, which if given is the epub_type of that landmark.
         """
         landmarks = [
             Dict(
@@ -781,18 +780,18 @@ class EPUB(ZIP, Source):
     @classmethod
     def nav_landmarks(C, *landmarks, title='Landmarks'):
         """
-        Builds a landmarks nav element from the given landmarks parameters. 
+        Builds a landmarks nav element from the given landmarks parameters.
         Each parameter is a dict:
             'epub_type' : the epub:type attribute, which is the landmark type
             'href'      : the href to the landmark
             'title'     : the text to display for this landmark
-        Common landmarks include: 
-            cover, toc, 
-            title-page, 
-            frontmatter, bodymatter, backmatter,  
-            loi (list of illustrations), 
-            lot (list of tables), 
-            preface, bibliography, index, glossary, acknowledgments 
+        Common landmarks include:
+            cover, toc,
+            title-page,
+            frontmatter, bodymatter, backmatter,
+            loi (list of illustrations),
+            lot (list of tables),
+            preface, bibliography, index, glossary, acknowledgments
         (see http://www.idpf.org/accessibility/guidelines/content/nav/landmarks.php)
         """
         return C.nav_elem(*landmarks, epub_type='landmarks', title=title)
@@ -807,7 +806,12 @@ class EPUB(ZIP, Source):
             if os.path.splitext(fn)[1] not in ['.html', '.xhtml']:
                 continue
             for pagebreak in XML(fn=fn).root.xpath(
-                "//*[(@epub:type='pagebreak' or @role='doc-pagebreak') and (@aria-label or @title)]",
+                """
+                //*[
+                    (@epub:type='pagebreak' or @role='doc-pagebreak') 
+                    and (@aria-label or @title)
+                ]
+                """,
                 namespaces=C.NS,
             ):
                 if pagebreak.get('id') is None:
@@ -1132,11 +1136,14 @@ class EPUB(ZIP, Source):
 
     @classmethod
     def opf_spine_itemref(C, spine_item):
-        """create an opf:itemref for the opf:spine from the given spine_item, with the following attributes:
-        href        : if given, is converted to the idref using href_to_id()
-        idref       : if given (and no href), is used as the idref
-        linear      : if given, becomes the "linear" property ("yes|no")
-        properties  : if given, space-separated list of spine itemref properties
+        """
+        Create an opf:itemref for the opf:spine from the given spine_item, with the
+        following attributes:
+
+        * href        : if given, is converted to the idref using href_to_id()
+        * idref       : if given (and no href), is used as the idref
+        * linear      : if given, becomes the "linear" property ("yes|no")
+        * properties  : if given, space-separated list of spine itemref properties
         """
         itemref = C.OPF.itemref(
             {

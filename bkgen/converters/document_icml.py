@@ -14,8 +14,9 @@ from bxml.xt import XT
 from lxml import etree
 
 from bkgen import NS, config
-from ._converter import Converter
 from bkgen.icml import ICML
+
+from ._converter import Converter
 
 B = Builder(**NS)
 E = Builder()._
@@ -77,7 +78,12 @@ def document(elem, **params):
     charstyles = [
         charstyle
         for charstyle in list(
-            set([c.get('AppliedCharacterStyle') for c in story.xpath(".//CharacterStyleRange")])
+            set(
+                [
+                    c.get('AppliedCharacterStyle')
+                    for c in story.xpath(".//CharacterStyleRange")
+                ]
+            )
         )
         if charstyle is not None and charstyle.strip() != ''
     ]
@@ -88,7 +94,9 @@ def document(elem, **params):
             E.CharacterStyle(
                 {
                     'Self': charstyle,
-                    'Name': urllib.parse.unquote(charstyle.replace("CharacterStyle/", '')),
+                    'Name': urllib.parse.unquote(
+                        charstyle.replace("CharacterStyle/", '')
+                    ),
                 }
             )
             for charstyle in charstyles
@@ -99,7 +107,9 @@ def document(elem, **params):
     if params.get('charstyles') is not None:
         # a list of CharacterStyle definitions was given -- insert into rcsg
         for charstyle in params.get('charstyles'):
-            existing_charstyle = rcsg.find("CharacterStyle[@Name='%s']" % charstyle.get('Name'))
+            existing_charstyle = rcsg.find(
+                "CharacterStyle[@Name='%s']" % charstyle.get('Name')
+            )
             if existing_charstyle is not None:
                 rcsg.replace(existing_charstyle, charstyle)
             else:
@@ -110,7 +120,12 @@ def document(elem, **params):
     parastyles = [
         parastyle
         for parastyle in list(
-            set([p.get('AppliedParagraphStyle') for p in story.xpath(".//ParagraphStyleRange")])
+            set(
+                [
+                    p.get('AppliedParagraphStyle')
+                    for p in story.xpath(".//ParagraphStyleRange")
+                ]
+            )
         )
         if parastyle is not None and parastyle.strip() != ''
     ]
@@ -121,7 +136,9 @@ def document(elem, **params):
             E.ParagraphStyle(
                 {
                     'Self': parastyle,
-                    'Name': urllib.parse.unquote(parastyle.replace("ParagraphStyle/", '')),
+                    'Name': urllib.parse.unquote(
+                        parastyle.replace("ParagraphStyle/", '')
+                    ),
                 }
             )
             for parastyle in parastyles
@@ -132,7 +149,9 @@ def document(elem, **params):
     if params.get('parastyles') is not None:
         # a list of ParagraphStyle definitions was given -- insert into rpsg
         for parastyle in params.get('parastyles'):
-            existing_parastyle = rpsg.find("ParagraphStyle[@Name='%s']" % parastyle.get('Name'))
+            existing_parastyle = rpsg.find(
+                "ParagraphStyle[@Name='%s']" % parastyle.get('Name')
+            )
             if existing_parastyle is not None:
                 rpsg.replace(existing_parastyle, parastyle)
             else:
@@ -181,8 +200,12 @@ def document(elem, **params):
     root.insert(root.index(root.find('Story')), crf)
 
     # Condition definitions: Print and Digital
-    root.insert(root.index(root.find('Story')), condition_definition('Print', 'GridGreen'))
-    root.insert(root.index(root.find('Story')), condition_definition('Digital', 'GridBlue'))
+    root.insert(
+        root.index(root.find('Story')), condition_definition('Print', 'GridGreen')
+    )
+    root.insert(
+        root.index(root.find('Story')), condition_definition('Digital', 'GridBlue')
+    )
 
     # TextVariables: Timestamp
     root.insert(
@@ -211,7 +234,10 @@ def document(elem, **params):
     if len(params['mutable']['Endnotes']) > 0:
         endnotes_doc = XML(
             root=document(
-                B.pub('document', B.html('body', B.html('section', *params['mutable']['Endnotes'])))
+                B.pub(
+                    'document',
+                    B.html('body', B.html('section', *params['mutable']['Endnotes'])),
+                )
             )[0],
             fn=os.path.splitext(params.get('fn'))[0] + '_Endnotes.xml',
         )
@@ -248,7 +274,9 @@ def body(elem, **params):
     params['story_id'] = 's' + random_id(
         6
     )  # to use in building unique sequential ids, such as Hyperlinks
-    story = E.Story({'Self': params['story_id']}, '\n', transformer(list(elem), **params))
+    story = E.Story(
+        {'Self': params['story_id']}, '\n', transformer(list(elem), **params)
+    )
     story.tail = '\n'
     return [story]
 
@@ -293,7 +321,9 @@ def CharacterStyleRange(*args, **params):
         stylename = '$ID/[No character style]'
         params['charstyle'] = stylename
     charstyle = 'CharacterStyle/' + stylename
-    return E.CharacterStyleRange({'AppliedCharacterStyle': charstyle}, '\n\t\t', *args, **kwargs)
+    return E.CharacterStyleRange(
+        {'AppliedCharacterStyle': charstyle}, '\n\t\t', *args, **kwargs
+    )
 
 
 def TextContentCSR(text, **params):
@@ -359,15 +389,23 @@ def para(elem, **params):
         else:
             prev = None
         # merge consecutive outline="1" elements into the first one. So check in both directions.
-        if prev is None or prev.tag != "{%(html)s}para" % NS or prev.get('outline') != '1':
+        if (
+            prev is None
+            or prev.tag != "{%(html)s}para" % NS
+            or prev.get('outline') != '1'
+        ):
             # only insert a bookmark if the previous paragraph was not outline="1"
 
             # merge the following outline="1" paras into this bookmark
             nxt = elem.getnext()
             while (
-                nxt is not None and nxt.tag == "{%(html)s}para" % NS and nxt.get('outline') == '1'
+                nxt is not None
+                and nxt.tag == "{%(html)s}para" % NS
+                and nxt.get('outline') == '1'
             ):
-                txt += ' ' + etree.tounicode(nxt, method='text', with_tail=False).strip()
+                txt += (
+                    ' ' + etree.tounicode(nxt, method='text', with_tail=False).strip()
+                )
                 nxt = nxt.getnext()
 
             # use a child anchor_start if there is no text before it in the element
@@ -386,7 +424,10 @@ def para(elem, **params):
             ):
                 destname = anchors[0].get('name')
             else:
-                destname = re.sub(r'[^0-9A-Za-z\.\-\_]', '_', txt[:30].strip()).strip("_") + '_1_1'
+                destname = (
+                    re.sub(r'[^0-9A-Za-z\.\-\_]', '_', txt[:30].strip()).strip("_")
+                    + '_1_1'
+                )
                 if re.search(r"^\d", destname) is not None:
                     destname = '_' + destname
                 dest = HyperlinkTextDestination(destname)
@@ -401,7 +442,9 @@ def destination_name():
 
 def Bookmark(bkmkname, destname):
     b = E.Bookmark(
-        Self=random_id(), Name=bkmkname, Destination='HyperlinkTextDestination/' + destname
+        Self=random_id(),
+        Name=bkmkname,
+        Destination='HyperlinkTextDestination/' + destname,
     )
     b.tail = '\n\t'
     return b
@@ -433,7 +476,10 @@ def table(elem, **params):
     tbl = E.Table(
         {'Self': tblName, 'BodyRowCount': str(numrows), 'ColumnCount': str(numcols)},
         '\n\t\t\t',
-        [E.Row({'Name': str(i), 'Self': tblName + 'Row' + str(i)}) for i in range(numrows)],
+        [
+            E.Row({'Name': str(i), 'Self': tblName + 'Row' + str(i)})
+            for i in range(numrows)
+        ],
         '\n\t\t\t',
         [
             E.Column(
@@ -453,7 +499,10 @@ def table(elem, **params):
         for td in tds:
             c += 1
             cell = E.Cell(
-                {'Name': "%d:%d" % (tds.index(td), trs.index(tr)), 'Self': tblName + 'i' + str(c)},
+                {
+                    'Name': "%d:%d" % (tds.index(td), trs.index(tr)),
+                    'Self': tblName + 'i' + str(c),
+                },
                 '\n',
                 transformer(td.getchildren(), **params),
             )
@@ -519,7 +568,9 @@ def endnote(elem, **params):
         **{k: params[k] for k in params.keys() if k != "charstyle"}
     )
 
-    params['Hyperlinks'].append(paragraph_destination(source_id, anchor=endnote_id, **params))
+    params['Hyperlinks'].append(
+        paragraph_destination(source_id, anchor=endnote_id, **params)
+    )
 
     e = E.CrossReferenceSource(
         {
@@ -535,8 +586,14 @@ def endnote(elem, **params):
 def paragraph_destination(source_id, anchor, **params):
     hyperlink_id = random_id(8)
     h = E.Hyperlink(
-        {'Self': hyperlink_id, 'Source': source_id, 'Name': "Cross-Reference %s" % hyperlink_id},
-        E.Properties(E.Destination({'type': 'object'}, "ParagraphDestination/" + anchor)),
+        {
+            'Self': hyperlink_id,
+            'Source': source_id,
+            'Name': "Cross-Reference %s" % hyperlink_id,
+        },
+        E.Properties(
+            E.Destination({'type': 'object'}, "ParagraphDestination/" + anchor)
+        ),
     )
     h.tail = '\n'
     return h
@@ -582,7 +639,9 @@ def build_endnote_marker(elem):
     """returns the correct endnote marker for this endnote"""
     section = elem.xpath("ancestor::html:section", namespaces=NS)[0]
     endnote_fmt = section.get('endnote_fmt') or 'lowerLetter'  # default lowerLetter?
-    endnote_base = int(section.get('endnote_start') or "1") - 1  # base = starting number - 1
+    endnote_base = (
+        int(section.get('endnote_start') or "1") - 1
+    )  # base = starting number - 1
 
     # endnote index
     if section.get('endnote_renum') == 'eachSect':  # index in section
@@ -606,16 +665,16 @@ def build_endnote_marker(elem):
         if endnote_fmt[:5] == 'lower':
             endnote_marker = endnote_marker.lower()
     elif endnote_fmt == 'chicago':
-        chicago = (
-            "*\u2020\u2021\u00a7"
-        )  # four characters: asterisk, cross, double-cross, section symbol
+        chicago = "*\u2020\u2021\u00a7"
         endnote_marker = chicago[index % len(chicago)] * (index // len(chicago) + 1)
     return endnote_marker
 
 
 @transformer.match("elem.tag=='{%(pub)s}endnote_ref'" % NS)
 def endnote_ref(elem, endnote_id=None, **params):
-    d = E.ParagraphDestination(Self="ParagraphDestination/" + endnote_id, Name=endnote_id)
+    d = E.ParagraphDestination(
+        Self="ParagraphDestination/" + endnote_id, Name=endnote_id
+    )
     return [d, TextContentCSR(elem.tail, **params)]
 
 
@@ -651,7 +710,9 @@ def condition_elem(elem, **params):
 
 
 def HyperlinkTextDestination(name):
-    return E.HyperlinkTextDestination(Self="HyperlinkTextDestination/" + name, Name=name)
+    return E.HyperlinkTextDestination(
+        Self="HyperlinkTextDestination/" + name, Name=name
+    )
 
 
 @transformer.match("elem.tag=='{%(pub)s}anchor_start'" % NS)
@@ -661,7 +722,9 @@ def anchor_start(elem, **params):
         params['Bookmarks'].append(Bookmark(elem.get('bkmk'), elem.get('name')))
     return [
         '\n\t',
-        CharacterStyleRange(HyperlinkTextDestination(elem.get('name')), '\n\t', **params),
+        CharacterStyleRange(
+            HyperlinkTextDestination(elem.get('name')), '\n\t', **params
+        ),
         '\n\t',
         TextContentCSR(elem.tail, **params),
     ]
@@ -671,7 +734,9 @@ def anchor_start(elem, **params):
 def anchor_end(elem, **params):
     return [
         '\n\t',
-        CharacterStyleRange(HyperlinkTextDestination(elem.get('name') + '_end'), '\n\t', **params),
+        CharacterStyleRange(
+            HyperlinkTextDestination(elem.get('name') + '_end'), '\n\t', **params
+        ),
         '\n\t',
         TextContentCSR(elem.tail, **params),
     ]
@@ -751,7 +816,9 @@ def hyperlink_anchor_source(elem, **params):
     source_id = random_id(8)
     url = URL(elem.get('href'))
     params['Hyperlinks'].append(
-        hyperlink_destination(source_id, anchor=url.fragment, url=str(url).split('#')[0], **params)
+        hyperlink_destination(
+            source_id, anchor=url.fragment, url=str(url).split('#')[0], **params
+        )
     )
     return [
         '\n\t',
@@ -774,7 +841,12 @@ def pageref(elem, **params):
     if elem.getparent().tag == '{%(html)s}char' % NS:
         r = ['\n\t\t', e, '\n\t', E.Content(elem.tail or '')]
     else:
-        r = ['\n\t', CharacterStyleRange(e, '\n\t', E.Content(elem.tail or ''), '\n\t', **params)]
+        r = [
+            '\n\t',
+            CharacterStyleRange(
+                e, '\n\t', E.Content(elem.tail or ''), '\n\t', **params
+            ),
+        ]
     return r
 
 
@@ -791,7 +863,12 @@ def textref(elem, **params):
     if elem.getparent().tag == '{%(html)s}char' % NS:
         r = ['\n\t\t', e, '\n\t', E.Content(elem.tail or '')]
     else:
-        r = ['\n\t', CharacterStyleRange(e, '\n\t', E.Content(elem.tail or ''), '\n\t', **params)]
+        r = [
+            '\n\t',
+            CharacterStyleRange(
+                e, '\n\t', E.Content(elem.tail or ''), '\n\t', **params
+            ),
+        ]
     return r
 
 
@@ -812,7 +889,10 @@ def xe(elem, **params):
 @transformer.match("elem.tag=='{%(pub)s}index'" % NS)
 def index(elem, **params):
     args = json.dumps(dict(**elem.attrib))
-    return ['\n\t', CharacterStyleRange(Note("{{index}}%s{{/index}}" % args), '\n\t', **params)]
+    return [
+        '\n\t',
+        CharacterStyleRange(Note("{{index}}%s{{/index}}" % args), '\n\t', **params),
+    ]
 
 
 # == Other Inline Elements ==
@@ -835,7 +915,12 @@ def timestamp(elem, **params):
     if elem.getparent().tag == '{%(html)s}char' % NS:
         r = ['\n\t\t', e, '\n\t', E.Content(elem.tail or '')]
     else:
-        r = ['\n\t', CharacterStyleRange(e, '\n\t', E.Content(elem.tail or ''), '\n\t', **params)]
+        r = [
+            '\n\t',
+            CharacterStyleRange(
+                e, '\n\t', E.Content(elem.tail or ''), '\n\t', **params
+            ),
+        ]
     return r
 
 
@@ -848,7 +933,12 @@ def tab(elem, **params):
     if elem.getparent().tag == '{%(html)s}char' % NS:
         r = ['\n\t\t', e, '\n\t', E.Content(elem.tail or '')]
     else:
-        r = ['\n\t', CharacterStyleRange(e, '\n\t', E.Content(elem.tail or ''), '\n\t', **params)]
+        r = [
+            '\n\t',
+            CharacterStyleRange(
+                e, '\n\t', E.Content(elem.tail or ''), '\n\t', **params
+            ),
+        ]
     return r
 
 
@@ -876,7 +966,8 @@ def line_break(elem, **params):
 
 
 @transformer.match(
-    """elem.tag in ['{%(opf)s}metadata', '{%(pub)s}metadata', '{%(pub)s}docvars']""" % NS
+    """elem.tag in ['{%(opf)s}metadata', '{%(pub)s}metadata', '{%(pub)s}docvars']"""
+    % NS
 )
 def omissions(elem, **params):
     return transformer.omit(elem, **params)

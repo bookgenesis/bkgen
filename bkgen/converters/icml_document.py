@@ -8,7 +8,8 @@ import urllib.parse
 
 from bl.dict import Dict
 from bl.file import File
-from bl.id import random_id
+
+# from bl.id import random_id
 from bl.string import String
 from bl.url import URL
 from bxml.builder import Builder
@@ -17,9 +18,10 @@ from bxml.xt import XT
 from lxml import etree
 
 import bkgen
-from ._converter import Converter
 from bkgen.document import Document
 from bkgen.icml import ICML
+
+from ._converter import Converter
 
 log = logging.getLogger(__name__)
 
@@ -46,7 +48,9 @@ def TheDocument(elem, **params):
     params['footnotes'] = []
 
     elem = pre_process(elem, **params)
-    root = B.pub.document('\n\t', B.html.body('\n', transformer(elem.getchildren(), **params)))
+    root = B.pub.document(
+        '\n\t', B.html.body('\n', transformer(elem.getchildren(), **params))
+    )
     root = post_process(root, **params)
     return [root]
 
@@ -94,7 +98,9 @@ def ParagraphStyleRange(elem, **params):
         elem.get('BulletsAndNumberingListType')
         or styles is not None
         and styles.get(elem.get('AppliedParagraphStyle')) is not None
-        and styles.get(elem.get('AppliedParagraphStyle')).get('BulletsAndNumberingListType')
+        and styles.get(elem.get('AppliedParagraphStyle')).get(
+            'BulletsAndNumberingListType'
+        )
         or None
     )
     if list_type not in [None, "NoList"]:
@@ -179,7 +185,9 @@ def character_attribs(elem):
 
 @transformer.match("elem.tag=='HiddenText'")
 def HiddenText(elem, **params):
-    return transformer(elem.getchildren(), **{k: params[k] for k in params if '_style' not in k})
+    return transformer(
+        elem.getchildren(), **{k: params[k] for k in params if '_style' not in k}
+    )
 
 
 # == Note ==
@@ -224,7 +232,9 @@ def Br(elem, **params):
 # == Footnote ==
 @transformer.match("elem.tag=='Footnote'")
 def Footnote(elem, **params):
-    fn_params = {k: params[k] for k in params.keys() if k not in ['p_class', 'span_class']}
+    fn_params = {
+        k: params[k] for k in params.keys() if k not in ['p_class', 'span_class']
+    }
     if elem not in params['footnotes']:
         params['footnotes'].append(elem)
     fn_id = str(params['footnotes'].index(elem) + 1)
@@ -243,7 +253,10 @@ def Table(elem, **params):
     attrib = {}
     if XML.find(elem, "@AppliedTableStyle") is not None:
         attrib['class'] = ICML.classname(
-            elem.get('AppliedTableStyle').split('/')[-1].replace('%3a', ':').replace(": ", ":")
+            elem.get('AppliedTableStyle')
+            .split('/')[-1]
+            .replace('%3a', ':')
+            .replace(": ", ":")
         )
     table = B.html.table(attrib, '\n\t', transformer(elem.getchildren(), **params))
     return [table, '\n']
@@ -264,7 +277,9 @@ def Row(elem, **params):
 
 
 def Cell(elem, **params):
-    cell_params = {k: params[k] for k in params.keys() if k not in ['p_class', 'span_class']}
+    cell_params = {
+        k: params[k] for k in params.keys() if k not in ['p_class', 'span_class']
+    }
     td = B.html.td('\n', transformer(elem.getchildren(), **cell_params))
     if elem.get('AppliedCellStyle') is not None:
         td.set('class', ICML.classname(elem.get('AppliedCellStyle')))
@@ -281,11 +296,15 @@ def HyperlinkTextDestination(elem, **params):
     attrib = {'id': make_element_id(elem, **params)}
 
     # If the anchor defines a bookmark, create a section_start
-    bookmark_xpath = "//Bookmark[@Destination='HyperlinkTextDestination/%s']" % elem.get('Name')
+    bookmark_xpath = (
+        "//Bookmark[@Destination='HyperlinkTextDestination/%s']" % elem.get('Name')
+    )
     bookmark = find_in_documents_or_sources(elem, bookmark_xpath, **params)
     if bookmark is not None:
         attrib.update(title=bookmark_title(bookmark['element']))
-        section_start = B.pub.section_start(**{k: v for k, v in attrib.items() if v is not None})
+        section_start = B.pub.section_start(
+            **{k: v for k, v in attrib.items() if v is not None}
+        )
         result += [section_start]
 
     # otherwise, insert an anchor
@@ -307,7 +326,8 @@ def ParagraphDestination(elem, **params):
 @transformer.match("elem.tag in ['HyperlinkTextSource', 'CrossReferenceSource']")
 def HyperlinkTextOrCrossReferenceSource(elem, **params):
     hyperlink = B.html.a(
-        {'id': make_element_id(elem, **params)}, transformer(elem.getchildren(), **params)
+        {'id': make_element_id(elem, **params)},
+        transformer(elem.getchildren(), **params),
     )
     cc = hyperlink.getchildren()
     result = None
@@ -321,7 +341,9 @@ def HyperlinkTextOrCrossReferenceSource(elem, **params):
         if found_hyperlink is None:
             log.warn("No hyperlink found for %s=%r" % (XML.tag_name(elem), elem))
         else:
-            hyperlink.attrib.update(hyperlink_href(found_hyperlink['element'], **params))
+            hyperlink.attrib.update(
+                hyperlink_href(found_hyperlink['element'], **params)
+            )
             result = [hyperlink]
 
     return result
@@ -346,13 +368,17 @@ def hyperlink_href(hyperlink_elem, source=None, **params):
             find_xpath = "//HyperlinkTextDestination[@Self='%s']" % destination.text
             found = find_in_documents_or_sources(hyperlink_elem, find_xpath, **params)
             if found is not None:
-                attribs['idref'] = make_element_id(found['element'], fn=found['filename'])
+                attribs['idref'] = make_element_id(
+                    found['element'], fn=found['filename']
+                )
                 attribs['filename'] = found['filename']
         elif 'HyperlinkURLDestination/' in destination.text:
             find_xpath = "//HyperlinkURLDestination[@Self='%s']" % destination.text
             found = find_in_documents_or_sources(hyperlink_elem, find_xpath, **params)
             if found is not None:
-                attribs['idref'] = make_element_id(found['element'], fn=found['filename'])
+                attribs['idref'] = make_element_id(
+                    found['element'], fn=found['filename']
+                )
                 attribs['filename'] = found['element'].get('DestinationURL')
         elif destination.get('type') == 'list':
             # first list item is filename
@@ -361,11 +387,17 @@ def hyperlink_href(hyperlink_elem, source=None, **params):
             )
             # rewrite the idref to include the filename component
             attribs['idref'] = (
-                make_identifier(os.path.splitext(os.path.basename(attribs['filename']))[0])
+                make_identifier(
+                    os.path.splitext(os.path.basename(attribs['filename']))[0]
+                )
                 + '_'
                 + attribs['idref']
             )
-    return {'href': f"{attribs.get('filename') or ''}#{attribs.get('idref') or ''}".rstrip('#')}
+    return {
+        'href': f"{attribs.get('filename') or ''}#{attribs.get('idref') or ''}".rstrip(
+            '#'
+        )
+    }
 
 
 def find_in_documents_or_sources(elem, xpath, **params):
@@ -449,7 +481,9 @@ def Rectangle(elem, **params):
     return transformer(elem.getchildren(), **params)
 
 
-@transformer.match("elem.tag in ['Image', 'PDF', 'EPS', 'PICT', 'WMF', 'ImportedPage', 'Graphic']")
+@transformer.match(
+    "elem.tag in ['Image', 'PDF', 'EPS', 'PICT', 'WMF', 'ImportedPage', 'Graphic']"
+)
 def Graphic(elem, **params):
     attribs = {
         'src': graphic_src(elem, **params),
@@ -484,7 +518,8 @@ def graphic_src(elem, **params):
 
 
 def graphic_geometry(elem):
-    """use the GraphicBounds, ActualPpi, and EffectivePpi of the graphic to determine display size
+    """
+    Use the GraphicBounds, ActualPpi, and EffectivePpi of the graphic to determine display size.
     """
     # All InDesign geometry is in points, 72 pt = 1 inch
     # @ItemTransform: transformation to page coordinates. what a clever but horrible way to store it
@@ -496,23 +531,25 @@ def graphic_geometry(elem):
     # internal coordinates of the graphic itself
     graphic_bounds = [float(i) for i in XML.xpath(elem, "Properties/GraphicBounds/@*")]
     size_x = graphic_bounds[2] - graphic_bounds[0]
-    size_y = graphic_bounds[3] - graphic_bounds[1]
+    # size_y = graphic_bounds[3] - graphic_bounds[1]
 
     # If there is no rotation or skew, we can use the ItemTransform matrix
-    item_transform = [float(i) for i in (XML.find(elem, "@ItemTransform") or '').split(' ')]
+    item_transform = [
+        float(i) for i in (XML.find(elem, "@ItemTransform") or '').split(' ')
+    ]
     if len(item_transform) == 6 and item_transform[1:3] == [0.0, 0.0]:
         resize_x = item_transform[0]
-        resize_y = item_transform[3]
+        # resize_y = item_transform[3]
         geometry['width'] = "%.2fpt" % (size_x * resize_x)
         # geometry['height'] = "%.2fpt" % (size_y * resize_y)
 
-    # otherwise, if there are ActualPpi and EffectivePpi, use that to get the width & height
+    # if there are ActualPpi and EffectivePpi, use that to get the width & height
     elif elem.get('ActualPpi') is not None and elem.get('EffectivePpi') is not None:
         # the resize factor is @ActualPpi divided by @EffectivePpi
         actual_ppi = [float(i) for i in XML.find(elem, "@ActualPpi").split(' ')]
         effective_ppi = [float(i) for i in XML.find(elem, "@EffectivePpi").split(' ')]
         resize_x = actual_ppi[0] / effective_ppi[0]
-        resize_y = actual_ppi[1] / effective_ppi[1]
+        # resize_y = actual_ppi[1] / effective_ppi[1]
         geometry['width'] = "%.2fpt" % (size_x * resize_x)
         # geometry['height'] = "%.2fpt" % (size_y * resize_y)
 
@@ -563,7 +600,7 @@ def ProcessingInstruction(elem, **params):
 @transformer.match("elem.tag=='Change'")
 def Change(elem, **params):
     """
-    Deal with redlining. For now, just provide the results. 
+    Deal with redlining. For now, just provide the results.
     Later, we'll support the HTML <ins> and <del> tags.
     """
     # attrib = dict(
@@ -677,7 +714,9 @@ def post_process(root, **params):
 
 def embed_textframes(root):
     for textframe in root.xpath("//TextFrame[@ParentStory]"):
-        textframe_stories = root.xpath("//Story[@Self='%s']" % textframe.get('ParentStory'))
+        textframe_stories = root.xpath(
+            "//Story[@Self='%s']" % textframe.get('ParentStory')
+        )
         if len(textframe_stories) < 1:
             continue
         textframe_story = textframe_stories[0]
@@ -780,7 +819,11 @@ def convert_lists(root):
         elif 'Bullet' in list_type:
             tag = 'ul'
         else:
-            p = XML.find(p, "following::html:p[@BulletsAndNumberingListType]", namespaces=bkgen.NS)
+            p = XML.find(
+                p,
+                "following::html:p[@BulletsAndNumberingListType]",
+                namespaces=bkgen.NS,
+            )
             continue
         list_elem = B.html(tag, '\n')
         list_elem.tail = '\n'
@@ -796,13 +839,17 @@ def convert_lists(root):
             nxt.attrib.pop('BulletsAndNumberingListType')
             nxt = list_elem.getnext()
         p = XML.find(
-            list_elem, "following::html:p[@BulletsAndNumberingListType]", namespaces=bkgen.NS
+            list_elem,
+            "following::html:p[@BulletsAndNumberingListType]",
+            namespaces=bkgen.NS,
         )
     return root
 
 
 def p_tails(root):
-    for p in root.xpath(".//html:p | .//html:table | .//html:div | .//html:section", namespaces=NS):
+    for p in root.xpath(
+        ".//html:p | .//html:table | .//html:div | .//html:section", namespaces=NS
+    ):
         p.tail = '\n'
     return root
 
@@ -813,17 +860,26 @@ def anchors_shift_paras(root):
         while (
             len(p.getchildren()) > 0
             and p.text in [None, '']
-            and p.getchildren()[0].tag in ["{%(pub)s}anchor" % NS, "{%(pub)s}anchor_end" % NS]
+            and p.getchildren()[0].tag
+            in ["{%(pub)s}anchor" % NS, "{%(pub)s}anchor_end" % NS]
         ):
             a = p.getchildren()[0]
-            while a is not None and a.tag == "{%(pub)s}anchor" % NS and a.tail in [None, '']:
+            while (
+                a is not None
+                and a.tag == "{%(pub)s}anchor" % NS
+                and a.tail in [None, '']
+            ):
                 a = a.getnext()
             if a is None or a.tag != "{%(pub)s}anchor_end" % NS:
                 break
             prevs = p.xpath("preceding::html:p", namespaces=NS)
             if len(prevs) > 0:
                 prev = prevs[-1]
-                while prev is not None and len(prev.getchildren()) == 0 and prev.text in [None, '']:
+                while (
+                    prev is not None
+                    and len(prev.getchildren()) == 0
+                    and prev.text in [None, '']
+                ):
                     prevs = prev.xpath("preceding::html:p", namespaces=NS)
                     if len(prevs) == 0:
                         break
@@ -877,7 +933,9 @@ def anchors_inside_paras(root):
             XML.remove(anchor, leave_tail=True)
             para.insert(0, anchor)
             anchor.tail, para.text = para.text, ''
-    for anchor_end in root.xpath("//pub:anchor_end[not(ancestor::html:p)]", namespaces=NS):
+    for anchor_end in root.xpath(
+        "//pub:anchor_end[not(ancestor::html:p)]", namespaces=NS
+    ):
         paras = anchor_end.xpath("preceding::html:p", namespaces=NS)
         if len(paras) > 0:
             para = paras[-1]
@@ -959,8 +1017,7 @@ def is_prev_node_br(elem):
 
 
 def remove_container_sections(root):
-    """Remove sections that are just containers for other sections
-    """
+    """Remove sections that are just containers for other sections"""
     sections = reversed(root.xpath("html:body/html:section", namespaces=NS))
     for section in sections:
         if (

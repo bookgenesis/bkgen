@@ -14,8 +14,9 @@ from bxml.xt import XT
 from lxml import etree
 
 from bkgen import NS, config
-from ._converter import Converter
 from bkgen.document import Document
+
+from ._converter import Converter
 
 B = Builder(**NS)
 H = Builder.single(NS.html)
@@ -52,7 +53,8 @@ def default(elem, **params):
 
 
 def get_includes(root, **params):
-    """place the content from <pub:include/> elements, and remap the src and href attributes therein
+    """
+    Place the content from `<pub:include/>` elements, and remap src and href attributes.
     """
     document = params.get('xml')
     for incl in root.xpath(".//pub:include", namespaces=NS):
@@ -89,13 +91,15 @@ def get_includes(root, **params):
 def table_columns(root, **params):
     """record the number of columns in each table in the table element"""
     for table in XML.xpath(root, "//html:table", namespaces=NS):
-        cols = max([len(tr.getchildren()) for tr in XML.xpath(table, "html:tr", namespaces=NS)])
+        cols = max(
+            [len(tr.getchildren()) for tr in XML.xpath(table, "html:tr", namespaces=NS)]
+        )
         table.set('data-tcols', str(cols))
     return root
 
 
 def special_characters(root, **params):
-    """tag special characters with <pub:x*>...</pub:x*> so that they can be rendered correctly in 
+    """tag special characters with <pub:x*>...</pub:x*> so that they can be rendered correctly in
     InDesign
     """
     for elem in root.xpath("//*[text()]"):
@@ -125,20 +129,24 @@ def special_characters(root, **params):
             .replace('\u2011', '[pub:x2011]\u2011[/pub:x2011]')
             .replace('\u202F', '[pub:x202F]\u202F[/pub:x202F]')
         )
-    root = etree.fromstring(re.sub(r"\[(/?pub:[^\]]*?)\]", r"<\1>", etree.tounicode(root)))
+    root = etree.fromstring(
+        re.sub(r"\[(/?pub:[^\]]*?)\]", r"<\1>", etree.tounicode(root))
+    )
     return root
 
 
 def image_hrefs(root, **params):
     for img in root.xpath("//html:img", namespaces=NS):
-        img.set('href', 'file://' + str(URL(img.get('src'))))  # relative paths are fine in AID XML.
+        img.set(
+            'href', 'file://' + str(URL(img.get('src')))
+        )  # relative paths are fine in AID XML.
     return root
 
 
 def paragraph_returns(root, **params):
     """Put a paragraph return at the end of every paragraph/heading that has following content.
-    The paragraph return goes at the end of the last text in the paragraph, in case there is a 
-    span or other element at the end of the paragraph (which would cause InDesign to ignore the 
+    The paragraph return goes at the end of the last text in the paragraph, in case there is a
+    span or other element at the end of the paragraph (which would cause InDesign to ignore the
     paragraph return if it were after that element).
     """
     t = etree.tounicode(root).strip()
@@ -182,13 +190,19 @@ def aid_style_names(root):
             pstyle = pstyle.replace('heading', 'Heading')
         elem.set("{%(aid)s}pstyle" % NS, pstyle)
     for elem in Document.xpath(root, "//*[@aid:cstyle]", namespaces=NS):
-        elem.set("{%(aid)s}cstyle" % NS, elem.get("{%(aid)s}cstyle" % NS).replace('-', ' '))
+        elem.set(
+            "{%(aid)s}cstyle" % NS, elem.get("{%(aid)s}cstyle" % NS).replace('-', ' ')
+        )
     for elem in Document.xpath(root, "//*[@aid5:tablestyle]", namespaces=NS):
         elem.set(
-            "{%(aid5)s}tablestyle" % NS, elem.get("{%(aid5)s}tablestyle" % NS).replace('-', ' ')
+            "{%(aid5)s}tablestyle" % NS,
+            elem.get("{%(aid5)s}tablestyle" % NS).replace('-', ' '),
         )
     for elem in Document.xpath(root, "//*[@aid5:cellstyle]", namespaces=NS):
-        elem.set("{%(aid5)s}cellstyle" % NS, elem.get("{%(aid5)s}cellstyle" % NS).replace('-', ' '))
+        elem.set(
+            "{%(aid5)s}cellstyle" % NS,
+            elem.get("{%(aid5)s}cellstyle" % NS).replace('-', ' '),
+        )
     return root
 
 

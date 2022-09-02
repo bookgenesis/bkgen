@@ -27,13 +27,15 @@ class DOCX(bxml.docx.DOCX, Source):
     def documents(self, path=None, **params):
         """return a list of documents containing the content of the document"""
         path = path or self.path
-        fn = os.path.splitext(os.path.join(path, self.clean_filename(self.basename)))[0] + '.xml'
+        fn = (
+            os.path.splitext(os.path.join(path, self.clean_filename(self.basename)))[0]
+            + '.xml'
+        )
         # just the one document
         return [self.document(fn=fn, **params)]
 
     def images(self):
-        """all the images referred to in the DOCX. 
-        """
+        """all the images referred to in the DOCX."""
         from bf.image import Image
 
         images = []
@@ -41,10 +43,14 @@ class DOCX(bxml.docx.DOCX, Source):
         for img in self.xml().root.xpath("//html:img", namespaces=DOCX.NS):
             image = Image()
             link_rel = XML.find(
-                rels, "//rels:Relationship[@Id='%s']" % img.get('data-link-id'), namespaces=DOCX.NS
+                rels,
+                "//rels:Relationship[@Id='%s']" % img.get('data-link-id'),
+                namespaces=DOCX.NS,
             )
             embed_rel = XML.find(
-                rels, "//rels:Relationship[@Id='%s']" % img.get('data-embed-id'), namespaces=DOCX.NS
+                rels,
+                "//rels:Relationship[@Id='%s']" % img.get('data-embed-id'),
+                namespaces=DOCX.NS,
             )
             if link_rel is not None:
                 image.fn = URL(link_rel.get('Target')).path
@@ -73,7 +79,9 @@ class DOCX(bxml.docx.DOCX, Source):
         """return numbering parameters for the given w:numId an w:lvl / w:ilvl"""
         numbering = self.xml(src='word/numbering.xml')
         params = Dict(level=str(level))
-        num = XML.find(numbering.root, "//w:num[@w:numId='%s']" % numId, namespaces=self.NS)
+        num = XML.find(
+            numbering.root, "//w:num[@w:numId='%s']" % numId, namespaces=self.NS
+        )
         if num is not None:
             params.update(id=numId)
             abstractNumId = XML.find(num, "w:abstractNumId/@w:val", namespaces=self.NS)
@@ -85,11 +93,17 @@ class DOCX(bxml.docx.DOCX, Source):
                 )
                 if abstractNum is not None:
                     lvl = XML.find(
-                        abstractNum, "w:lvl[@w:ilvl='%s']" % params.level, namespaces=self.NS
+                        abstractNum,
+                        "w:lvl[@w:ilvl='%s']" % params.level,
+                        namespaces=self.NS,
                     )
                     if lvl is not None:
-                        params['start'] = XML.find(lvl, "w:start/@w:val", namespaces=self.NS)
-                        params['numFmt'] = XML.find(lvl, "w:numFmt/@w:val", namespaces=self.NS)
+                        params['start'] = XML.find(
+                            lvl, "w:start/@w:val", namespaces=self.NS
+                        )
+                        params['numFmt'] = XML.find(
+                            lvl, "w:numFmt/@w:val", namespaces=self.NS
+                        )
                         if params['numFmt'] == 'bullet':
                             params['ul'] = True
                         else:

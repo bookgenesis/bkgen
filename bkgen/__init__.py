@@ -22,7 +22,9 @@ config.Resources = Dict(
         or ('win32' in sys.platform and 'kindlegen_win32_v2_9/kindlegen.exe')
         or None,
     ),
-    daisyace=os.path.join(PACKAGE_PATH, 'node_modules', '@daisy', 'ace', 'bin', 'ace.js'),
+    daisyace=os.path.join(
+        PACKAGE_PATH, 'node_modules', '@daisy', 'ace', 'bin', 'ace.js'
+    ),
     mimetypes=os.path.join(RESOURCES_PATH, 'mime.types'),
 )
 
@@ -50,7 +52,10 @@ NS = OrderedDict(
         ('aid', 'http://ns.adobe.com/AdobeInDesign/4.0/'),
         ('aid5', 'http://ns.adobe.com/AdobeInDesign/5.0/'),
         # Microsoft
-        ('cp', 'http://schemas.openxmlformats.org/package/2006/metadata/core-properties'),
+        (
+            'cp',
+            'http://schemas.openxmlformats.org/package/2006/metadata/core-properties',
+        ),
         # Publishing XML and Book Genesis
         ('pub', 'http://publishingxml.org/ns'),
         ('bg', 'http://bookgenesis.com/ns'),
