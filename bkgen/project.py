@@ -21,6 +21,7 @@ from copy import deepcopy
 from glob import glob
 from itertools import chain
 
+import click
 from bf.image import Image
 from bf.pdf import PDF
 from bgs.gs import GS
@@ -96,6 +97,35 @@ class Project(XML, Source):
     def __repr__(self):
         return "Project(fn=%r)" % self.fn
 
+    @classmethod
+    def load(C, filepath):
+        """
+        Load the Project at the given `filepath`
+
+        * If `filepath` is a <pub:project> XML file, load it.
+        * If `filepath` is a directory, load the <pub:project> XML file in it.
+            - If filepath/project.xml exists, load that.
+            - Otherwise, load the first XML file that is a <pub:project> XML file.
+        * Otherwise, raise a TypeError - this is not a Project file or folder
+        """
+        if os.path.isfile(filepath):
+            project = C(fn=filepath)
+            if project.root.tag != "{%(pub)s}project" % C.NS:
+                raise TypeError(f"{filepath} is not a `<pub:project>` XML file.")
+            return project
+
+        if os.path.isdir(filepath):
+            if os.path.exists(os.path.join(filepath, 'project.xml')):
+                return C(fn=os.path.join(filepath, 'project.xml'))
+
+            # Return the first XML document at the project root that is a <pub:project>.
+            for fn in glob(os.path.join(filepath, "*.xml")):
+                xml = XML(fn=fn)
+                if xml.root.tag == "{%(pub)s}project" % C.NS:
+                    return C(fn=fn)
+
+        raise TypeError(f'{filepath} is neither a Project file or a Project folder.')
+
     @property
     def name(self):
         return self.root.get('name')
@@ -147,6 +177,13 @@ class Project(XML, Source):
         return path
 
     @property
+    def font_path(self):
+        path = os.path.join(self.path, self.font_folder)
+        if not os.path.exists(path):
+            os.makedirs(path)
+        return path
+
+    @property
     def output_kinds(self):
         return self.get('output_kinds') or self.OUTPUT_KIND_EXTS
 
@@ -170,7 +207,7 @@ class Project(XML, Source):
         Potentially time-consuming to go through all the content.
         """
         data = []
-        fns = rglob(os.path.join(self.path, self.content_folder), '*.xml')
+        fns = rglob(self.content_path, '*.xml')
         for fn in fns:
             x = XML(fn=fn)
             if x.root.tag != "{%(pub)s}document" % NS:
@@ -205,7 +242,7 @@ class Project(XML, Source):
 
         images = [
             Image(fn=fn)
-            for fn in rglob(os.path.join(self.path, self.content_folder), '*.*')
+            for fn in rglob(self.content_path, '*.*')
             if os.path.splitext(fn)[-1].lower()
             in ['.jpg', '.jpeg', '.tiff', '.tif', '.png', '.pdf', '.bmp']
         ]
@@ -1798,39 +1835,106 @@ def rmtree_warn(function, path, excinfo):
 # == COMMAND INTERFACE METHODS ==
 
 
-def import_all(project_path):
-    """import sources, cover, and metadata into project"""
-    project = Project(
-        fn=os.path.join(project_path, 'project.xml'), **(config.Project or {})
+@click.group()
+def main():
+    print()
+
+
+@main.command('create')
+@click.argument('project_path', type=click.Path(file_okay=False, resolve_path=True))
+def create_project(project_path):
+    """
+    Create a new project in the given folder.
+    """
+    print(project_path)
+    Project.create(
+        os.path.dirname(project_path),
+        os.path.basename(project_path),
     )
+
+
+existing_project_path_argument = click.argument(
+    'project_path',
+    type=click.Path(exists=True, resolve_path=True, readable=True, writable=True),
+)
+
+
+@main.command('import')
+@existing_project_path_argument
+@click.argument('filenames', nargs=-1)
+def import_(project_path, filenames):
+    """
+    Import the given source files into the project.
+    """
+    project = Project.load(project_path)
+    for fn in filenames:
+        project.import_source_file(fn, fns=filenames)
+
+    project.write()
+
+
+@main.command('import-cover')
+@existing_project_path_argument
+@click.argument('filenames', nargs=-1)
+def import_cover(project_path, filename):
+    """
+    Import the given image files into the project.
+    """
+    project = Project.load(project_path)
+    project.import_image(filename, **{'class': 'cover'})
+
+
+@main.command('import-images')
+@existing_project_path_argument
+@click.argument('filenames', nargs=-1)
+def import_images(project_path, filenames):
+    """
+    Import the given image files into the project.
+    """
+    project = Project.load(project_path)
+    for filename in filenames:
+        project.import_image(filename, **{'class': 'cover'})
+
+
+@main.command('import-stylesheets')
+@existing_project_path_argument
+@click.argument('filenames', nargs=-1)
+def import_stylesheets(project_path, filenames):
+    """
+    Merge the given CSS files into the project stylesheet.
+    """
+    project = Project.load(project_path)
+    css = project.stylesheet()
+    css.write()
+    css = CSS.merge_stylesheets(css.fn, *filenames)
+    css.write()
+
+
+@main.command('import-all')
+@existing_project_path_argument
+def import_all(project_path):
+    """
+    Import existing content and metadata in the project folder into the project
+    definition file.
+    """
+    project = Project.load(project_path)
     basename = os.path.basename(project.path)
     log.info("== IMPORT ALL FOR PROJECT: %s ==" % basename)
 
-    # make sure the project folders exist
-    interior_path = os.path.join(project.path, project.interior_folder)
-    if not os.path.exists(interior_path):
-        os.makedirs(interior_path)
-    source_path = os.path.join(project.path, project.source_folder)
-    if not os.path.exists(source_path):
-        os.makedirs(source_path)
-    cover_path = os.path.join(project.path, project.cover_folder)
-    if not os.path.exists(cover_path):
-        os.makedirs(cover_path)
-
     # import idml if available
-    fns = rglob(interior_path, '*.idml') + rglob(source_path, '*.idml')
+    fns = rglob(project.interior_path, '*.idml') + rglob(project.source_path, '*.idml')
     log.info('-- %d .idml files' % len(fns))
     for fn in fns:
         project.import_source_file(fn, fns=fns)
 
     # import icml
-    fns = rglob(interior_path, '*.icml') + rglob(source_path, '*.icml')
+    fns = rglob(project.interior_path, '*.icml') + rglob(project.source_path, '*.icml')
     log.info('-- %d .icml files' % len(fns))
     for fn in fns:
         project.import_source_file(fn, fns=fns)
 
     # import docx
-    fns = rglob(interior_path, '*.docx') + rglob(source_path, '*.docx')
+    fns = rglob(project.interior_path, '*.docx') + rglob(project.source_path, '*.docx')
     log.info('-- %d .docx files' % len(fns))
     for fn in fns:
         project.import_source_file(fn, fns=fns, with_metadata=False)
@@ -1846,7 +1950,7 @@ def import_all(project_path):
     # images
     fns = [
         fn
-        for fn in rglob(interior_path + '/Links', "*.*")
+        for fn in rglob(project.interior_path + '/Links', "*.*")
         if os.path.splitext(fn)[-1].lower()
         in ['.pdf', '.jpg', '.png', '.tif', '.tiff', '.eps']
     ]
@@ -1854,150 +1958,74 @@ def import_all(project_path):
     for fn in fns:
         project.import_image(fn, gs=config.Lib and config.Lib.gs or None)
 
-    # cover
-    fns = rglob(cover_path, "*.jpg")
-    for fn in fns:
-        project.import_image(
-            fn,
-            gs=config.Lib and config.Lib.gs or None,
-            **{'class': 'cover', 'kind': 'digital'},
-        )
 
-
-def build_project(
+@main.command('build')
+@existing_project_path_argument
+@click.option(
+    '--format',
+    type=click.Choice(['epub', 'mobi', 'html', 'archive'], case_sensitive=False),
+)
+@click.option('--daisyace', is_flag=True)
+@click.option('--epubcheck', is_flag=True)
+@click.option('--singlepage', is_flag=True)
+def build_outputs(
     project_path,
     format=None,
-    check=None,
-    doc_stylesheets=True,
+    daisyace=None,
+    epubcheck=None,
     singlepage=False,
-    before_compile=None,
 ):
-    if os.path.isfile(project_path):
-        project_fn = project_path
-    elif os.path.isdir(project_path) and os.path.isfile(
-        os.path.join(project_path, 'project.xml')
-    ):
-        project_fn = os.path.join(project_path, 'project.xml')
-    else:
-        log.error("Project not found: %s" % project_path)
-        return
-    project = Project(fn=project_fn, **(config.Project or {}))
-    log.debug("== BUILD PROJECT == %s" % os.path.basename(os.path.dirname(project.fn)))
+    """
+    Build outputs for the project.
+    """
+    project = Project.load(project_path)
 
-    # default formats
-    if format is None or 'epub' in format:
-        image_args = config.EPUB.images or {}
-        project.build_epub(
-            check=check, before_compile=before_compile, image_args=image_args
-        )
-    if format is None or 'mobi' in format:
-        image_args = config.Kindle.images or {}
-        project.build_mobi(before_compile=before_compile, image_args=image_args)
-
-    # non-default formats
-    if format is not None:
-        if 'html' in format:
-            image_args = config.EPUB.images or {}
-            project.build_html(
-                singlepage=singlepage,
-                before_compile=before_compile,
-                image_args=image_args,
-            )
-        if 'archive' in format:
-            project.build_archive()
+    if not format:
+        project.build_outputs()
+    elif format == 'epub':
+        project.build_outputs(kind='EPUB', epub_check=epubcheck, epub_ace=daisyace)
+    elif format == 'mobi':
+        project.build_outputs(kind='Kindle')
+    elif format == 'html':
+        project.build_outputs(kind='HTML', singlepage=singlepage)
+    elif format == 'archive':
+        project.build_outputs(kind='archive')
 
 
-def cleanup_project(
-    project_path, outputs=False, resources=False, logs=False, exclude=None
-):
-    project = Project(
-        fn=os.path.join(project_path, 'project.xml'), **(config.Project or {})
-    )
+@main.command('cleanup')
+@existing_project_path_argument
+@click.option('--outputs', is_flag=True)
+@click.option('--resources', is_flag=True)
+@click.option('--logs', is_flag=True)
+@click.option('--exclude')
+def cleanup(project_path, outputs, resources, logs, exclude):
+    """
+    Clean up files in the project.
+    """
+    project = Project.load(project_path)
     project.cleanup(outputs=outputs, resources=resources, logs=logs, exclude=exclude)
 
 
+@main.command('zip')
+@existing_project_path_argument
 def zip_project(project_path):
-    from bl.zip import ZIP
+    """
+    Zip the project folder.
+    """
+    project = Project.load(project_path)
+    return ZIP.zip_path(project.path)
 
-    return ZIP.zip_path(project_path)
 
-
+@main.command('remove')
+@existing_project_path_argument
 def remove_project(project_path):
-    shutil.rmtree(project_path, onerror=rmtree_warn)
+    """
+    Remove the project folder from the filesystem.
+    """
+    project = Project.load(project_path)
+    shutil.rmtree(project.path, onerror=rmtree_warn)
 
 
 if __name__ == '__main__':
     logging.basicConfig(**config.Logging)
-
-    if len(sys.argv) < 2:
-        log.warning(
-            "Usage: python -m bkgen.project [command] project_path [project_path] ..."
-        )
-    elif len(sys.argv) == 2:
-        project = Project(fn=sys.argv[1])
-    else:
-        project_path = File(os.path.abspath(sys.argv[2])).fn  # normalize by all means!
-
-        fns = [File(fn=fn).fn for fn in sys.argv[3:]]
-
-        len_project_xml = len('project.xml')
-        if os.path.isdir(project_path):
-            project_fn = os.path.join(project_path, 'project.xml')
-        else:
-            project_fn = project_path
-            project_path = os.path.dirname(project_path)
-
-        project = Project(fn=project_fn)
-
-        if 'create' in sys.argv[1]:
-            Project.create(
-                os.path.dirname(project_path),
-                os.path.basename(project_path),
-                path=project_path,
-            )
-
-        if 'import-all' in sys.argv[1]:
-            import_all(project_path)
-        elif 'import-cover' in sys.argv[1]:
-            project.import_image(
-                fns[0], gs=config.Lib and config.Lib.gs or None, **{'class': 'cover'}
-            )
-        elif 'import' in sys.argv[1]:
-            project = Project(fn=project_fn)
-            for fn in fns:
-                project.import_source_file(fn, fns=fns)
-            project.write()
-
-        if 'stylesheet' in sys.argv[1]:
-            css = project.stylesheet()
-            css.write()
-            css = CSS.merge_stylesheets(css.fn, *fns)
-            css.write()
-
-        if 'build' in sys.argv[1]:
-            if sys.argv[1] == 'build':
-                project.build_outputs()
-            if 'epub' in sys.argv[1]:
-                project.build_outputs(
-                    kind='EPUB',
-                    epub_check='check' in sys.argv[1],
-                    epub_ace='ace' in sys.argv[1],
-                )
-            if 'mobi' in sys.argv[1]:
-                project.build_outputs(kind='Kindle')
-            if 'html' in sys.argv[1]:
-                project.build_outputs(
-                    kind='HTML', singlepage='html-single' in sys.argv[1]
-                )
-            if 'archive' in sys.argv[1]:
-                project.build_outputs(kind='archive')
-        if 'clean' in sys.argv[1]:
-            cleanup_project(
-                project_path,
-                outputs='outputs' in sys.argv[1],
-                resources='resources' in sys.argv[1],
-            )
-        if 'zip' in sys.argv[1]:
-            zip_project(project_path)
-        if 'remove' in sys.argv[1]:
-            remove_project(project_path)
+    main()
