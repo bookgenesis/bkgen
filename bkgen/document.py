@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 
 class Document(XML, Source):
     ROOT_TAG = "{%(pub)s}document" % NS
-    NS = Dict(**{k: NS[k] for k in NS if k in ['html', 'pub', 'epub', 'm']})
+    NS = Dict(**{k: NS[k] for k in NS if k in ['html', 'epub', 'm', 'bg', 'pub']})
     DEFAULT_NS = NS.html
 
     def __init__(self, *args, **kwargs):

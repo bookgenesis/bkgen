@@ -2,6 +2,8 @@
 set -eu
 
 PACKAGE=$(dirname $(dirname $0))
-isort --profile black $PACKAGE
-black $PACKAGE
-flake8 $PACKAGE
+LOCATION=${1:-$PACKAGE}
+
+isort --profile black $LOCATION
+black $LOCATION
+flake8 $LOCATION

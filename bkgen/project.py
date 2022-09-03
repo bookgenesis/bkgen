@@ -1893,7 +1893,7 @@ def import_images(project_path, filenames):
     """
     project = Project.load(project_path)
     for filename in filenames:
-        project.import_image(filename, **{'class': 'cover'})
+        project.import_image(filename)
 
 
 @main.command('import-stylesheets')

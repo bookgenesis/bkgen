@@ -26,7 +26,7 @@ from ._converter import Converter
 log = logging.getLogger(__name__)
 
 
-NS = Document.NS
+NS = bkgen.NS
 NS.update(**{k: bkgen.NS[k] for k in bkgen.NS if 'aid' in k})
 B = Builder(default=NS.html, **NS)
 transformer = XT()
@@ -495,9 +495,47 @@ def Graphic(elem, **params):
         + '; '.join(["%s:%s" % (k, v) for k, v in graphic_geometry(elem).items()])
         + ';'
     ).strip()
-    attribs = {k: v for k, v in attribs.items() if v is not None}
+    attribs = {key: val for key, val in attribs.items() if val is not None}
+
+    # Include attributes of child `<PDFAttribute>` as a single `bg:ICML.PDFAttribute`
+    # attribute, with keys and values formatted like a CSS style string. Use xmlns:bg
+    # (bookgenesis) for now - it's an Adobe element, but it's not in their namespaces.
+    pdfAttribute = ICML.find(elem, "PDFAttribute")
+    if pdfAttribute is not None:
+        attribs["{%(bg)s}ICML.PDFAttribute" % NS] = css_style_attribute(
+            pdfAttribute.attrib
+        )
     log.debug(f"img {attribs}")
+
+    # Copy the src file to the content location.
+    # - **TODO**: get rid of yuck, side-effects in otherwise functional code (and
+    #   re-work image processing in the whole workflow.)
+    # - params['srcfn'] = the source InDesign document (relative) path
+    # - params['document_path] = the output content folder (absolute) path
+    # - attribs['src'] = the relative path to the src image from the content folder
+    src_filepath = os.path.abspath(attribs['src'])
+    out_filepath = os.path.join(
+        params['document_path'], 'images', os.path.basename(attribs['src'])
+    )
+    File(fn=src_filepath).write(fn=out_filepath)
+    log.info(f"WROTE {src_filepath} => {out_filepath}")
+
     return [B.html.img(**attribs)]
+
+
+def css_style_attribute(mapping):
+    """
+    Return the given mapping as a CSS-style attribute string.
+
+    - keys and values are returned url-quoted, with space and forward-slash treated as
+      "safe" - this protects colon, semi-colon, and double-quote to be separators.
+    """
+    return '; '.join(
+        ': '.join(
+            (urllib.parse.quote(key, safe=' /'), urllib.parse.quote(val, safe=' '))
+        )
+        for key, val in mapping.items()
+    )
 
 
 def graphic_src(elem, **params):
@@ -514,6 +552,7 @@ def graphic_src(elem, **params):
             src = url.path
         else:
             src = str(url)
+
         return src
 
 
