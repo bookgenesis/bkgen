@@ -23,6 +23,7 @@ from importlib import import_module
 from pathlib import Path
 from typing import List
 
+import click
 import yaml
 from bl.rglob import rglob
 from bxml.builder import Builder
@@ -98,26 +99,32 @@ class Resource(BaseModel):
                 if 'xsl' in transform.suffix:
                     xslt = XSLT(fn=str(transform))
                     doc.root = xslt(doc.root, **params).getroot()
-                # python 'module:method', callable with doc.root
+
+                # python 'module:method', callable with doc.root and **params
                 elif ':' in str(transform):
                     modname, trfname = str(transform).split(':')
                     mod = import_module(modname)
                     trf = mod.__dict__[trfname]
                     doc.root = trf(doc.root, **params)
+
             body = doc.find(doc.root, 'html:body')
+
             # write files that have content
             if body is not None and body.getchildren():
                 doc.fn = os.path.splitext(resource_path)[0] + '.xml'
                 doc.write()
+
             # remove left-over empty files
             else:
                 fn = os.path.abspath(str(resource_path))
                 if os.path.exists(fn):
                     print('REMOVE', resource_path)
                     os.remove(fn)
+
         except Exception as exc:
             print(self.folder, source, transform, exc)
             print(traceback.format_exc())
+
         return resource_path
 
 
@@ -129,7 +136,7 @@ class Resources(BaseModel):
     """
 
     # **TODO**: semantic versioning string for comparison with this version?
-    version: str
+    version: str = '0.0.1'
     resources: List[Resource] = Field(default_factory=list)
 
     @validator('resources')
@@ -153,22 +160,30 @@ class Resources(BaseModel):
 
     def process(self, folder=None):
         """
-        Process the Resources as defined. Use parallel processing:
+        Process the Resources as defined. Parameters:
+
+        * folder - if given, limit to processing only this resource.folder value (useful
+          during development). Default is to process all resources.
+
+        Uses parallel processing:
 
         * Each Resources writes to a unique folder, so can be parallelized.
         * All sources in each Resource write to unique files, so can be parallelized.
         """
         pool = mp.Pool()
         for resource in self.resources:
-            if folder is None or str(resource.folder) == str(folder):
-                # ensure the resource folder exists, so different processes don't mkdir
-                os.makedirs(resource.folder, exist_ok=True)
+            # limit to folder if given
+            if folder is not None and str(resource.folder) != str(folder):
+                continue
 
-                if not resource.sources:
-                    resource.sources = [Path(resource.folder)]
+            # ensure resource.folder exists, so different processes don't makedirs.
+            os.makedirs(resource.folder, exist_ok=True)
 
-                for source in resource.sources:
-                    yield pool.apply_async(resource.process_source, (source,))
+            if not resource.sources:
+                resource.sources = [Path(resource.folder)]
+
+            for source in resource.sources:
+                yield pool.apply_async(resource.process_source, (source,))
 
 
 def update_spine(project):
@@ -202,3 +217,29 @@ def update_spine(project):
                         spineitem.tail = '\n\t'
                         spine.append(spineitem)
                         print('APPEND spineitem:', spineitem.attrib)
+
+
+# == COMMAND-LINE INTERFACE ==
+
+
+@click.group()
+def main():
+    pass
+
+
+@main.command('process')
+@click.argument('filename', type=click.Path(exists=True))
+@click.option(
+    '-f', '--folder', help='Limit to resources for the given folder, if given.'
+)
+def process_resources(filename, folder=None):
+    """
+    Process the resources defined in FILENAME
+    """
+    resources = Resources.load(filename)
+    for result in resources.process(folder=folder):
+        print(result.get())
+
+
+if __name__ == '__main__':
+    main()
