@@ -2,13 +2,12 @@ import importlib
 import logging
 import os
 
+from bkgen import NS
+from bkgen.source import Source
 from bl.dict import Dict
 from bl.file import File
 from bl.url import URL
 from bxml import XML
-
-from bkgen import NS
-from bkgen.source import Source
 
 log = logging.getLogger(__name__)
 

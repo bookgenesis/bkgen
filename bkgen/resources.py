@@ -25,12 +25,11 @@ from typing import List
 
 import click
 import yaml
+from bkgen.document import Document
 from bl.rglob import rglob
 from bxml.builder import Builder
 from bxml.xslt import XSLT
 from pydantic import BaseModel, Field, validator
-
-from bkgen.document import Document
 
 PATH = Path(os.path.abspath(__file__)).parent
 

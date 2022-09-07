@@ -4,6 +4,8 @@ import re
 import urllib.parse
 from glob import glob
 
+from bkgen import NS, config
+from bkgen.icml import ICML
 from bl.dict import Dict
 from bl.id import random_id
 from bl.string import String
@@ -12,9 +14,6 @@ from bxml.builder import Builder
 from bxml.xml import XML
 from bxml.xt import XT
 from lxml import etree
-
-from bkgen import NS, config
-from bkgen.icml import ICML
 
 from ._converter import Converter
 

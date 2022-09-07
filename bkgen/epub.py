@@ -7,6 +7,10 @@ from copy import deepcopy
 from datetime import datetime
 from uuid import uuid4
 
+from bkgen import NS, config
+from bkgen.css import CSS
+from bkgen.html import HTML
+from bkgen.source import Source
 from bl.dict import Dict
 from bl.file import File
 from bl.rglob import rglob
@@ -17,11 +21,6 @@ from bl.zip import ZIP
 from bxml.builder import Builder
 from bxml.xml import XML
 from lxml import etree
-
-from bkgen import NS, config
-from bkgen.css import CSS
-from bkgen.html import HTML
-from bkgen.source import Source
 
 DEBUG = False
 

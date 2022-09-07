@@ -3,11 +3,10 @@
 import logging
 from copy import deepcopy
 
-from bxml.builder import Builder
-from bxml.xt import XT
-
 from bkgen import NS
 from bkgen.document import Document
+from bxml.builder import Builder
+from bxml.xt import XT
 
 from ._converter import Converter
 

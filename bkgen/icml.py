@@ -2,15 +2,14 @@ import logging
 import os
 import re
 
+import bkgen
 from bf.css import CSS
 from bf.styles import Styles
+from bkgen.source import Source
 from bl.dict import Dict
 from bl.string import String
 from bxml.xml import XML
 from lxml import etree
-
-import bkgen
-from bkgen.source import Source
 
 log = logging.getLogger(__name__)
 
