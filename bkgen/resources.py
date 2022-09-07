@@ -182,7 +182,11 @@ class Resources(BaseModel):
                 resource.sources = [Path(resource.folder)]
 
             for source in resource.sources:
-                yield pool.apply_async(resource.process_source, (source,))
+                pool.apply_async(resource.process_source, (source,))
+
+        # close the pool and wait for all jobs to finish
+        pool.close()
+        pool.join()
 
 
 def update_spine(project):
@@ -235,9 +239,7 @@ def process_resources(filename, folder=None):
     """
     Process the resources defined in FILENAME
     """
-    resources = Resources.load(filename)
-    for result in resources.process(folder=folder):
-        print(result.get())
+    Resources.load(filename).process(folder=folder)
 
 
 if __name__ == '__main__':
