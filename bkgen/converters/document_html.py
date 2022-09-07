@@ -4,16 +4,15 @@ import logging
 import os
 from copy import deepcopy
 
+from bkgen import NS
+from bkgen.document import Document
+from bkgen.html import HTML
 from bl.file import File
 from bl.url import URL
 from bxml.builder import Builder
 from bxml.xml import XML
 from bxml.xt import XT
 from lxml import etree
-
-from bkgen import NS
-from bkgen.document import Document
-from bkgen.html import HTML
 
 from ._converter import Converter
 

@@ -2,6 +2,8 @@
 
 import os
 
+from bkgen import NS
+from bkgen.document import Document
 from bl.file import File
 from bl.string import String
 from bl.url import URL
@@ -9,9 +11,6 @@ from bxml import XML
 from bxml.builder import Builder
 from bxml.xt import XT
 from lxml import etree
-
-from bkgen import NS
-from bkgen.document import Document
 
 from ._converter import Converter
 

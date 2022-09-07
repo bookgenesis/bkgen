@@ -1,15 +1,14 @@
 import os
 
 import markdown.extensions.wikilinks
+from bkgen import NS
+from bkgen.html import HTML
+from bkgen.source import Source
 from bl.string import String
 from bl.text import Text
 from bl.url import URL
 from bxml.builder import Builder
 from lxml import etree
-
-from bkgen import NS
-from bkgen.html import HTML
-from bkgen.source import Source
 
 B = Builder(default=NS.html, **{'html': NS.html, 'pub': NS.pub})
 

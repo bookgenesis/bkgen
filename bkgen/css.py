@@ -1,10 +1,9 @@
 import logging
 
 import bf.css
+from bkgen import NS
 from bl.dict import Dict
 from bxml import XML
-
-from bkgen import NS
 
 log = logging.getLogger(__name__)
 

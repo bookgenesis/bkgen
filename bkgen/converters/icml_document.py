@@ -6,6 +6,9 @@ import re
 import tempfile
 import urllib.parse
 
+import bkgen
+from bkgen.document import Document
+from bkgen.icml import ICML
 from bl.dict import Dict
 from bl.file import File
 
@@ -16,10 +19,6 @@ from bxml.builder import Builder
 from bxml.xml import XML
 from bxml.xt import XT
 from lxml import etree
-
-import bkgen
-from bkgen.document import Document
-from bkgen.icml import ICML
 
 from ._converter import Converter
 

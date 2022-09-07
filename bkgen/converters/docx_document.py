@@ -8,6 +8,8 @@ import shutil
 import urllib.parse
 from copy import deepcopy
 
+from bkgen import NS
+from bkgen.document import Document
 from bl.dict import Dict
 from bl.int import Int
 from bl.string import String
@@ -17,9 +19,6 @@ from bxml.xml import XML
 from bxml.xslt import XSLT
 from bxml.xt import XT
 from lxml import etree
-
-from bkgen import NS
-from bkgen.document import Document
 
 from ._converter import Converter
 

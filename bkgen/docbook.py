@@ -1,8 +1,7 @@
 import os
 
-from bxml import XML
-
 from bkgen.source import Source
+from bxml import XML
 
 
 class DocBook(XML, Source):
