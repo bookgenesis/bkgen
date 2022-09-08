@@ -1,3 +1,6 @@
+-e git+https://github.com/blackearth/bf@3ba0681d0556f5c9e5cf74e253241960e6210568#egg=bf
+-e git+https://github.com/blackearth/bl@901fe94a2a4c1b1852c46776d476513a705f8524#egg=bl
+-e git+https://github.com/BlackEarth/bref.git@8a07966a238823c9346be9513e5f3ecae8a0dc1e#egg=bref
 -e git+https://github.com/BlackEarth/bgs.git@0760426ecaa0a3bd630fe5a60951cc2df6d5cd81#egg=bgs
 -e git+https://github.com/BlackEarth/bmagick.git@61d216db3438de82b1e7616f8769846f8fe91aa1#egg=bmagick
 -e git+https://github.com/BlackEarth/bxml.git@3.0.0#egg=bxml
