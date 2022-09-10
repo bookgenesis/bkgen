@@ -989,7 +989,7 @@ class Project(XML, Source):
                     r'[\s\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', ''
                 )
             ).strip()
-        if epub_name not in [None, '']:
+        if epub_name in [None, '']:
             epub_name = (
                 self.name
                 or self.root.get('name')
@@ -1051,7 +1051,7 @@ class Project(XML, Source):
 
     def build_html(
         self,
-        clean=True,
+        clean=False,
         singlepage=False,
         ext='.xhtml',
         doc_stylesheets=True,
@@ -1432,7 +1432,7 @@ class Project(XML, Source):
             out_path = os.path.join(
                 output_path, os.path.relpath(d.path, self.path)
             ).replace('\\', '/')
-            outfn = os.path.join(out_path, out_basename)
+            outfn = os.path.join(out_path, out_basename) + ext
             log.debug('outfn = %s', outfn)
             if 'html' in ext:
                 # create the output html for this document
