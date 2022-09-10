@@ -958,7 +958,7 @@ class EPUB(ZIP, Source):
         guide.tail = '\n\n'
         for key in [key for key in references.keys() if references[key] is not None]:
             ref = C.OPF.reference(
-                type=key, title=String(key).titleify(), href=references[key]
+                {'type': key, 'title': String(key).titleify(), 'href': references[key]}
             )
             ref.tail = '\n\t\t'
             guide.append(ref)
@@ -1043,7 +1043,7 @@ class EPUB(ZIP, Source):
         # dc:identifier is required; create UUID if not given
         if metadata_elem.find("{%(dc)s}identifier" % C.NS) is None:
             uuid = str(uuid4())
-            id_elem = DC.identifier(uuid, id='uuid')
+            id_elem = DC.identifier(uuid, {'id': 'uuid'})
             id_elem.tail = '\n\t\t'
             metadata_elem.append(id_elem)
 
