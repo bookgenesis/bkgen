@@ -1422,21 +1422,18 @@ class Project(XML, Source):
             if d is None:
                 continue
 
-            outfn = (
-                (
-                    os.path.splitext(
-                        os.path.join(
-                            output_path,
-                            os.path.relpath(d.fn, self.path).replace('\\', '/'),
-                        )
-                    )[0]
-                    + ext
-                )
+            out_basename = re.sub(
+                r'\W+',
+                '-',
+                os.path.splitext(os.path.basename(d.fn))[0]
                 .encode('ascii', 'xmlcharrefreplace')
-                .replace(b';', b'_')
-                .replace(b'&#', b'_')
-                .decode()
+                .decode(),
             )
+            out_path = os.path.join(
+                output_path, os.path.relpath(d.path, self.path)
+            ).replace('\\', '/')
+            outfn = os.path.join(out_path, out_basename)
+            log.debug('outfn = %s', outfn)
             if 'html' in ext:
                 # create the output html for this document
                 h = d.html(
@@ -1449,6 +1446,8 @@ class Project(XML, Source):
                     lang=lang,
                     conditions=conditions,
                 )
+                h.fn = outfn
+                h.path = os.path.dirname(os.path.abspath(h.fn))
                 # add the document-specific CSS, if it exists
                 if len(doc_css_fns) > 0 and doc_stylesheets is True:
                     css_fns = []

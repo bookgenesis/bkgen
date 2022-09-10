@@ -4,15 +4,16 @@ import logging
 import os
 from copy import deepcopy
 
-from bkgen import NS
-from bkgen.document import Document
-from bkgen.html import HTML
 from bl.file import File
 from bl.url import URL
 from bxml.builder import Builder
 from bxml.xml import XML
 from bxml.xt import XT
 from lxml import etree
+
+from bkgen import NS
+from bkgen.document import Document
+from bkgen.html import HTML
 
 from ._converter import Converter
 
@@ -27,12 +28,15 @@ transformer_XSLT = etree.XSLT(etree.parse(os.path.splitext(__file__)[0] + '.xsl'
 class DocumentHtml(Converter):
     def convert(self, document, **params):
         document.render_includes()
-        return document.transform(transformer, XMLClass=HTML, **params)
+        root = transformer.transform(document.root, XMLClass=HTML, **params)
+        doc = HTML(root=root)
+        # doc.fn = os.path.splitext(document.fn)[0] + '.html'
+        return doc
 
 
 # == DEFAULT ==
 # do XSLT on the element and return the results
-@transformer.match("True")
+@transformer.register(test=lambda elem, **params: True)
 def default(elem, **params):
     root = transformer_XSLT(elem).getroot()
     root = html_lang(root, **params)
@@ -48,7 +52,7 @@ def default(elem, **params):
     if params.get('simple_tables') is True:
         root = render_simple_tables(root)
     root = tds_with_image_style_min_width_height(root)
-    return [root]
+    return root
 
 
 def html_lang(root, lang='en', **params):
@@ -64,7 +68,7 @@ def fill_head(root, **params):
     output_path = params.get('output_path') or os.path.dirname(params.get('fn'))
     if head is not None:
         if XML.find(head, "html:meta[@charset]", namespaces=NS) is None:
-            head.append(H.meta(charset='UTF-8'))
+            head.append(H.meta({'charset': 'UTF-8'}))
         if (
             params.get('http_equiv_content_type') is True
             and XML.find(head, "html:meta[@http-equiv='Content-Type']", namespaces=NS)
@@ -83,9 +87,11 @@ def fill_head(root, **params):
             mimetype = File(fn=srcfn).mimetype
             href = File(srcfn).relpath(os.path.dirname(params.get('fn')))
             if resource.get('class') == 'stylesheet':
-                head.append(H.link(rel='stylesheet', type=mimetype, href=href))
+                head.append(
+                    H.link({'rel': 'stylesheet', 'type': mimetype, 'href': href})
+                )
             elif resource.get('class') == 'script':
-                head.append(H.script(type=mimetype, src=href))
+                head.append(H.script({'type': mimetype, 'src': href}))
 
         # -- <title> --
         title = XML.find(
@@ -203,11 +209,11 @@ def render_footnotes(root, **params):
                 XML.find(footnote, "pub:footnote-ref/@id", namespaces=NS)
                 or fnid + 'ref'
             )
-            fnlink = H.a(fnum, href="#%s" % fnid, id=fnrefid)
+            fnlink = H.a(fnum, {'href': "#%s" % fnid, 'id': fnrefid})
             parent.insert(parent.index(footnote), fnlink)
             XML.remove(footnote, leave_tail=True)
             fnref = XML.find(footnote, ".//pub:footnote-ref", namespaces=NS)
-            fnreflink = H.a(fnum, href="#%s" % fnrefid)
+            fnreflink = H.a(fnum, {'href': "#%s" % fnrefid})
             if fnref is not None:
                 fnref.getparent().replace(fnref, fnreflink)
             else:
@@ -242,8 +248,8 @@ def process_endnotes(root, endnotes=[], insert_endnotes=False, **params):
             enrefid = XML.find(
                 elem, ".//pub:endnote-ref/@id", namespaces=NS
             ) or enid.replace('en-', 'enref-')
-            enlink = H.a(enum, href="#%s" % enid, id=enrefid)
-            enreflink = H.a(enum, href="#%s" % enrefid)
+            enlink = H.a(enum, {'href': "#%s" % enid, 'id': enrefid})
+            enreflink = H.a(enum, {'href': "#%s" % enrefid})
             endnote = H.section(
                 {'id': enid, 'class': 'endnote', 'title': elem.get('title') or enum}
             )

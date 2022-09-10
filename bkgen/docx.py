@@ -2,11 +2,12 @@ import os
 import sys
 
 import bxml.docx
-from bkgen import NS
-from bkgen.source import Source
 from bl.dict import Dict
 from bl.url import URL
 from bxml import XML
+
+from bkgen import NS
+from bkgen.source import Source
 
 
 class DOCX(bxml.docx.DOCX, Source):

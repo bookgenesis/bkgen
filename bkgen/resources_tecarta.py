@@ -4,10 +4,11 @@ from glob import glob
 from pathlib import Path
 
 import yaml
-from bkgen.document import Document
 from bl.string import String
 from bxml.builder import Builder
 from lxml import etree
+
+from bkgen.document import Document
 
 log = logging.getLogger(__name__)
 B = Builder(**Document.NS)
