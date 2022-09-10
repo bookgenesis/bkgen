@@ -1,7 +1,8 @@
 import os
 
-from bkgen import NS
 from bxml import XML
+
+from bkgen import NS
 
 from .source import Source
 

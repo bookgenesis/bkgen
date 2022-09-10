@@ -6,12 +6,13 @@ import subprocess
 
 from bf.css import CSS
 from bf.image import Image
-from bkgen import NS, config
-from bkgen.html import HTML
 from bl.dict import Dict
 from bl.text import Text
 from bl.url import URL
 from bxml.xml import XML, etree
+
+from bkgen import NS, config
+from bkgen.html import HTML
 
 log = logging.getLogger(__name__)
 

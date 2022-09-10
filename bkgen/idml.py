@@ -1,15 +1,16 @@
 import logging
 import os
 
-from bkgen import NS
-from bkgen.document import Document
-from bkgen.source import Source
 from bl.dict import Dict
 from bl.folder import Folder
 from bl.url import URL
 from bl.zip import ZIP
 from bxml import XML
 from bxml.builder import Builder
+
+from bkgen import NS
+from bkgen.document import Document
+from bkgen.source import Source
 
 from .icml import ICML
 

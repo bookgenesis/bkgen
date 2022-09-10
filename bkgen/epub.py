@@ -7,10 +7,6 @@ from copy import deepcopy
 from datetime import datetime
 from uuid import uuid4
 
-from bkgen import NS, config
-from bkgen.css import CSS
-from bkgen.html import HTML
-from bkgen.source import Source
 from bl.dict import Dict
 from bl.file import File
 from bl.rglob import rglob
@@ -21,6 +17,11 @@ from bl.zip import ZIP
 from bxml.builder import Builder
 from bxml.xml import XML
 from lxml import etree
+
+from bkgen import NS, config
+from bkgen.css import CSS
+from bkgen.html import HTML
+from bkgen.source import Source
 
 DEBUG = False
 
@@ -224,7 +225,7 @@ class EPUB(ZIP, Source):
         cover_html=True,
         nav_href='nav.xhtml',
         nav_title="Navigation",
-        show_nav=False,
+        show_nav=True,
         nav_toc=None,
         nav_landmarks=None,
         nav_page_list=None,
@@ -372,7 +373,7 @@ class EPUB(ZIP, Source):
         spine_items,
         nav_href='nav.xhtml',
         nav_title="Navigation",
-        show_nav=False,
+        show_nav=True,
         nav_toc=None,
         nav_landmarks=None,
         nav_page_list=None,
@@ -460,24 +461,29 @@ class EPUB(ZIP, Source):
                 nav.write(doctype="<!DOCTYPE html>", canonicalized=False)
                 navfn = nav.fn
 
-        nav_elems = []
-
         if nav_toc is None:
             nav_toc = C.nav_toc_from_spine_items(output_path, spine_items)
-        nav_elems.append(nav_toc)
+
+        nav_elems = [nav_toc]
 
         nav_toc.set('role', 'doc-toc')
 
         if nav_landmarks is None:
             nav_landmarks = C.nav_landmarks_from_spine_items(output_path, spine_items)
-            nav_elems.append(nav_landmarks)
+            if nav_landmarks is not None:
+                nav_elems.append(nav_landmarks)
+            else:
+                print('WARN: no nav landmarks')
 
         # nav_loi_lot_etc.
         nav_elems += C.make_nav_loi_lot_loa_lov(output_path, spine_items)
 
         if nav_page_list is None:
             nav_page_list = C.nav_page_list_from_spine_items(output_path, spine_items)
-            nav_elems.append(nav_page_list)
+            if nav_page_list is not None:
+                nav_elems.append(nav_page_list)
+            else:
+                print('WARN: no nav page list')
 
         navfn = C.make_nav_file(
             output_path, *nav_elems, nav_href=nav_href, title=nav_title, lang=lang
@@ -709,9 +715,9 @@ class EPUB(ZIP, Source):
                     '\n\t\t',
                     H.title(title),
                     '\n\t\t',
-                    H.meta(charset="UTF-8"),
+                    H.meta({'charset': "UTF-8"}),
                     '\n\t\t',
-                    H.style("""li {list-style-type: none;}""", type="text/css"),
+                    H.style("""li {list-style-type: none;}""", {'type': "text/css"}),
                     '\n\t',
                 ),
                 '\n\t',
