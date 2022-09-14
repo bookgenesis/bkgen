@@ -3,7 +3,10 @@ import os
 import re
 import shutil
 import subprocess
+import sys
+from pathlib import Path
 
+import click
 from bf.css import CSS
 from bf.image import Image
 from bl.dict import Dict
@@ -12,6 +15,7 @@ from bl.url import URL
 from bxml.xml import XML, etree
 
 from bkgen import NS, config
+from bkgen.epub import EPUB
 from bkgen.html import HTML
 
 log = logging.getLogger(__name__)
@@ -510,19 +514,26 @@ class MOBI(Dict):
         return result
 
 
+@click.group()
+def main():
+    pass
+
+
+@main.command()
+@click.argument('build_paths', nargs=-1, type=Path)
+def compile(build_paths):
+    for build_path in build_paths:
+        opffn = EPUB.get_opf_fn(build_path)
+        print(MOBI().compile_mobi(build_path, opffn))
+
+
+@main.command()
+@click.argument('epub_paths', nargs=-1, type=Path)
+def from_epub(epub_paths):
+    for epub_path in epub_paths:
+        print(MOBI().from_epub(epub_path, build_path=epub_path))
+
+
 if __name__ == '__main__':
-    import sys
-
-    from bkgen.epub import EPUB
-
     logging.basicConfig(**config.Logging)
-    for build_path in sys.argv[2:]:
-        if sys.argv[1] == 'compile':
-            opffn = EPUB.get_opf_fn(build_path)
-            MOBI().compile_mobi(build_path, opffn)
-        elif 'from-epub=' in sys.argv[1]:
-            epub_path = sys.argv[1].split('=')[-1]
-            result = MOBI().from_epub(epub_path, build_path=build_path)
-            print(result)
-        else:
-            print("unknown command: %s" % sys.argv[1])
+    main()
