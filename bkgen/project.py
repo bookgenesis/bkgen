@@ -894,7 +894,7 @@ class Project(XML, Source):
         results = []
 
         for output_kind in output_kinds:
-            log.info("output kind=%r" % output_kind)
+            log.info("-- BUILD: output kind=%r --" % output_kind)
             try:
                 start_time = time.time()
                 assert output_kind in self.OUTPUT_KIND_EXTS.keys()
@@ -1963,6 +1963,7 @@ def import_all(project_path):
 @click.option(
     '--format',
     type=click.Choice(['epub', 'mobi', 'html', 'archive'], case_sensitive=False),
+    multiple=True,
 )
 @click.option('--daisyace', is_flag=True)
 @click.option('--epubcheck', is_flag=True)
@@ -1981,14 +1982,18 @@ def build_outputs(
 
     if not format:
         project.build_outputs()
-    elif format == 'epub':
-        project.build_outputs(kind='EPUB', epub_check=epubcheck, epub_ace=daisyace)
-    elif format == 'mobi':
-        project.build_outputs(kind='Kindle')
-    elif format == 'html':
-        project.build_outputs(kind='HTML', singlepage=singlepage)
-    elif format == 'archive':
-        project.build_outputs(kind='archive')
+    else:
+        for fmt in format:
+            if fmt == 'epub':
+                project.build_outputs(
+                    kind='EPUB', epub_check=epubcheck, epub_ace=daisyace
+                )
+            elif fmt == 'mobi':
+                project.build_outputs(kind='Kindle')
+            elif fmt == 'html':
+                project.build_outputs(kind='HTML', singlepage=singlepage)
+            elif fmt == 'archive':
+                project.build_outputs(kind='archive')
 
 
 @main.command('cleanup')
