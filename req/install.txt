@@ -2,6 +2,6 @@
 -e git+https://github.com/BlackEarth/bmagick.git@61d216db3438de82b1e7616f8769846f8fe91aa1#egg=bmagick
 -e git+https://github.com/BlackEarth/bxml.git@b969a2455e6e7dd3b08464b65c4d52a7d6a109b9#egg=bxml
 lxml~=4.7.1
-Markdown~=3.1.6
+Markdown~=3.2.1
 pycountry~=19.7.15
 PyYAML==5.1.2

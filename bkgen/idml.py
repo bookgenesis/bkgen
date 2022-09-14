@@ -43,13 +43,15 @@ class IDML(ZIP, Source):
     @property
     def stories(self):
         """
-        It's useful to have access to all the stories (as ICML documents) in the package. 
+        It's useful to have access to all the stories (as ICML documents) in the package.
         Cached, as with others.
         """
         if self.__stories is None:
             self.__stories = []
             for story in self.designmap.root.xpath("idPkg:Story", namespaces=self.NS):
-                fn = os.path.join(self.splitext()[0], os.path.basename(str(URL(story.get('src')))))
+                fn = os.path.join(
+                    self.splitext()[0], os.path.basename(str(URL(story.get('src'))))
+                )
                 icml = ICML(fn=fn, root=self.read(story.get('src')))
                 self.__stories.append(icml)
         return self.__stories
@@ -57,20 +59,31 @@ class IDML(ZIP, Source):
     @property
     def items(self):
         """
-        Return a dict of items (anything with a Self) in the IDML file. 
+        Return a dict of items (anything with a Self) in the IDML file.
         Needed to resolve Article components.
         """
         if self.__items is None:
             d = Dict()
             for rp in [
-                rp for rp in self.zipfile.namelist() if os.path.splitext(rp)[-1].lower() == '.xml'
+                rp
+                for rp in self.zipfile.namelist()
+                if os.path.splitext(rp)[-1].lower() == '.xml'
             ]:
                 x = XML(root=self.read(rp))
-                for item in x.root.xpath("//*[@Self] | //idPkg:*[@Self]", namespaces=self.NS):
-                    if item.get('Self') in d and d[item.get('Self')].attrib != item.attrib:
+                for item in x.root.xpath(
+                    "//*[@Self] | //idPkg:*[@Self]", namespaces=self.NS
+                ):
+                    if (
+                        item.get('Self') in d
+                        and d[item.get('Self')].attrib != item.attrib
+                    ):
                         LOG.error(
                             "%s already in items_dict. %r vs. %r"
-                            % (item.get('Self'), d[item.get('Self')].attrib, item.attrib)
+                            % (
+                                item.get('Self'),
+                                d[item.get('Self')].attrib,
+                                item.attrib,
+                            )
                         )
                     else:
                         d[item.get('Self')] = item
@@ -83,13 +96,15 @@ class IDML(ZIP, Source):
     def stylesheet(self, fn=None):
         """return a stylesheet from the .idml file's style definitions"""
         if fn is None:
-            fn = os.path.join(self.output_path, os.path.basename(self.output_path) + '.css')
+            fn = os.path.join(
+                self.output_path, os.path.basename(self.output_path) + '.css'
+            )
         return ICML(root=self.read('Resources/Styles.xml')).stylesheet(fn=fn)
 
     def document(self, path=None, articles=True, sources=None, **params):
         """return a pub:document with the articles / stories in the .idml file.
         path=None: The path in which the document files are created.
-        articles=True: If the .idml file has Articles, use those as guidance; 
+        articles=True: If the .idml file has Articles, use those as guidance;
             otherwise, use the stories directly.
         sources=None: The collection of source documents
             (e.g., to resolve hyperlinks in a multi-publication InDesign book).
@@ -107,8 +122,7 @@ class IDML(ZIP, Source):
         return doc
 
     def articles_document(self, path=None, sources=None):
-        """return a collection of pub:documents built from the InDesign Articles in the .idml file.
-        """
+        """return a collection of pub:documents built from the InDesign Articles in the .idml file."""
         path = path or self.output_path
         sources = sources or [self]
         doc = Document()
@@ -117,7 +131,9 @@ class IDML(ZIP, Source):
         for article in self.designmap.root.xpath("//Article"):
             article_icml = ICML()
             article_icml.fn = os.path.splitext(doc.fn)[0] + '.icml'
-            LOG.debug("article name=%r icml.fn = %r" % (article.get('Name'), article_icml.fn))
+            LOG.debug(
+                "article name=%r icml.fn = %r" % (article.get('Name'), article_icml.fn)
+            )
             for member in article.xpath("ArticleMember"):
                 item = self.items[member.get('ItemRef')]
                 LOG.debug(
@@ -139,14 +155,18 @@ class IDML(ZIP, Source):
             article_doc = article_icml.document(
                 srcfn=self.fn, sources=sources, styles=self.styles()
             )
-            for incl in article_doc.xpath(article_doc.root, "//pub:include[@idref]", namespaces=NS):
+            for incl in article_doc.xpath(
+                article_doc.root, "//pub:include[@idref]", namespaces=NS
+            ):
                 parent = incl.getparent()
                 incl_pkg = self.designmap.root.find(
                     "idPkg:Story[@src='Stories/Story_%s.xml']" % incl.get('idref'),
                     namespaces=self.NS,
                 )
                 if incl_pkg is not None:
-                    incl_doc = ICML(root=self.read(str(URL(incl_pkg.get('src'))))).document(
+                    incl_doc = ICML(
+                        root=self.read(str(URL(incl_pkg.get('src'))))
+                    ).document(
                         fn=self.fn, srcfn=self.fn, sources=sources, styles=self.styles()
                     )
                     for ch in incl_doc.find(
@@ -155,7 +175,9 @@ class IDML(ZIP, Source):
                         parent.insert(parent.index(incl), ch)
                     parent.remove(incl)
 
-            for elem in article_doc.xpath(article_doc.root, "html:body/*", namespaces=NS):
+            for elem in article_doc.xpath(
+                article_doc.root, "html:body/*", namespaces=NS
+            ):
                 doc_body.append(elem)
 
         return doc

@@ -7,8 +7,9 @@ from bxml.builder import Builder
 from bxml.xt import XT
 
 from bkgen import NS
-from ._converter import Converter
 from bkgen.document import Document
+
+from ._converter import Converter
 
 log = logging.getLogger(__name__)
 B = Builder(default=NS.html, **Document.NS)
@@ -67,7 +68,10 @@ def document(elem, **params):
 
         e.set(
             'class',
-            e.get('class') or e.get('{%(aid5)s}cellstyle' % NS) or e.get('aid5-cellstyle') or '',
+            e.get('class')
+            or e.get('{%(aid5)s}cellstyle' % NS)
+            or e.get('aid5-cellstyle')
+            or '',
         )
         if e.get('class') == '':
             e.attrib.pop('class')
@@ -77,7 +81,11 @@ def document(elem, **params):
             e.attrib.pop('aid5-cellstyle')
 
         e.set(
-            'rowspan', e.get('rowspan') or e.get('{%(aid)s}crows' % NS) or e.get('aid-crows') or ''
+            'rowspan',
+            e.get('rowspan')
+            or e.get('{%(aid)s}crows' % NS)
+            or e.get('aid-crows')
+            or '',
         )
         if e.get('rowspan') == '':
             e.attrib.pop('rowspan')
@@ -87,7 +95,11 @@ def document(elem, **params):
             e.attrib.pop('aid-crows')
 
         e.set(
-            'colspan', e.get('colspan') or e.get('{%(aid)s}ccols' % NS) or e.get('aid-ccols') or ''
+            'colspan',
+            e.get('colspan')
+            or e.get('{%(aid)s}ccols' % NS)
+            or e.get('aid-ccols')
+            or '',
         )
         if e.get('colspan') == '':
             e.attrib.pop('colspan')
@@ -98,7 +110,8 @@ def document(elem, **params):
 
         e.set(
             'width',
-            e.get('width') or (e.get('{%(aid)s}ccols' % NS) or e.get('aid-ccols') or '') + 'pt',
+            e.get('width')
+            or (e.get('{%(aid)s}ccols' % NS) or e.get('aid-ccols') or '') + 'pt',
         )
         if e.get('width') == 'pt':
             e.attrib.pop('width')
@@ -118,7 +131,10 @@ def document(elem, **params):
 
         e.set(
             'class',
-            e.get('class') or e.get('{%(aid5)s}tablestyle') or e.get('aid5-tablestyle') or '',
+            e.get('class')
+            or e.get('{%(aid5)s}tablestyle')
+            or e.get('aid5-tablestyle')
+            or '',
         )
         if e.get('class') == '':
             e.attrib.pop('class')
@@ -129,7 +145,10 @@ def document(elem, **params):
 
         e.set(
             'data-cols',
-            e.get('data-cols') or e.get('{%(aid)s}tcols' % NS) or e.get('aid-tcols') or '',
+            e.get('data-cols')
+            or e.get('{%(aid)s}tcols' % NS)
+            or e.get('aid-tcols')
+            or '',
         )
         if e.get('data-cols') == '':
             e.attrib.pop('data-cols')
@@ -140,7 +159,10 @@ def document(elem, **params):
 
         e.set(
             'data-rows',
-            e.get('data-rows') or e.get('{%(aid)s}trows' % NS) or e.get('aid-trows') or '',
+            e.get('data-rows')
+            or e.get('{%(aid)s}trows' % NS)
+            or e.get('aid-trows')
+            or '',
         )
         if e.get('data-rows') == '':
             e.attrib.pop('data-rows')
