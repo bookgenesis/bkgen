@@ -20,13 +20,15 @@ class DocBook(XML, Source):
     def documents(self, path=None, **params):
         """return a list of documents containing the content of the document"""
         path = path or self.path
-        fn = os.path.splitext(os.path.join(path, self.clean_filename(self.basename)))[0] + '.xml'
+        fn = (
+            os.path.splitext(os.path.join(path, self.clean_filename(self.basename)))[0]
+            + '.xml'
+        )
         # just the one document
         return [self.document(fn=fn, **params)]
 
     def images(self):
-        """all the images referred to in the DocBook file. 
-        """
+        """all the images referred to in the DocBook file."""
         return []
 
     def metadata(self):

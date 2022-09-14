@@ -34,8 +34,7 @@ class Document(XML, Source):
         return self.element("html:body")
 
     def content_for_editing(self, elem=None):
-        """return a string containing the content of the body or given element for editing
-        """
+        """return a string containing the content of the body or given element for editing"""
         from .converters import document_html
 
         elem = elem or self.find(self.root, 'html:body')
@@ -44,7 +43,9 @@ class Document(XML, Source):
         elem = document_html.process_pub_attributes(elem)
         content = (elem.text or '') + ''.join(
             [
-                re.sub("<(/?pub:[^>]+)>", r"&lt;\1&gt;", etree.tounicode(e, with_tail=True))
+                re.sub(
+                    "<(/?pub:[^>]+)>", r"&lt;\1&gt;", etree.tounicode(e, with_tail=True)
+                )
                 for e in elem.getchildren()
             ]
         ).strip().replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
@@ -53,7 +54,9 @@ class Document(XML, Source):
     def metadata(self):
         from .metadata import Metadata
 
-        return Metadata(root=self.find(self.root, "opf:metadata", namespaces=Metadata.NS))
+        return Metadata(
+            root=self.find(self.root, "opf:metadata", namespaces=Metadata.NS)
+        )
 
     def documents(self, **args):
         return [self]
@@ -83,7 +86,7 @@ class Document(XML, Source):
         section = None
         if id not in [None, '']:
             section = x.find(x.root, "//*[@id='%s']" % id, namespaces=C.NS)
-            if section is None: 
+            if section is None:
                 log.warn('SECTION NOT FOUND: %s#%s', fn, id)
 
         log.debug("Load %r" % section.attrib if section is not None else None)
@@ -108,7 +111,9 @@ class Document(XML, Source):
             fn = self.splitext()[0] + '.aid.xml'
         return converter.convert(self, fn=fn, **params)
 
-    def html(self, fn=None, ext='.xhtml', output_path=None, resources=[], lang='en', **args):
+    def html(
+        self, fn=None, ext='.xhtml', output_path=None, resources=[], lang='en', **args
+    ):
         from .converters.document_html import DocumentHtml
 
         converter = DocumentHtml()
@@ -138,7 +143,9 @@ class Document(XML, Source):
 
             # fill the include with the included content from the source
             srcfn = os.path.abspath(
-                os.path.join(os.path.dirname(self.fn), str(URL(incl.get('src'))).split('#')[0])
+                os.path.join(
+                    os.path.dirname(self.fn), str(URL(incl.get('src'))).split('#')[0]
+                )
             )
             if os.path.exists(srcfn):
                 src = Document(fn=srcfn)
@@ -147,8 +154,8 @@ class Document(XML, Source):
                     incl_elems = XML.xpath(src.root, "//*[@id='%s']" % srcid)
                 else:
                     incl_elems = XML.xpath(src.root, "html:body/*", namespaces=NS)
-                
-                if len(incl_elems)==0:
+
+                if len(incl_elems) == 0:
                     log.warn('NO ELEMENTS TO INCLUDE: %s', incl.get('src'))
 
                 for ie in incl_elems:
@@ -161,7 +168,9 @@ class Document(XML, Source):
 
     def section_content(self, section_id):
         """return an xml string containing the content of the section"""
-        section = self.find(self.root, "//html:section[@id='%s']" % section_id, namespaces=NS)
+        section = self.find(
+            self.root, "//html:section[@id='%s']" % section_id, namespaces=NS
+        )
         log.info("%s" % section_id)
         if section is not None:
             return (section.text or '') + ''.join(
@@ -194,7 +203,7 @@ class Document(XML, Source):
         return cleaned
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     for fn in sys.argv[2:]:
         doc = Document(fn=fn)
         if 'icml' in sys.argv[1]:

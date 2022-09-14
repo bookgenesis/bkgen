@@ -6,12 +6,20 @@ from . import NS
 
 class Metadata(XML):
     ROOT_TAG = "{%(opf)s}metadata" % NS
-    NS = Dict(**{k: NS[k] for k in NS if k in ['opf', 'dc', 'dcterms', 'dcmitype', 'cp', 'xsi']})
+    NS = Dict(
+        **{
+            k: NS[k]
+            for k in NS
+            if k in ['opf', 'dc', 'dcterms', 'dcmitype', 'cp', 'xsi']
+        }
+    )
 
     def identifier(self, id_patterns=['isbn']):
         identifier = None
         for pattern in id_patterns:
-            identifier = self.find(self.root, "dc:identifier[contains(@id, '%s')]" % pattern)
+            identifier = self.find(
+                self.root, "dc:identifier[contains(@id, '%s')]" % pattern
+            )
             if identifier is not None:
                 return identifier
 
@@ -63,7 +71,10 @@ class Metadata(XML):
         entries = []
         for elem in self.xpath(self.root, "dc:creator"):
             entries.append(
-                (elem.text or '', self.element("opf:meta", refines='#%s' % elem.get('id')).text)
+                (
+                    elem.text or '',
+                    self.element("opf:meta", refines='#%s' % elem.get('id')).text,
+                )
             )
         return entries
 

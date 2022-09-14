@@ -12,9 +12,10 @@ from bxml.xt import XT
 from lxml import etree
 
 from bkgen import NS
-from ._converter import Converter
 from bkgen.document import Document
 from bkgen.html import HTML
+
+from ._converter import Converter
 
 log = logging.getLogger(__name__)
 
@@ -67,10 +68,16 @@ def fill_head(root, **params):
             head.append(H.meta(charset='UTF-8'))
         if (
             params.get('http_equiv_content_type') is True
-            and XML.find(head, "html:meta[@http-equiv='Content-Type']", namespaces=NS) is None
+            and XML.find(head, "html:meta[@http-equiv='Content-Type']", namespaces=NS)
+            is None
         ):
             head.append(
-                H.meta({'http-equiv': 'Content-Type', 'content': 'text/html; charset=utf-8'})
+                H.meta(
+                    {
+                        'http-equiv': 'Content-Type',
+                        'content': 'text/html; charset=utf-8',
+                    }
+                )
             )
         for resource in params.get('resources') or []:
             srcfn = os.path.join(output_path, str(URL(resource.get('href'))))
@@ -82,15 +89,21 @@ def fill_head(root, **params):
                 head.append(H.script(type=mimetype, src=href))
 
         # -- <title> --
-        title = XML.find(head, "//html:title", namespaces=NS)  # matches an existing <title>
+        title = XML.find(
+            head, "//html:title", namespaces=NS
+        )  # matches an existing <title>
 
         # first look for @aria-labelledby
         if title is None:
-            labelledby = XML.find(root, "html:body/html:*/@aria-labelledby", namespaces=NS)
+            labelledby = XML.find(
+                root, "html:body/html:*/@aria-labelledby", namespaces=NS
+            )
             if labelledby is not None:
                 title_elem = XML.find(root, "//*[@id='%s']" % labelledby)
                 if title_elem is not None:
-                    title = H.title(etree.tounicode(title_elem, method='text', with_tail=False))
+                    title = H.title(
+                        etree.tounicode(title_elem, method='text', with_tail=False)
+                    )
 
         # then look for @aria-label or @title
         if title is None:
@@ -108,17 +121,19 @@ def fill_head(root, **params):
 
 
 def filter_conditions(root, **params):
-    """include a set of conditions: 
-    @pub:cond indicates element inclusion, 
+    """include a set of conditions:
+    @pub:cond indicates element inclusion,
     @pub:condlink indicates inclusion of the link (element ancestor-or-self with @href)
-    * either those specified in params['conditions'], 
+    * either those specified in params['conditions'],
     * or default to 'digital epub mobi html'.
     """
     include = (params.get('conditions') or 'digital html epub mobi').lower().split(' ')
     # element with @pub:cond that doesn't match current context is removed
     for conditional_elem in XML.xpath(root, "//html:*[@pub:cond]", namespaces=NS):
         remove = True
-        conditions = conditional_elem.attrib.pop("{%(pub)s}cond" % NS).lower().split(' ')
+        conditions = (
+            conditional_elem.attrib.pop("{%(pub)s}cond" % NS).lower().split(' ')
+        )
         for condition in conditions:
             if condition in include:
                 remove = False
@@ -131,13 +146,17 @@ def filter_conditions(root, **params):
         root, "//html:*[@pub:condlink][ancestor-or-self::html:*[@href]]", namespaces=NS
     ):
         remove = True
-        conditions = conditional_elem.attrib.pop("{%(pub)s}condlink" % NS).lower().split(' ')
+        conditions = (
+            conditional_elem.attrib.pop("{%(pub)s}condlink" % NS).lower().split(' ')
+        )
         for condition in conditions:
             if condition in include:
                 remove = False
                 break
         if remove is True:
-            link_elem = XML.find(conditional_elem, "ancestor-or-self::html:*[@href]", namespaces=NS)
+            link_elem = XML.find(
+                conditional_elem, "ancestor-or-self::html:*[@href]", namespaces=NS
+            )
             XML.replace_with_contents(link_elem)
     return root
 
@@ -162,9 +181,13 @@ def omit_unsupported_font_formatting(root, **params):
 
 def render_footnotes(root, **params):
     """render the footnotes within the given section at the end of the section"""
-    sections = root.xpath(".//html:section[@id and descendant::pub:footnote]", namespaces=NS)
+    sections = root.xpath(
+        ".//html:section[@id and descendant::pub:footnote]", namespaces=NS
+    )
     for section in sections:
-        footnotes_section = XML.find(section, ".//html:section[@class='footnotes']", namespaces=NS)
+        footnotes_section = XML.find(
+            section, ".//html:section[@class='footnotes']", namespaces=NS
+        )
         if footnotes_section is None:
             footnotes_section = H.section(
                 '\n', {'class': 'footnotes', 'id': section.get('id') + '_footnotes'}
@@ -177,7 +200,10 @@ def render_footnotes(root, **params):
             parent = footnote.getparent()
             fnum = footnote.get('title') or str(section_footnotes.index(footnote) + 1)
             fnid = footnote.get('id') or "fn-%s" % fnum
-            fnrefid = XML.find(footnote, "pub:footnote-ref/@id", namespaces=NS) or fnid + 'ref'
+            fnrefid = (
+                XML.find(footnote, "pub:footnote-ref/@id", namespaces=NS)
+                or fnid + 'ref'
+            )
             fnlink = H.a(fnum, href="#%s" % fnid, id=fnrefid)
             parent.insert(parent.index(footnote), fnlink)
             XML.remove(footnote, leave_tail=True)
@@ -198,7 +224,7 @@ def render_footnotes(root, **params):
 
 
 def process_endnotes(root, endnotes=[], insert_endnotes=False, **params):
-    """collect endnotes from the content in params['endnotes'], 
+    """collect endnotes from the content in params['endnotes'],
     and output them at <pub:endnotes/> or existing <section class="endnotes"/>.
     If insert_endnotes=True, then insert any remaining endnotes at the end of the document.
     """
@@ -214,9 +240,9 @@ def process_endnotes(root, endnotes=[], insert_endnotes=False, **params):
             # render the endnote reference link here and collect the endnote
             enum = elem.get('title') or str(len(endnotes) + 1)
             enid = elem.get('id') or "en-%s" % enum
-            enrefid = XML.find(elem, ".//pub:endnote-ref/@id", namespaces=NS) or enid.replace(
-                'en-', 'enref-'
-            )
+            enrefid = XML.find(
+                elem, ".//pub:endnote-ref/@id", namespaces=NS
+            ) or enid.replace('en-', 'enref-')
             enlink = H.a(enum, href="#%s" % enid, id=enrefid)
             enreflink = H.a(enum, href="#%s" % enrefid)
             endnote = H.section(
@@ -228,12 +254,16 @@ def process_endnotes(root, endnotes=[], insert_endnotes=False, **params):
             enref = XML.find(endnote, ".//pub:endnote-ref", namespaces=NS)
             enref.getparent().replace(enref, enreflink)
             endnote = etree.fromstring(
-                etree.tounicode(endnote).replace(' xmlns:pub="http://publishingxml.org/ns"', '')
+                etree.tounicode(endnote).replace(
+                    ' xmlns:pub="http://publishingxml.org/ns"', ''
+                )
             )
             endnotes.append(endnote)
             this_elem = enlink
         elem = XML.find(
-            this_elem, '|'.join(['following::' + x for x in endnote_xpaths]), namespaces=NS
+            this_elem,
+            '|'.join(['following::' + x for x in endnote_xpaths]),
+            namespaces=NS,
         )
     if insert_endnotes is True and len(endnotes) > 0:
         body = XML.find(root, "html:body", namespaces=NS)
@@ -259,7 +289,9 @@ def render_endnotes(endnotes_elem, endnotes):
 def process_pub_attributes(root, **params):
     """put all remaining pub attributes into the style attribute with the -pub- prefix."""
     for e in Document.xpath(root, "//*[@pub:*]"):
-        styles = [s.strip() for s in (e.get('style') or '').split(';') if s.strip() != '']
+        styles = [
+            s.strip() for s in (e.get('style') or '').split(';') if s.strip() != ''
+        ]
         for aval in Document.xpath(e, "@pub:*"):
             aname = aval.attrname.replace("{%(pub)s}" % Document.NS, '-pub-')
             _ = e.attrib.pop(aval.attrname)
@@ -294,8 +326,8 @@ def process_index_entries(root, **params):
 
 def replace_ligature_characters(root):
     """
-    Sometimes ligature characters (fl, fi) are used in books directly, 
-    but these don't work well in HTML contexts, 
+    Sometimes ligature characters (fl, fi) are used in books directly,
+    but these don't work well in HTML contexts,
     so replace them with their multi-character equivalents.
     """
     ligatures = {
@@ -337,7 +369,7 @@ def replace_ligature_characters(root):
 
 def render_simple_tables(root):
     """If a table's first row is <th> cells, and every row has the same number of cells,
-    then convert the table into a series of two column tables, one per row, 
+    then convert the table into a series of two column tables, one per row,
     with the <th> cells on the left and the <td> cells on the right.
     """
     for table in Document.xpath(root, "//html:table"):
@@ -360,7 +392,9 @@ def render_simple_tables(root):
             row_table = B.html.table('\n\t')
             row_table.tail = '\n'
             for i in range(len(first_row)):
-                tr = B.html.tr('\n\t\t', deepcopy(first_row[i]), '\n\t\t', deepcopy(row[i]))
+                tr = B.html.tr(
+                    '\n\t\t', deepcopy(first_row[i]), '\n\t\t', deepcopy(row[i])
+                )
                 tr.tail = '\n\t'
                 row_table.append(tr)
             parent.insert(parent.index(table), row_table)
@@ -377,17 +411,20 @@ def tds_with_image_style_min_width_height(root):
         td_style = {
             key.strip(): val.strip()
             for key, val in [
-                attr.split(':') for attr in (td.get('style') or ':').strip(';').split(';')
+                attr.split(':')
+                for attr in (td.get('style') or ':').strip(';').split(';')
             ]
             if key != ''
         }
         for img in Document.xpath(
-            td, "descendant::html:img[contains(@style,'width') or contains(@style,'height')]"
+            td,
+            "descendant::html:img[contains(@style,'width') or contains(@style,'height')]",
         ):
             img_style = {
                 key.strip(): val.strip()
                 for key, val in [
-                    attr.split(':') for attr in (img.get('style') or ':').strip(';').split(';')
+                    attr.split(':')
+                    for attr in (img.get('style') or ':').strip(';').split(';')
                 ]
                 if key != ''
             }
@@ -398,6 +435,9 @@ def tds_with_image_style_min_width_height(root):
                 if key in img_style and key not in td_style:
                     td_style[key] = img_style[key]
         if len(td_style) > 0:
-            td.set('style', '; '.join(["%s: %s" % (k, v) for k, v in td_style.items()]) + ';')
+            td.set(
+                'style',
+                '; '.join(["%s: %s" % (k, v) for k, v in td_style.items()]) + ';',
+            )
 
     return root

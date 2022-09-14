@@ -35,6 +35,7 @@ class ICML(XML, Source):
         fn = the output filename; default os.path.splitext(ICML.fn)[0] + '.xml'
         """
         import bkgen.converters.icml_document
+
         from .document import Document
 
         x = self.transform(
@@ -100,7 +101,11 @@ class ICML(XML, Source):
     def classname(C, stylename):
         """convert an Indesign style name into an HTML class name"""
         name = (
-            stylename.strip('/').split('/')[-1].replace('[', '').replace(']', '').replace(':', '__')
+            stylename.strip('/')
+            .split('/')[-1]
+            .replace('[', '')
+            .replace(']', '')
+            .replace(':', '__')
         )
         name = str(String(name).camelsplit().strip())
         name = re.sub(r'[^0-9A-Za-z_\-]+', '-', name)
@@ -114,8 +119,7 @@ class ICML(XML, Source):
     # than by ICML properties -- treat the style element as data to query
 
     def style_block(self, elem, pts_per_em=None):
-        """query style elem and return a style definition block
-        """
+        """query style elem and return a style definition block"""
         pts_per_em = pts_per_em or self.PTS_PER_EM
         style = Dict()
 
@@ -142,7 +146,9 @@ class ICML(XML, Source):
 
         key = 'AppliedLanguage'
         if elem.get(key) is not None:
-            lang = pycountry.languages.lookup(elem.get(key).split('/')[-1].split(':')[0].split('_')[0])
+            lang = pycountry.languages.lookup(
+                elem.get(key).split('/')[-1].split(':')[0].split('_')[0]
+            )
             if lang is not None:
                 return lang.alpha_2
             else:
@@ -150,8 +156,7 @@ class ICML(XML, Source):
 
     @classmethod
     def style_attribute(Class, elem, pts_per_em=None):
-        """query style elem for attributes and return a CSS style definition block.
-        """
+        """query style elem for attributes and return a CSS style definition block."""
         from bf.css import CSS
 
         log.debug(elem.attrib)
@@ -178,10 +183,16 @@ class ICML(XML, Source):
                 r"Word_R(\d+)_G(\d+)_B(\d+)$", color
             )
             if cmyk is not None:
-                rgb = CSS.cmyk_to_rgb(cmyk.group(1), cmyk.group(2), cmyk.group(3), cmyk.group(4))
+                rgb = CSS.cmyk_to_rgb(
+                    cmyk.group(1), cmyk.group(2), cmyk.group(3), cmyk.group(4)
+                )
                 style['color:'] = 'rgb(%(r)d, %(g)d, %(b)d)' % rgb
             elif rgb is not None:
-                style['color:'] = 'rgb(%s, %s, %s)' % (rgb.group(1), rgb.group(2), rgb.group(3))
+                style['color:'] = 'rgb(%s, %s, %s)' % (
+                    rgb.group(1),
+                    rgb.group(2),
+                    rgb.group(3),
+                )
             elif color == 'Black':
                 style['color:'] = 'rgb(0, 0, 0)'
             elif color == 'Paper':
@@ -241,7 +252,11 @@ class ICML(XML, Source):
             elif 'Black' in fs:
                 style['font-weight:'] = '900'
             elif (
-                'Medium' in fs or 'Regular' in fs or 'Roman' in fs or 'Book' in fs or 'Normal' in fs
+                'Medium' in fs
+                or 'Regular' in fs
+                or 'Roman' in fs
+                or 'Book' in fs
+                or 'Normal' in fs
             ):
                 style['font-weight:'] = 'normal'
             elif 'Extralight' in fs or 'Thin' in fs:

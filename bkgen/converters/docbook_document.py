@@ -10,8 +10,9 @@ from bxml.xt import XT
 from lxml import etree
 
 from bkgen import NS
-from ._converter import Converter
 from bkgen.document import Document
+
+from ._converter import Converter
 
 log = logging.getLogger(__name__)
 B = Builder(default=NS.html, **NS)
@@ -35,5 +36,7 @@ def document(elem, **params):
         if e.get('src') is not None:
             e.set('src', str(URL(e.get('src'))))
     for img in docroot.xpath("//html:img[@height]", namespaces=NS):
-        img.set('style', 'height:%s;%s' % (img.attrib.pop('height'), img.get('style') or ''))
+        img.set(
+            'style', 'height:%s;%s' % (img.attrib.pop('height'), img.get('style') or '')
+        )
     return [docroot]

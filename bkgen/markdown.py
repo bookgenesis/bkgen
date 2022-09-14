@@ -33,7 +33,9 @@ class Markdown(Text, Source):
     def documents(self, **params):
         return [self.document(**params)]
 
-    def html(self, reload=False, output_format='xhtml5', lazy_ol=False, extensions=None):
+    def html(
+        self, reload=False, output_format='xhtml5', lazy_ol=False, extensions=None
+    ):
         if reload is True or self.__HTML is None:
             from markdown import markdown
 
@@ -43,7 +45,9 @@ class Markdown(Text, Source):
                 lazy_ol=lazy_ol,
                 extensions=extensions or self.EXTENSIONS,
             )
-            body = etree.fromstring("""<body xmlns="%s">\n%s\n</body>""" % (NS.html, content))
+            body = etree.fromstring(
+                """<body xmlns="%s">\n%s\n</body>""" % (NS.html, content)
+            )
             root = B.html.html('\n\t', body, '\n')
             for elem in root.xpath("//*[contains(@href, '.md')]"):
                 path_fragment = str(URL(elem.get('href'))).split('#')

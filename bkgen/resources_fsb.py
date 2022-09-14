@@ -14,20 +14,22 @@ All paths in the resources.yaml are relative to the parent directory of that doc
 very generalizable and included a lot of bespoke scripting. This is more generic.)
 """
 
-import os
 import multiprocessing as mp
+import os
 import shutil
-import yaml
 import traceback
 from glob import glob
-from bl.rglob import rglob
 from importlib import import_module
-from typing import List, Union
 from pathlib import Path
-from pydantic import AnyUrl, BaseModel, Field, validator
-from bkgen.document import Document
-from bxml.xslt import XSLT
+from typing import List, Union
+
+import yaml
+from bl.rglob import rglob
 from bxml.builder import Builder
+from bxml.xslt import XSLT
+from pydantic import AnyUrl, BaseModel, Field, validator
+
+from bkgen.document import Document
 
 PATH = Path(os.path.abspath(__file__)).parent
 

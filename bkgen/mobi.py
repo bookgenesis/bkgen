@@ -141,8 +141,8 @@ class MOBI(Dict):
     @classmethod
     def move_anchors_before_paragraphs(C, build_path, opffn):
         """
-        In Kindle ebooks, link targets **NO LONGER** need to be moved 
-        before the containing paragraph so that the 
+        In Kindle ebooks, link targets **NO LONGER** need to be moved
+        before the containing paragraph so that the
         paragraph formatting can be displayed properly.
         """
         opf = XML(fn=opffn)
@@ -181,7 +181,7 @@ class MOBI(Dict):
 
     def size_images(self, opffn):
         """
-        Resample images to the width / height specified in the img tag, 
+        Resample images to the width / height specified in the img tag,
         and remove those size attributes
         """
         opf = XML(fn=opffn)
@@ -370,8 +370,8 @@ class MOBI(Dict):
             h.write()
 
     def remove_display_none(self, opffn):
-        """Kindle doesn't like too much display:none; so remove those elements, 
-        and remove the instruction from the stylesheets. 
+        """Kindle doesn't like too much display:none; so remove those elements,
+        and remove the instruction from the stylesheets.
         Preserve any pagebreaks in the removed content.
         """
         opf = XML(fn=opffn)
@@ -423,7 +423,7 @@ class MOBI(Dict):
 
     def remove_css_before_after(self, opffn):
         """
-        Remove ::before and ::after selectors from the stylesheets, 
+        Remove ::before and ::after selectors from the stylesheets,
         because they cause problems on the Kindle.
         """
         opf = XML(fn=opffn)
@@ -444,8 +444,7 @@ class MOBI(Dict):
             css.write()
 
     def remove_details(self, opffn):
-        """Kindle doesn't like <details> elements; so remove those elements. 
-        """
+        """Kindle doesn't like <details> elements; so remove those elements."""
         opf = XML(fn=opffn)
         html_items = [
             item
@@ -497,6 +496,7 @@ class MOBI(Dict):
 
 if __name__ == '__main__':
     import sys
+
     from bkgen.epub import EPUB
 
     logging.basicConfig(**config.Logging)

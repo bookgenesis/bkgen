@@ -16,7 +16,9 @@ def trim(fn):
     """trim the file and return the output filename"""
     ext = os.path.splitext(fn)[-1].lower()
     if ext in ['.pdf', '.eps']:
-        outfiles = gs.render(fn, outfn=os.path.splitext(fn)[0] + '.jpg', mogrify={'trim': ''})
+        outfiles = gs.render(
+            fn, outfn=os.path.splitext(fn)[0] + '.jpg', mogrify={'trim': ''}
+        )
         return '\n'.join(outfiles)
     else:
         magick.mogrify(fn, trim="")

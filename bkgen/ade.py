@@ -13,7 +13,9 @@ class ADE(EPUB):
     """
 
     @classmethod
-    def build(C, epub_path, metadata, pagemap_href="page-map.xml", zip_epub=True, **kwargs):
+    def build(
+        C, epub_path, metadata, pagemap_href="page-map.xml", zip_epub=True, **kwargs
+    ):
         """build the ADE EPUB file"""
         # first use the EPUB.build() procedure
         epubfn = EPUB.build(epub_path, metadata, zip_epub=False, **kwargs)
@@ -23,7 +25,9 @@ class ADE(EPUB):
         navfn = C.get_nav_fn(epub_path)
         if navfn is not None and opffn is not None:
             # make the page map file
-            pagemap_fn = C.make_page_map_file(epub_path, navfn, pagemap_href=pagemap_href)
+            pagemap_fn = C.make_page_map_file(
+                epub_path, navfn, pagemap_href=pagemap_href
+            )
             if pagemap_fn is not None:
                 # add page map to the opf manifest and spine
                 opf = XML(fn=opffn)
@@ -48,10 +52,16 @@ class ADE(EPUB):
     @classmethod
     def make_page_map_file(C, epub_path, nav_fn, pagemap_href='page-map.xml'):
         nav = XML(fn=nav_fn)
-        page_list = nav.root.find(".//{%(html)s}nav[@{%(epub)s}type='page-list']" % C.NS)
+        page_list = nav.root.find(
+            ".//{%(html)s}nav[@{%(epub)s}type='page-list']" % C.NS
+        )
         if page_list is not None:
-            pagemap = XML(fn=os.path.join(epub_path, pagemap_href), root=C.OPF('page-map'))
+            pagemap = XML(
+                fn=os.path.join(epub_path, pagemap_href), root=C.OPF('page-map')
+            )
             for a in page_list.xpath(".//html:a[@href]", namespaces=C.NS):
-                pagemap.root.append(C.OPF.page(name=a.text, href=str(URL(a.get('href')))))
+                pagemap.root.append(
+                    C.OPF.page(name=a.text, href=str(URL(a.get('href'))))
+                )
             pagemap.write()
             return pagemap.fn

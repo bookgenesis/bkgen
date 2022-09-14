@@ -28,10 +28,14 @@ def import_resources(resource_map_filename, postprocess=None):
             source_document = Document(fn=str(source_path))
             if source_path.name not in content_documents:
                 content_documents[source_path.name] = Document()
-                content_documents[source_path.name].fn = str(path / 'content' / source_path.name)
+                content_documents[source_path.name].fn = str(
+                    path / 'content' / source_path.name
+                )
             content_document = content_documents[source_path.name]
             log.info("content_document.fn = %s" % content_document.fn)
-            content_document_body = content_document.find(content_document.root, "html:body")
+            content_document_body = content_document.find(
+                content_document.root, "html:body"
+            )
             assert content_document_body is not None
             for item in resource_items(source_document, source_def):
                 content_document_body.append(item)
@@ -44,20 +48,24 @@ def import_resources(resource_map_filename, postprocess=None):
             content_document.fn = str(path / 'content' / document_def['name'])
         content_document = content_documents[document_def['name']]
         log.info("content_document.fn = %s" % content_document.fn)
-        content_document_body = content_document.find(content_document.root, "html:body")
+        content_document_body = content_document.find(
+            content_document.root, "html:body"
+        )
         assert content_document_body is not None
         for item in document_definition_items(document_def):
             content_document_body.append(item)
             log.debug(item.attrib)
         content_document.write()
 
-    content_filenames = [str(path / 'content' / name) for name in content_documents.keys()]
-    
+    content_filenames = [
+        str(path / 'content' / name) for name in content_documents.keys()
+    ]
+
     if postprocess is not None:
         if not isinstance(postprocess, list):
             postprocess = [postprocess]
         for content_filename in content_filenames:
-            for fn in postprocess: 
+            for fn in postprocess:
                 fn(content_filename)
 
     return content_filenames
@@ -71,7 +79,9 @@ def resource_items(source_document, source_def):
 
 def resource_definition_items(source_document, resource_items_def):
     log.debug("resource_items_def['xpath'] = %r" % resource_items_def['xpath'])
-    for element in source_document.xpath(source_document.root, resource_items_def['xpath']):
+    for element in source_document.xpath(
+        source_document.root, resource_items_def['xpath']
+    ):
         if element.tag == "{%(html)s}section" % Document.NS:
             section_item = deepcopy(element)
         else:
@@ -86,13 +96,17 @@ def resource_definition_items(source_document, resource_items_def):
             section_item.set('title', resource_items_def.get('title'))
         elif resource_items_def.get('title-xpath'):
             section_item.set(
-                'title', str(''.join(Document.xpath(element, resource_items_def['title-xpath'])))
+                'title',
+                str(
+                    ''.join(Document.xpath(element, resource_items_def['title-xpath']))
+                ),
             )
 
         # data-ref
         if resource_items_def.get('ref-xpath'):
             section_item.set(
-                'data-ref', str(''.join(Document.xpath(element, resource_items_def['ref-xpath'])))
+                'data-ref',
+                str(''.join(Document.xpath(element, resource_items_def['ref-xpath']))),
             )
 
         # collect next matches
@@ -102,7 +116,8 @@ def resource_definition_items(source_document, resource_items_def):
             next_elem = element.getnext()
             while (
                 next_elem is not None
-                and Document.find(next_elem, f"self::{collect_next_matches}") is not None
+                and Document.find(next_elem, f"self::{collect_next_matches}")
+                is not None
             ):
                 section_item.append(deepcopy(next_elem))
                 next_elem = next_elem.getnext()
@@ -130,4 +145,6 @@ def document_definition_items(document_def):
 
 def element_content_id(element):
     """create an id for the element based on its content"""
-    return '_' + String(Document.canonicalized_string(element)).digest(b64=True, alg='md5')
+    return '_' + String(Document.canonicalized_string(element)).digest(
+        b64=True, alg='md5'
+    )

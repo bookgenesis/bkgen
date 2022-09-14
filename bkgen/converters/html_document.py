@@ -11,8 +11,9 @@ from bxml.xt import XT
 from lxml import etree
 
 from bkgen import NS
-from ._converter import Converter
 from bkgen.document import Document
+
+from ._converter import Converter
 
 B = Builder(**NS)
 transformer = XT()
@@ -72,8 +73,7 @@ def wrap_sections(root, body_xpath=None):
 
 
 def sections_ids(root):
-    """every section needs to have a title, if possible, and a unique id in the document
-    """
+    """every section needs to have a title, if possible, and a unique id in the document"""
     body = root.find("{%(html)s}body" % NS)
     sections = body.xpath(".//html:section", namespaces=NS)
     title_xpath = """

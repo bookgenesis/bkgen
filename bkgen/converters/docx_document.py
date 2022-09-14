@@ -19,8 +19,9 @@ from bxml.xt import XT
 from lxml import etree
 
 from bkgen import NS
-from ._converter import Converter
 from bkgen.document import Document
+
+from ._converter import Converter
 
 log = logging.getLogger(__name__)
 B = Document.Builder()
@@ -171,8 +172,8 @@ def remove_empty_paras(root, **params):
 
 def nest_level_sections(root, **params):
     """h1...h9 paragraphs indicate the beginning of a nested section;
-        each level creates a new nested section.
-        the section title attribute is the heading text.
+    each level creates a new nested section.
+    the section title attribute is the heading text.
     """
     body = XML.find(root, "html:body", namespaces=NS)
     level_section_xpath = """.//html:*[not(ancestor::html:table) and 
@@ -237,7 +238,7 @@ def set_section_ids(root, **params):
 # *** OBSOLETE ***
 def split_level_sections(root, levels=1, **params):
     """hN paragraphs (for levels in 1..9) indicate the beginning of a section;
-        each creates a new section.
+    each creates a new section.
     """
     level_section_xpath = ' | '.join(
         [".//html:h%d[not(ancestor::html:table)]" % i for i in range(1, levels + 1)]
@@ -412,7 +413,7 @@ def number_lists(root, **params):
 
 def map_para_styles_levels(root, **params):
     """Adjust the para class to use the Word style name.
-        Also convert <p> to <h#> if there is an outline level in the style."""
+    Also convert <p> to <h#> if there is an outline level in the style."""
     stylemap = params['docx'].stylemap(cache=True)
     for p in root.xpath(".//html:p[@class]", namespaces=NS):
         style = stylemap.get(p.get('class'))
@@ -581,7 +582,7 @@ def handle_style_overrides(root, style_overrides=True, **params):
 
 def paragraphs_with_newlines(root):
     """
-    Paragraphs that are not in tables, comments, footnotes, or endnotes 
+    Paragraphs that are not in tables, comments, footnotes, or endnotes
     should be followed by a newline
     """
     for p in root.xpath(
@@ -634,8 +635,7 @@ def anchors_in_paragraphs(root):
 
 
 def field_elements(root, **params):
-    """fields need to be converted from a series of milestones to properly nested form
-    """
+    """fields need to be converted from a series of milestones to properly nested form"""
     # unnest pub:field_* elements so that html:p is their direct parent
     for field_elem in root.xpath(
         ".//pub:*[ancestor::html:p and contains(name(), 'field_')]", namespaces=NS
@@ -743,7 +743,7 @@ def parse_field_attributes(cls, tokens):
 
 def toc_fields(root, **params):
     """
-    TOC fields usually have PAGEREF fields inside them, 
+    TOC fields usually have PAGEREF fields inside them,
     but the main text of each entry is not linked.
     Add a link to the main text of each entry that has a PAGEREF field but no link.
     """
