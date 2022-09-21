@@ -40,7 +40,7 @@ class Resource(BaseModel):
     transforms: List[Path] = Field(default_factory=list)
     params: dict = Field(default_factory=dict)
 
-    @validator('sources')
+    @validator("sources")
     def unpack_sources_globs(cls, value):
         """
         Any source that is a Path might be a glob. Unpack these first.
@@ -53,7 +53,7 @@ class Resource(BaseModel):
 
         return list(gen_sources(value))
 
-    @validator('sources')
+    @validator("sources")
     def check_unique_sources(cls, value):
         """
         Each source must have a unique base filename within this Resource.
@@ -84,7 +84,7 @@ class Resource(BaseModel):
             ),
             **self.params,
         }
-        if source.suffix.lower() == '.xml':
+        if source.suffix.lower() == ".xml":
             doc = Document(fn=str(source))
         else:
             doc = Document()
@@ -95,25 +95,25 @@ class Resource(BaseModel):
         try:
             for transform in self.transforms:
                 # xsl module, to be processed by lxml XSLT
-                if 'xsl' in transform.suffix:
+                if "xsl" in transform.suffix:
                     xslt = XSLT(fn=str(transform))
                     doc.root = xslt(doc.root, **params).getroot()
                 # python 'module:method', callable with doc.root
-                elif ':' in str(transform):
-                    modname, trfname = str(transform).split(':')
+                elif ":" in str(transform):
+                    modname, trfname = str(transform).split(":")
                     mod = import_module(modname)
                     trf = mod.__dict__[trfname]
                     doc.root = trf(doc.root, **params)
-            body = doc.find(doc.root, 'html:body')
+            body = doc.find(doc.root, "html:body")
             # write files that have content
             if body is not None and body.getchildren():
-                doc.fn = os.path.splitext(resource_path)[0] + '.xml'
+                doc.fn = os.path.splitext(resource_path)[0] + ".xml"
                 doc.write()
             # remove left-over empty files
             else:
                 fn = os.path.abspath(str(resource_path))
                 if os.path.exists(fn):
-                    print('REMOVE', resource_path)
+                    print("REMOVE", resource_path)
                     os.remove(fn)
         except Exception as exc:
             print(self.folder, source, transform, exc)
@@ -132,7 +132,7 @@ class Resources(BaseModel):
     version: str
     resources: List[Resource] = Field(default_factory=list)
 
-    @validator('resources')
+    @validator("resources")
     def check_unique_folders(cls, value):
         """
         Each Resource in this Resources list must have a unique folder name
@@ -172,33 +172,33 @@ class Resources(BaseModel):
 
 
 def update_spine(project):
-    res = Resources.load(PATH / 'resources.yaml')
+    res = Resources.load(PATH / "resources.yaml")
     PUB = Builder.single(Document.NS.pub)
 
     # collect all the included sections with filename#id
     includes = []
     for resource in res.resources:
-        fns = rglob(str(PATH / resource.folder), '*.xml')
+        fns = rglob(str(PATH / resource.folder), "*.xml")
         for fn in fns:
             doc = Document(fn=fn)
-            for incl in doc.xpath(doc.root, '//pub:include'):
-                includes.append(incl.get('src').split('/')[-1])
+            for incl in doc.xpath(doc.root, "//pub:include"):
+                includes.append(incl.get("src").split("/")[-1])
 
     # create the spine with all the sections that are not included elsewhere
-    spine = project.find(project.root, 'pub:spine')
+    spine = project.find(project.root, "pub:spine")
     for resource in res.resources:
-        fns = rglob(str(PATH / resource.folder), '*.xml')
+        fns = rglob(str(PATH / resource.folder), "*.xml")
         for fn in fns:
-            basename = fn.split('/')[-1]
+            basename = fn.split("/")[-1]
             doc = Document(fn=fn)
             for section in doc.xpath(doc.root, "html:body/html:section"):
                 if f"{basename}#{section.get('id')}" not in includes:
                     relpath = os.path.relpath(doc.fn, str(PATH))
                     href = f"{relpath}#{section.get('id')}"
                     if project.find(spine, f"pub:spineitem[@href='{href}']") is None:
-                        spineitem = PUB.spineitem({'href': href})
-                        if section.get('title'):
-                            spineitem.set('title', section.get('title'))
-                        spineitem.tail = '\n\t'
+                        spineitem = PUB.spineitem({"href": href})
+                        if section.get("title"):
+                            spineitem.set("title", section.get("title"))
+                        spineitem.tail = "\n\t"
                         spine.append(spineitem)
-                        print('APPEND spineitem:', spineitem.attrib)
+                        print("APPEND spineitem:", spineitem.attrib)

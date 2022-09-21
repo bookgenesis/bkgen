@@ -18,10 +18,10 @@ def import_resources(resource_map_filename, postprocess=None):
     path = Path(resource_map_filename).parent
     resource_map = yaml.safe_load(open(resource_map_filename).read())
     content_documents = {}
-    for source_def in resource_map.get('sources') or []:
+    for source_def in resource_map.get("sources") or []:
         log.debug(source_def)
         source_filenames = sorted(
-            glob(str(path / source_def['source-path'] / source_def['file-glob']))
+            glob(str(path / source_def["source-path"] / source_def["file-glob"]))
         )
         for source_filename in source_filenames:
             source_path = Path(source_filename)
@@ -29,7 +29,7 @@ def import_resources(resource_map_filename, postprocess=None):
             if source_path.name not in content_documents:
                 content_documents[source_path.name] = Document()
                 content_documents[source_path.name].fn = str(
-                    path / 'content' / source_path.name
+                    path / "content" / source_path.name
                 )
             content_document = content_documents[source_path.name]
             log.info("content_document.fn = %s" % content_document.fn)
@@ -42,11 +42,11 @@ def import_resources(resource_map_filename, postprocess=None):
                 log.debug(item.attrib)
             content_document.write()
 
-    for document_def in resource_map.get('documents') or []:
-        if document_def['name'] not in content_documents:
+    for document_def in resource_map.get("documents") or []:
+        if document_def["name"] not in content_documents:
             content_document = Document()
-            content_document.fn = str(path / 'content' / document_def['name'])
-        content_document = content_documents[document_def['name']]
+            content_document.fn = str(path / "content" / document_def["name"])
+        content_document = content_documents[document_def["name"]]
         log.info("content_document.fn = %s" % content_document.fn)
         content_document_body = content_document.find(
             content_document.root, "html:body"
@@ -58,7 +58,7 @@ def import_resources(resource_map_filename, postprocess=None):
         content_document.write()
 
     content_filenames = [
-        str(path / 'content' / name) for name in content_documents.keys()
+        str(path / "content" / name) for name in content_documents.keys()
     ]
 
     if postprocess is not None:
@@ -72,15 +72,15 @@ def import_resources(resource_map_filename, postprocess=None):
 
 
 def resource_items(source_document, source_def):
-    for resource_items_def in source_def['definitions']:
+    for resource_items_def in source_def["definitions"]:
         for item in resource_definition_items(source_document, resource_items_def):
             yield item
 
 
 def resource_definition_items(source_document, resource_items_def):
-    log.debug("resource_items_def['xpath'] = %r" % resource_items_def['xpath'])
+    log.debug("resource_items_def['xpath'] = %r" % resource_items_def["xpath"])
     for element in source_document.xpath(
-        source_document.root, resource_items_def['xpath']
+        source_document.root, resource_items_def["xpath"]
     ):
         if element.tag == "{%(html)s}section" % Document.NS:
             section_item = deepcopy(element)
@@ -88,31 +88,31 @@ def resource_definition_items(source_document, resource_items_def):
             section_item = B.html.section(deepcopy(element))
 
         # section class
-        if resource_items_def.get('section-class'):
-            section_item.set('class', resource_items_def['section-class'])
+        if resource_items_def.get("section-class"):
+            section_item.set("class", resource_items_def["section-class"])
 
         # title
-        if resource_items_def.get('title'):
-            section_item.set('title', resource_items_def.get('title'))
-        elif resource_items_def.get('title-xpath'):
+        if resource_items_def.get("title"):
+            section_item.set("title", resource_items_def.get("title"))
+        elif resource_items_def.get("title-xpath"):
             section_item.set(
-                'title',
+                "title",
                 str(
-                    ''.join(Document.xpath(element, resource_items_def['title-xpath']))
+                    "".join(Document.xpath(element, resource_items_def["title-xpath"]))
                 ),
             )
 
         # data-ref
-        if resource_items_def.get('ref-xpath'):
+        if resource_items_def.get("ref-xpath"):
             section_item.set(
-                'data-ref',
-                str(''.join(Document.xpath(element, resource_items_def['ref-xpath']))),
+                "data-ref",
+                str("".join(Document.xpath(element, resource_items_def["ref-xpath"]))),
             )
 
         # collect next matches
-        if resource_items_def.get('collect-next-matches'):
-            collect_next_matches = resource_items_def['collect-next-matches']
-            log.debug('collect_next_matches = %r' % collect_next_matches)
+        if resource_items_def.get("collect-next-matches"):
+            collect_next_matches = resource_items_def["collect-next-matches"]
+            log.debug("collect_next_matches = %r" % collect_next_matches)
             next_elem = element.getnext()
             while (
                 next_elem is not None
@@ -123,28 +123,28 @@ def resource_definition_items(source_document, resource_items_def):
                 next_elem = next_elem.getnext()
 
         # id
-        if section_item.get('id') is not None:
-            section_item.attrib.pop('id')
-        section_item.set('id', element_content_id(section_item))
+        if section_item.get("id") is not None:
+            section_item.attrib.pop("id")
+        section_item.set("id", element_content_id(section_item))
 
-        section_item.text = '\n'
-        section_item.tail = '\n\n'
+        section_item.text = "\n"
+        section_item.tail = "\n\n"
         yield section_item
 
 
 def document_definition_items(document_def):
-    template = document_def['template']
-    for item_def in document_def['items']:
+    template = document_def["template"]
+    for item_def in document_def["items"]:
         section_item = etree.fromstring(template.format(**item_def))
-        section_item.tail = '\n\n'
-        if section_item.get('id') is not None:
-            section_item.attrib.pop('id')
-        section_item.set('id', element_content_id(section_item))
+        section_item.tail = "\n\n"
+        if section_item.get("id") is not None:
+            section_item.attrib.pop("id")
+        section_item.set("id", element_content_id(section_item))
         yield section_item
 
 
 def element_content_id(element):
     """create an id for the element based on its content"""
-    return '_' + String(Document.canonicalized_string(element)).digest(
-        b64=True, alg='md5'
+    return "_" + String(Document.canonicalized_string(element)).digest(
+        b64=True, alg="md5"
     )

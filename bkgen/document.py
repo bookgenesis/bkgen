@@ -17,16 +17,16 @@ log = logging.getLogger(__name__)
 
 class Document(XML, Source):
     ROOT_TAG = "{%(pub)s}document" % NS
-    NS = Dict(**{k: NS[k] for k in NS if k in ['html', 'pub', 'epub', 'm']})
+    NS = Dict(**{k: NS[k] for k in NS if k in ["html", "pub", "epub", "m"]})
     DEFAULT_NS = NS.html
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.root.text = '\n'
+        self.root.text = "\n"
         if self.find(self.root, "html:body", namespaces=self.NS) is None:
             H = Builder.single(self.NS.html)
-            body = H.body('\n')
-            body.tail = '\n'
+            body = H.body("\n")
+            body.tail = "\n"
             self.root.append(body)
 
     @property
@@ -37,18 +37,18 @@ class Document(XML, Source):
         """return a string containing the content of the body or given element for editing"""
         from .converters import document_html
 
-        elem = elem or self.find(self.root, 'html:body')
+        elem = elem or self.find(self.root, "html:body")
         elem = document_html.render_footnotes(elem)
         elem = document_html.process_endnotes(elem, endnotes=[], insert_endnotes=True)
         elem = document_html.process_pub_attributes(elem)
-        content = (elem.text or '') + ''.join(
+        content = (elem.text or "") + "".join(
             [
                 re.sub(
                     "<(/?pub:[^>]+)>", r"&lt;\1&gt;", etree.tounicode(e, with_tail=True)
                 )
                 for e in elem.getchildren()
             ]
-        ).strip().replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+        ).strip().replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
         return content
 
     def metadata(self):
@@ -65,7 +65,7 @@ class Document(XML, Source):
         from bf.image import Image
 
         images = [
-            Image(fn=os.path.join(self.path, str(URL(img.get('src')))))
+            Image(fn=os.path.join(self.path, str(URL(img.get("src")))))
             for img in self.xpath(self.root, "//html:img[@src]", namespaces=NS)
         ]
         return images
@@ -73,7 +73,7 @@ class Document(XML, Source):
     def stylesheet(self):
         from .css import CSS
 
-        cssfn = os.path.splitext(self.fn)[0] + '.css'
+        cssfn = os.path.splitext(self.fn)[0] + ".css"
         if os.path.exists(cssfn):
             return CSS(fn=cssfn)
 
@@ -84,16 +84,16 @@ class Document(XML, Source):
         x = C(fn=fn, **args)
         x.fn = fn
         section = None
-        if id not in [None, '']:
+        if id not in [None, ""]:
             section = x.find(x.root, "//*[@id='%s']" % id, namespaces=C.NS)
             if section is None:
-                log.warn('SECTION NOT FOUND: %s#%s', fn, id)
+                log.warn("SECTION NOT FOUND: %s#%s", fn, id)
 
         log.debug("Load %r" % section.attrib if section is not None else None)
         if section is not None:
-            body_elem = B._.body('\n', section)
-            x.root = B.pub.document('\n\t', body_elem, '\n')
-            x.fn = os.path.splitext(x.fn)[0] + '_' + (section.get('id') or '') + '.xml'
+            body_elem = B._.body("\n", section)
+            x.root = B.pub.document("\n\t", body_elem, "\n")
+            x.fn = os.path.splitext(x.fn)[0] + "_" + (section.get("id") or "") + ".xml"
 
         return x
 
@@ -108,11 +108,11 @@ class Document(XML, Source):
 
         converter = DocumentAid()
         if fn is None:
-            fn = self.splitext()[0] + '.aid.xml'
+            fn = self.splitext()[0] + ".aid.xml"
         return converter.convert(self, fn=fn, **params)
 
     def html(
-        self, fn=None, ext='.xhtml', output_path=None, resources=[], lang='en', **args
+        self, fn=None, ext=".xhtml", output_path=None, resources=[], lang="en", **args
     ):
         from .converters.document_html import DocumentHtml
 
@@ -137,31 +137,31 @@ class Document(XML, Source):
         """put included content into the <pub:include> elements in the document."""
         for incl in self.root.xpath("//pub:include", namespaces=NS):
             # remove existing content from the include
-            incl.text = '\n'
+            incl.text = "\n"
             for ch in incl.getchildren():
                 incl.remove(ch)
 
             # fill the include with the included content from the source
             srcfn = os.path.abspath(
                 os.path.join(
-                    os.path.dirname(self.fn), str(URL(incl.get('src'))).split('#')[0]
+                    os.path.dirname(self.fn), str(URL(incl.get("src"))).split("#")[0]
                 )
             )
             if os.path.exists(srcfn):
                 src = Document(fn=srcfn)
-                if '#' in incl.get('src'):
-                    srcid = str(URL(incl.get('src'))).split('#')[-1]
+                if "#" in incl.get("src"):
+                    srcid = str(URL(incl.get("src"))).split("#")[-1]
                     incl_elems = XML.xpath(src.root, "//*[@id='%s']" % srcid)
                 else:
                     incl_elems = XML.xpath(src.root, "html:body/*", namespaces=NS)
 
                 if len(incl_elems) == 0:
-                    log.warn('NO ELEMENTS TO INCLUDE: %s', incl.get('src'))
+                    log.warn("NO ELEMENTS TO INCLUDE: %s", incl.get("src"))
 
                 for ie in incl_elems:
                     incl.append(ie)
             else:
-                log.error('INCLUDE SRC FILE NOT FOUND: %s', incl.get('src'))
+                log.error("INCLUDE SRC FILE NOT FOUND: %s", incl.get("src"))
 
             if strip is True:
                 self.replace_with_contents(incl)
@@ -173,42 +173,42 @@ class Document(XML, Source):
         )
         log.info("%s" % section_id)
         if section is not None:
-            return (section.text or '') + ''.join(
+            return (section.text or "") + "".join(
                 [etree.tounicode(e, with_tail=True) for e in section.getchildren()]
             )
 
-    BANNED_ELEMENT_TAGS = ['html:script', 'html:form', 'html:input', 'html:textarea']
-    BANNED_ATTRIBUTE_PATTERN = r'^on.*'
+    BANNED_ELEMENT_TAGS = ["html:script", "html:form", "html:input", "html:textarea"]
+    BANNED_ATTRIBUTE_PATTERN = r"^on.*"
 
     def cleanup(self, root=None):
         """Clean root of disallowed elements and attributes; return a list of them"""
         root = root or self.root
-        cleaned = {'elements': [], 'attributes': []}
-        elem_xpath = ' | '.join(['//' + e for e in self.BANNED_ELEMENT_TAGS])
+        cleaned = {"elements": [], "attributes": []}
+        elem_xpath = " | ".join(["//" + e for e in self.BANNED_ELEMENT_TAGS])
         for elem in self.xpath(root, elem_xpath):
-            data = {'tag': self.tag_name(elem.tag), 'attrib': elem.attrib}
+            data = {"tag": self.tag_name(elem.tag), "attrib": elem.attrib}
             self.remove(elem, leave_tail=True)
-            cleaned['elements'].append(data)
+            cleaned["elements"].append(data)
         attr_xpath = '//@*[re:test(name(), "%s", "i")]' % self.BANNED_ATTRIBUTE_PATTERN
         for val in self.xpath(
-            root, attr_xpath, namespaces={'re': "http://exslt.org/regular-expressions"}
+            root, attr_xpath, namespaces={"re": "http://exslt.org/regular-expressions"}
         ):
             data = {
-                'name': val.attrname,
-                'value': str(val),
-                'tag': self.tag_name(val.getparent().tag),
+                "name": val.attrname,
+                "value": str(val),
+                "tag": self.tag_name(val.getparent().tag),
             }
             _ = val.getparent().attrib.pop(val.attrname)
-            cleaned['attributes'].append(data)
+            cleaned["attributes"].append(data)
         return cleaned
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     for fn in sys.argv[2:]:
         doc = Document(fn=fn)
-        if 'icml' in sys.argv[1]:
-            doc.icml(fn=os.path.splitext(doc.fn)[0] + '.icml').write()
-        if 'aid' in sys.argv[1]:
-            doc.aid(fn=os.path.splitext(doc.fn)[0] + '.aid.xml').write()
-        if 'html' in sys.argv[1]:
+        if "icml" in sys.argv[1]:
+            doc.icml(fn=os.path.splitext(doc.fn)[0] + ".icml").write()
+        if "aid" in sys.argv[1]:
+            doc.aid(fn=os.path.splitext(doc.fn)[0] + ".aid.xml").write()
+        if "html" in sys.argv[1]:
             doc.html().write()
