@@ -11,7 +11,7 @@ class DocBook(XML, Source):
         from .converters.docbook_document import DocBookDocument
 
         converter = DocBookDocument()
-        fn = fn or os.path.splitext(self.clean_filename(self.fn))[0] + '.xml'
+        fn = fn or os.path.splitext(self.clean_filename(self.fn))[0] + ".xml"
         doc = converter.convert(self, fn=fn, **params)
         return doc
 
@@ -22,7 +22,7 @@ class DocBook(XML, Source):
         path = path or self.path
         fn = (
             os.path.splitext(os.path.join(path, self.clean_filename(self.basename)))[0]
-            + '.xml'
+            + ".xml"
         )
         # just the one document
         return [self.document(fn=fn, **params)]

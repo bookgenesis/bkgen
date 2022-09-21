@@ -58,20 +58,20 @@ class Project(XML, Source):
     """
 
     NS = Dict(
-        **{k: v for k, v in NS.items() if k not in ['aid', 'aid5', 'cp', 'm', 'db']}
+        **{k: v for k, v in NS.items() if k not in ["aid", "aid5", "cp", "m", "db"]}
     )
     ROOT_TAG = "{%(pub)s}project" % NS  #: The tag for the root element of a project.
     DEFAULT_NS = NS.pub
 
     # the kinds of inputs that are currently supported
     ACCEPTED_EXTENSIONS = (
-        ['.docx', '.htm', '.html', '.xhtml', '.md', '.txt']
-        + ['.icml', '.idml', '.epub', '.jpg', '.jpeg']
-        + ['.png', '.bmp', '.tif', '.tiff']
+        [".docx", ".htm", ".html", ".xhtml", ".md", ".txt"]
+        + [".icml", ".idml", ".epub", ".jpg", ".jpeg"]
+        + [".png", ".bmp", ".tif", ".tiff"]
     )
 
     # the kinds of outputs that are currently supported
-    OUTPUT_KIND_EXTS = Dict(**{'EPUB': '.epub', 'Kindle': '.mobi', 'HTML': '.zip'})
+    OUTPUT_KIND_EXTS = Dict(**{"EPUB": ".epub", "Kindle": ".mobi", "HTML": ".zip"})
 
     @property
     def OUTPUT_EXT_KINDS(self):
@@ -80,19 +80,19 @@ class Project(XML, Source):
     def __init__(self, **args):
         XML.__init__(self, **args)
         if self.content_folder is None:
-            self.content_folder = 'content'
+            self.content_folder = "content"
         if self.image_folder is None:
-            self.image_folder = self.content_folder + '/images'
+            self.image_folder = self.content_folder + "/images"
         if self.cover_folder is None:
-            self.cover_folder = 'cover'
+            self.cover_folder = "cover"
         if self.output_folder is None:
-            self.output_folder = 'outputs'
+            self.output_folder = "outputs"
         if self.interior_folder is None:
-            self.interior_folder = 'interior'
+            self.interior_folder = "interior"
         if self.source_folder is None:
-            self.source_folder = 'sources'
+            self.source_folder = "sources"
         if self.font_folder is None:
-            self.font_folder = 'fonts'
+            self.font_folder = "fonts"
 
     def __repr__(self):
         return "Project(fn=%r)" % self.fn
@@ -115,8 +115,8 @@ class Project(XML, Source):
             return project
 
         if os.path.isdir(filepath):
-            if os.path.exists(os.path.join(filepath, 'project.xml')):
-                return C(fn=os.path.join(filepath, 'project.xml'))
+            if os.path.exists(os.path.join(filepath, "project.xml")):
+                return C(fn=os.path.join(filepath, "project.xml"))
 
             # Return the first XML document at the project root that is a <pub:project>.
             for fn in glob(os.path.join(filepath, "*.xml")):
@@ -124,11 +124,11 @@ class Project(XML, Source):
                 if xml.root.tag == "{%(pub)s}project" % C.NS:
                     return C(fn=fn)
 
-        raise TypeError(f'{filepath} is neither a Project file or a Project folder.')
+        raise TypeError(f"{filepath} is neither a Project file or a Project folder.")
 
     @property
     def name(self):
-        return self.root.get('name')
+        return self.root.get("name")
 
     @property
     def path(self):
@@ -185,11 +185,11 @@ class Project(XML, Source):
 
     @property
     def output_kinds(self):
-        return self.get('output_kinds') or self.OUTPUT_KIND_EXTS
+        return self.get("output_kinds") or self.OUTPUT_KIND_EXTS
 
     @property
     def title_text(self):
-        return self.metadata().title.text or ''
+        return self.metadata().title.text or ""
 
     @property
     def cover_href(self):
@@ -207,15 +207,15 @@ class Project(XML, Source):
         Potentially time-consuming to go through all the content.
         """
         data = []
-        fns = rglob(self.content_path, '*.xml')
+        fns = rglob(self.content_path, "*.xml")
         for fn in fns:
             x = XML(fn=fn)
             if x.root.tag != "{%(pub)s}document" % NS:
                 continue
             for elem in x.root.xpath("//html:body/html:section[@id]", namespaces=NS):
                 sd = Dict(
-                    href=os.path.relpath(fn, self.path) + '#' + elem.get('id'),
-                    title=elem.get('title'),
+                    href=os.path.relpath(fn, self.path) + "#" + elem.get("id"),
+                    title=elem.get("title"),
                 )
                 if include_content is True:
                     sd.element = elem
@@ -234,7 +234,7 @@ class Project(XML, Source):
         """all of pub:document files in the content subfolder."""
         from .document import Document
 
-        return [Document(fn=fn) for fn in rglob(self.content_path, '*.xml')]
+        return [Document(fn=fn) for fn in rglob(self.content_path, "*.xml")]
 
     def images(self):
         """all of the image files in the content subfolder."""
@@ -242,9 +242,9 @@ class Project(XML, Source):
 
         images = [
             Image(fn=fn)
-            for fn in rglob(self.content_path, '*.*')
+            for fn in rglob(self.content_path, "*.*")
             if os.path.splitext(fn)[-1].lower()
-            in ['.jpg', '.jpeg', '.tiff', '.tif', '.png', '.pdf', '.bmp']
+            in [".jpg", ".jpeg", ".tiff", ".tif", ".png", ".pdf", ".bmp"]
         ]
         return images
 
@@ -256,13 +256,13 @@ class Project(XML, Source):
             namespaces=NS,
         )
         if csshref is None:
-            css = CSS(fn=os.path.join(PATH, 'templates', 'project.css'))
-            css.fn = str(self.folder / 'project.css')
+            css = CSS(fn=os.path.join(PATH, "templates", "project.css"))
+            css.fn = str(self.folder / "project.css")
             css.write()
             csshref = css.relpath(self.path)
             resources = self.find(self.root, "pub:resources", namespaces=NS)
-            css_resource = PUB.resource({'class': 'stylesheet', 'href': csshref})
-            css_resource.tail = '\n\t\t'
+            css_resource = PUB.resource({"class": "stylesheet", "href": csshref})
+            css_resource.tail = "\n\t\t"
             resources.append(css_resource)
         else:
             css = CSS(fn=str(self.folder / csshref))
@@ -280,8 +280,8 @@ class Project(XML, Source):
         css = self.stylesheet()
         log.debug("href = %r" % href)
         if href is not None:
-            docfn = os.path.join(self.content_path, href.split('#')[0])
-            doc_cssfn = os.path.splitext(docfn)[0] + '.css'
+            docfn = os.path.join(self.content_path, href.split("#")[0])
+            doc_cssfn = os.path.splitext(docfn)[0] + ".css"
             log.debug("doc_cssfn = %r" % doc_cssfn)
             if os.path.exists(doc_cssfn):
                 css = CSS.merge_stylesheets(css.fn, doc_cssfn)
@@ -293,7 +293,7 @@ class Project(XML, Source):
         return [
             f
             for f in File(fn=self.path).file_list(depth=depth)
-            if (hidden is True or os.path.basename(f.fn)[0] != '.')
+            if (hidden is True or os.path.basename(f.fn)[0] != ".")
         ]
 
     def content_files(self):
@@ -301,7 +301,7 @@ class Project(XML, Source):
         return [
             f
             for f in File(fn=self.content_path).file_list()
-            if os.path.basename(f.fn)[0] != '.'
+            if os.path.basename(f.fn)[0] != "."
         ]
 
     def source_files(self):
@@ -309,14 +309,14 @@ class Project(XML, Source):
         return [
             f
             for f in File(fn=self.source_path).file_list()
-            if os.path.basename(f.fn)[0] != '.'
+            if os.path.basename(f.fn)[0] != "."
         ]
 
     def output_files(self):
         return [
             f
             for f in File(fn=self.output_path).file_list()
-            if os.path.basename(f.fn)[0] != '.'
+            if os.path.basename(f.fn)[0] != "."
         ]
 
     # CLASSMETHODS
@@ -328,7 +328,7 @@ class Project(XML, Source):
         title,
         name=None,
         path=None,
-        basename='project',
+        basename="project",
         refresh=False,
         include_stylesheet=True,
         **project_params,
@@ -343,10 +343,10 @@ class Project(XML, Source):
         Returns the Project XML object.
         """
         name = name or String(title).nameify()
-        if not (re.match(r"^[\w\-\_\.]+$", name or '', flags=re.U)):
+        if not (re.match(r"^[\w\-\_\.]+$", name or "", flags=re.U)):
             raise ValueError(
-                'Please provide a project name containing letters, numbers, hyphens, '
-                + 'underscores, and periods -- no whitespace or special characters.'
+                "Please provide a project name containing letters, numbers, hyphens, "
+                + "underscores, and periods -- no whitespace or special characters."
             )
         if not os.path.exists(parent_path):
             os.makedirs(parent_path)
@@ -357,7 +357,7 @@ class Project(XML, Source):
         else:
             log.debug("Project folder already exists: %s" % project_path)
 
-        project_fn = os.path.join(project_path, '%s.xml' % basename)
+        project_fn = os.path.join(project_path, "%s.xml" % basename)
         if os.path.exists(project_fn) and refresh is True:
             log.info(
                 "Refreshing project by removing existing project file: %s" % project_fn
@@ -368,10 +368,10 @@ class Project(XML, Source):
             project = Class(fn=project_fn, **project_params)
         else:
             project = Class(
-                fn=os.path.join(PATH, 'templates', 'project.xml'), **project_params
+                fn=os.path.join(PATH, "templates", "project.xml"), **project_params
             )
             project.fn = project_fn
-            project.root.set('name', name)
+            project.root.set("name", name)
 
         # update the title from what is given
         project.find(project.root, "opf:metadata/dc:title", namespaces=NS).text = title
@@ -380,7 +380,7 @@ class Project(XML, Source):
         for folder in [
             project.get(k)
             for k in project.keys()
-            if '_folder' in k and project.get(k) is not None
+            if "_folder" in k and project.get(k) is not None
         ]:
             path = os.path.join(project_path, folder)
             if not os.path.exists(path):
@@ -395,22 +395,22 @@ class Project(XML, Source):
         )
         if stylesheet_elem is not None:
             stylesheet_fn = os.path.abspath(
-                os.path.join(project.path, str(URL(stylesheet_elem.get('href'))))
+                os.path.join(project.path, str(URL(stylesheet_elem.get("href"))))
             )
             if not os.path.exists(stylesheet_fn):
                 stylesheet_elem.getparent().remove(stylesheet_elem)
                 stylesheet_elem = None
         if stylesheet_elem is None and include_stylesheet is True:
-            stylesheet_fn = os.path.splitext(project_fn)[0] + '.css'
+            stylesheet_fn = os.path.splitext(project_fn)[0] + ".css"
             stylesheet_href = os.path.relpath(stylesheet_fn, project.path).replace(
-                '\\', '/'
+                "\\", "/"
             )
-            project.add_resource(stylesheet_href, 'stylesheet')
+            project.add_resource(stylesheet_href, "stylesheet")
             if not os.path.exists(stylesheet_fn):
                 log.debug("stylesheet does not exist, creating")
                 from bl.text import Text
 
-                stylesheet = Text(fn=os.path.join(PATH, 'templates', 'project.css'))
+                stylesheet = Text(fn=os.path.join(PATH, "templates", "project.css"))
                 stylesheet.fn = stylesheet_fn
                 stylesheet.write()
         log.debug("project stylesheet = %r" % stylesheet_fn)
@@ -427,17 +427,17 @@ class Project(XML, Source):
             namespaces=NS,
         )
         if resource is None:
-            resource = PUB.resource({'href': href, 'class': resource_class})
-            resource.tail = '\n\t\t'
+            resource = PUB.resource({"href": href, "class": resource_class})
+            resource.tail = "\n\t\t"
             if kind is not None:
-                resource.set('kind', kind)
+                resource.set("kind", kind)
             resources.append(resource)
         else:
             log.warning("resource with that href already exists: %r" % resource.attrib)
         return resource
 
     def import_font_files(self, *fns):
-        resource_hrefs = [elem.get('href') for elem in self.resources()]
+        resource_hrefs = [elem.get("href") for elem in self.resources()]
         result_fns = []
         for fn in fns:
             src_file = File(fn=str(fn))
@@ -452,7 +452,7 @@ class Project(XML, Source):
                 src_file.copy(font_file.fn)
             href = font_file.relpath(self.path)
             if href not in resource_hrefs:
-                self.add_resource(href, 'font')
+                self.add_resource(href, "font")
                 result_fns.append(font_file.fn)
         return result_fns
 
@@ -473,10 +473,10 @@ class Project(XML, Source):
             result.fns += self.import_source(SourceClass(fn=fn), **args)
 
         # Project manifest
-        elif content_type in ['application/json'] or ext in ['.json']:
-            with open(fn, 'rb') as f:
+        elif content_type in ["application/json"] or ext in [".json"]:
+            with open(fn, "rb") as f:
                 manifest = json.load(f)
-            result['sources'] = []
+            result["sources"] = []
             manifest_fns = [
                 str(os.path.join(os.path.dirname(fn), entry)) for entry in manifest
             ]
@@ -485,18 +485,18 @@ class Project(XML, Source):
                     self.import_source_file(
                         manifest_fn,
                         fns=manifest_fns,
-                        **{k: v for k, v in args.items() if k not in ['fns']},
+                        **{k: v for k, v in args.items() if k not in ["fns"]},
                     )
                 )
-            result['fns'] = list(
-                chain(*[source['fns'] for source in result['sources']])
+            result["fns"] = list(
+                chain(*[source["fns"] for source in result["sources"]])
             )
 
         # .DOCX files
         elif (
             content_type
-            == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-            or ext == '.docx'
+            == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            or ext == ".docx"
         ):
             # write the content data to a temporary folder
             from .docx import DOCX
@@ -504,10 +504,10 @@ class Project(XML, Source):
             result.fns += self.import_source(DOCX(fn=fn), **args)
 
         # .HTML files
-        elif content_type in ['text/html', 'application/xhtml+xml'] or ext in [
-            '.htm',
-            '.html',
-            '.xhtml',
+        elif content_type in ["text/html", "application/xhtml+xml"] or ext in [
+            ".htm",
+            ".html",
+            ".xhtml",
         ]:
             # write the content data to a temporary folder
             from .html import HTML
@@ -515,73 +515,73 @@ class Project(XML, Source):
             result.fns += self.import_source(HTML(fn=fn), **args)
 
         # .MD files
-        elif content_type == 'text/x-markdown' or ext in ['.md', '.txt']:
+        elif content_type == "text/x-markdown" or ext in [".md", ".txt"]:
             # write the content data to a temporary folder
             from .markdown import Markdown
 
             result.fns += self.import_source(Markdown(fn=fn), **args)
 
         # .EPUB files
-        elif content_type == 'application/epub+zip' or ext == '.epub':
+        elif content_type == "application/epub+zip" or ext == ".epub":
             from .epub import EPUB
 
             result.fns += self.import_source(EPUB(fn=fn), **args)
 
         # .IDML files
         elif (
-            content_type == 'application/vnd.adobe.indesign-idml-package'
-            or ext == '.idml'
+            content_type == "application/vnd.adobe.indesign-idml-package"
+            or ext == ".idml"
         ):
             from .idml import IDML
 
             result.fns += self.import_source(IDML(fn=fn), **args)
 
         # .XML files
-        elif content_type == 'application/xml' and ext == '.icml':
+        elif content_type == "application/xml" and ext == ".icml":
             from .icml import ICML
 
             result.fns += self.import_source(ICML(fn=fn), **args)
 
-        elif content_type == 'application/xml' and ext == '.xml':
+        elif content_type == "application/xml" and ext == ".xml":
             from .document import Document
 
-            with open(fn, 'rb') as f:
+            with open(fn, "rb") as f:
                 t = f.read()
                 log.debug("importing Document: %r" % t)
             result.fns += self.import_source(Document(fn=fn), **args)
 
         # Images
         elif content_type in [
-            'image/jpeg',
-            'image/png',
-            'image/bmp',
-            'image/tiff',
-            'application/pdf',
-        ] or ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff', '.pdf']:
+            "image/jpeg",
+            "image/png",
+            "image/bmp",
+            "image/tiff",
+            "application/pdf",
+        ] or ext in [".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".pdf"]:
             result.fns += self.import_image(fn, gs=config.Lib and config.Lib.gs or None)
 
         # Fonts
         elif content_type in [
-            'application/x-font-ttf',
-            'application/font-sfnt',
+            "application/x-font-ttf",
+            "application/font-sfnt",
         ] or ext in [
-            '.ttf',
-            '.otf',
+            ".ttf",
+            ".otf",
         ]:
             result.fns += self.import_font_files(fn)
 
         # not a matching file type
         else:
-            result.message = 'Sorry, not a supported file type: %r (%r)' % (
+            result.message = "Sorry, not a supported file type: %r (%r)" % (
                 ext,
                 content_type,
             )
-            result.status = 'error'
+            result.status = "error"
             log.error(result.message)
 
         if result.status is None:
-            result.status = 'success'
-            result.message = 'import succeeded.'
+            result.status = "success"
+            result.message = "import succeeded."
 
         return result
 
@@ -635,7 +635,7 @@ class Project(XML, Source):
             try:
                 self.import_metadata(source.metadata())
             except:
-                log.error(f'could not import_metadata for {source}')
+                log.error(f"could not import_metadata for {source}")
         if stylesheet is True:
             ss = source.stylesheet()
             if ss is not None:
@@ -657,19 +657,19 @@ class Project(XML, Source):
         (2) adding sections of the document to the spine, if not present
         (3) importing referenced images, if available
         """
-        with open(os.path.join(config.Resources.path, 'epubtypes.json'), 'rb') as f:
-            epubtypes = json.loads(f.read().decode('utf-8'))
+        with open(os.path.join(config.Resources.path, "epubtypes.json"), "rb") as f:
+            epubtypes = json.loads(f.read().decode("utf-8"))
         if documents is None:
             return
         spine_elem = self.find(self.root, "pub:spine")
         if spine_elem is None:
-            log.debug('there is no spine element, add one')
-            spine_elem = PUB.spine('\n\t\t')
-            spine_elem.tail = '\n\n\t'
+            log.debug("there is no spine element, add one")
+            spine_elem = PUB.spine("\n\t\t")
+            spine_elem.tail = "\n\n\t"
             self.root.append(spine_elem)
-        spine_elem.text = '\n\t\t'
+        spine_elem.text = "\n\t\t"
         spine_hrefs = [
-            str(URL(spineitem.get('href')))
+            str(URL(spineitem.get("href")))
             for spineitem in self.xpath(spine_elem, "pub:spineitem", namespaces=NS)
         ]
         fns = []
@@ -683,12 +683,12 @@ class Project(XML, Source):
             # import referenced images, and update the image locations.
             if source_path is not None:
                 for img in doc.root.xpath("//html:img[@src]", namespaces=NS):
-                    srcfn = os.path.join(source_path, str(URL(img.get('src'))))
+                    srcfn = os.path.join(source_path, str(URL(img.get("src"))))
                     # SPECIAL CASE: srcfn + '.jpg' exists => use that instead, because it indicates
                     # that the user has exported the image as cropped from InDesign and wants to use
                     # that instead of the typesetting source image file.
-                    if os.path.exists(srcfn + '.jpg'):
-                        srcfn += '.jpg'
+                    if os.path.exists(srcfn + ".jpg"):
+                        srcfn += ".jpg"
                     log.debug(
                         "img srcfn=%r exists? %r" % (srcfn, os.path.exists(srcfn))
                     )
@@ -706,7 +706,7 @@ class Project(XML, Source):
                         if os.path.exists(imgfn):
                             os.remove(imgfn)
                         shutil.copy(srcfn, imgfn)
-                    img.set('src', File(imgfn).relpath(doc.path))
+                    img.set("src", File(imgfn).relpath(doc.path))
             doc.write(canonicalized=True)
             fns.append(doc.fn)
 
@@ -719,10 +719,10 @@ class Project(XML, Source):
             doc_spine_hrefs = [
                 href
                 for href in spine_hrefs
-                if '#' in href and href.split('#')[0] == doc_href
+                if "#" in href and href.split("#")[0] == doc_href
             ]
             for href in doc_spine_hrefs:
-                id = href.split('#')[-1]
+                id = href.split("#")[-1]
                 section = doc.find(
                     doc.root, "//html:section[@id='%s']" % id, namespaces=NS
                 )
@@ -731,7 +731,7 @@ class Project(XML, Source):
                         spine_elem, "pub:spineitem[@href='%s']" % href
                     )
                     log.info(
-                        'Removing non-existent content from spine: %r'
+                        "Removing non-existent content from spine: %r"
                         % spineitem.attrib
                     )
                     spine_elem.remove(spineitem)
@@ -739,19 +739,19 @@ class Project(XML, Source):
             # update the project spine: append anything that is new.
             sections = doc.root.xpath("html:body/html:section[@id]", namespaces=NS)
             for section in sections:
-                section_href = doc_href + '#' + section.get('id')
+                section_href = doc_href + "#" + section.get("id")
                 if section_href not in spine_hrefs:
                     spineitem = PUB.spineitem(href=section_href)
-                    spineitem.tail = '\n\t\t'
-                    if section.get('title') is not None:
-                        title = section.get('title')
-                        spineitem.set('title', title)
+                    spineitem.tail = "\n\t\t"
+                    if section.get("title") is not None:
+                        title = section.get("title")
+                        spineitem.set("title", title)
                         for epubtype in epubtypes:
                             if (
-                                re.search(epubtype['pattern'], title, flags=re.I)
+                                re.search(epubtype["pattern"], title, flags=re.I)
                                 is not None
                             ):
-                                spineitem.set('landmark', epubtype['type'])
+                                spineitem.set("landmark", epubtype["type"])
                                 break
                     spine_elem.append(spineitem)
 
@@ -767,7 +767,7 @@ class Project(XML, Source):
             old_elem = self.find(
                 project_metadata.root,
                 "*[@id='%s' or @property='%s']"
-                % (elem.get('id'), elem.get('property')),
+                % (elem.get("id"), elem.get("property")),
             )
             if old_elem is not None:
                 project_metadata.root.replace(old_elem, elem)
@@ -775,16 +775,16 @@ class Project(XML, Source):
                 project_metadata.root.append(elem)
 
             # make sure the element has an id
-            if elem.get('id') is None:
-                ns = project_metadata.tag_namespace(elem.tag or '')
+            if elem.get("id") is None:
+                ns = project_metadata.tag_namespace(elem.tag or "")
                 if ns in NS.values():
                     prefix = NS.keys()[NS.values().index(ns)]
-                    tag = elem.tag.replace("{%s}" % ns, prefix + ':')
+                    tag = elem.tag.replace("{%s}" % ns, prefix + ":")
                 else:
                     tag = elem.tag
                 elems = self.xpath(new_metadata, tag, namespaces=NS)
-                id = tag.split(':')[-1] + str(len(elems) + 1)
-                elem.set('id', id)
+                id = tag.split(":")[-1] + str(len(elems) + 1)
+                elem.set("id", id)
 
     def import_images(self, images):
         if images is None:
@@ -802,19 +802,19 @@ class Project(XML, Source):
         from bf.image import Image
 
         if gs in params:
-            gs = params.pop('gs')
-        basename = self.make_basename(fn, ext='.jpg')
-        if params.get('class') is not None and 'cover' in params.get('class'):
+            gs = params.pop("gs")
+        basename = self.make_basename(fn, ext=".jpg")
+        if params.get("class") is not None and "cover" in params.get("class"):
             outfn = os.path.join(self.path, str(self.cover_folder), basename)
         else:
             outfn = os.path.join(self.path, str(self.image_folder), basename)
-        log.debug('image: %s' % os.path.relpath(fn, self.path).replace('\\', '/'))
+        log.debug("image: %s" % os.path.relpath(fn, self.path).replace("\\", "/"))
         ext = os.path.splitext(fn)[-1].lower()
-        if ext in ['.pdf', '.eps']:
+        if ext in [".pdf", ".eps"]:
             gso = GS(gs=gs)
-            gso.render(fn, outfn, device='jpeg', res=600, allpages=allpages)
+            gso.render(fn, outfn, device="jpeg", res=600, allpages=allpages)
         else:
-            Image(fn=fn).convert(outfn, format='jpg', quality=100)
+            Image(fn=fn).convert(outfn, format="jpg", quality=100)
 
         # create / update the resource for the image
         image_file = File(fn=outfn)
@@ -825,17 +825,17 @@ class Project(XML, Source):
         )
         if resource is None:
             resource = etree.Element("{%(pub)s}resource" % NS, href=href, **params)
-            resource.tail = '\n\t'
+            resource.tail = "\n\t"
 
         resources = self.find(self.root, "pub:resources")
 
-        if 'cover' in (resource.get('class') or ''):
-            if params.get('kind') is None or 'digital' in params.get('kind'):
+        if "cover" in (resource.get("class") or ""):
+            if params.get("kind") is None or "digital" in params.get("kind"):
                 existing_cover_digital = self.find(
                     self.root,
                     "//pub:resource[contains(@class,'cover') and (@kind='%s' or not(@kind))]"
-                    % params.get('kind')
-                    or 'digital',
+                    % params.get("kind")
+                    or "digital",
                     namespaces=NS,
                 )
                 if existing_cover_digital is not None:
@@ -850,7 +850,7 @@ class Project(XML, Source):
         self.write()
         return outfn
 
-    def get_cover_href(self, kind='digital'):
+    def get_cover_href(self, kind="digital"):
         return self.find(
             self.root,
             """
@@ -898,7 +898,7 @@ class Project(XML, Source):
             try:
                 start_time = time.time()
                 assert output_kind in self.OUTPUT_KIND_EXTS.keys()
-                if output_kind == 'EPUB':
+                if output_kind == "EPUB":
                     result = self.build_epub(
                         cleanup=cleanup,
                         doc_stylesheets=doc_stylesheets,
@@ -906,32 +906,32 @@ class Project(XML, Source):
                         check=epub_check,
                         ace=epub_ace,
                     )
-                elif output_kind == 'Kindle':
+                elif output_kind == "Kindle":
                     result = self.build_mobi(
                         cleanup=cleanup,
                         doc_stylesheets=doc_stylesheets,
                         before_compile=before_compile,
                     )
-                elif output_kind == 'HTML':
+                elif output_kind == "HTML":
                     result = self.build_html(
                         cleanup=cleanup,
                         doc_stylesheets=doc_stylesheets,
                         singlepage=singlepage,
                     )
-                elif output_kind == 'Archive':
+                elif output_kind == "Archive":
                     result = self.build_archive()
                 result.size = File(fn=result.fn).size
-                result.status = 'completed'
+                result.status = "completed"
             except:
                 raise
                 msg = (
                     str(String(sys.exc_info()[0].__name__).camelsplit())
-                    + ' '
+                    + " "
                     + str(sys.exc_info()[1])
                 ).strip()
                 result = Dict(
                     kind=output_kind,
-                    status='error',
+                    status="error",
                     message=msg,
                     traceback=traceback.format_exc(),
                 )
@@ -946,12 +946,12 @@ class Project(XML, Source):
 
     def build_archive(self):
         """create a zip archive of the project folder itself"""
-        outfn = os.path.join(self.path, str(self.output_folder), self.name + '.zip')
+        outfn = os.path.join(self.path, str(self.output_folder), self.name + ".zip")
         zipfn = ZIP.zip_path(
             self.path,
             fn=outfn,
-            mode='w',
-            exclude=[os.path.relpath(outfn, self.path).replace('\\', '/')],
+            mode="w",
+            exclude=[os.path.relpath(outfn, self.path).replace("\\", "/")],
         )  # avoid recursive self-inclusion
         result = Dict(fn=zipfn, format="pub")
         return result
@@ -974,34 +974,34 @@ class Project(XML, Source):
     ):
         if image_args is None:
             image_args = config.EPUB.images
-        log.debug('build_epub(**%r):' % (image_args))
-        epub_isbn = self.metadata().identifier(id_patterns=['epub', 'ebook', 'isbn'])
+        log.debug("build_epub(**%r):" % (image_args))
+        epub_isbn = self.metadata().identifier(id_patterns=["epub", "ebook", "isbn"])
 
         if (
             epub_name is None
             and epub_isbn is not None
-            and epub_isbn.text not in [None, '']
+            and epub_isbn.text not in [None, ""]
         ):
             epub_name = str(
                 String(epub_isbn.text)
                 # remove any dashes or whitespace
                 .resub(
-                    r'[\s\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]', ''
+                    r"[\s\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]", ""
                 )
             ).strip()
-        if epub_name in [None, '']:
+        if epub_name in [None, ""]:
             epub_name = (
                 self.name
-                or self.root.get('name')
+                or self.root.get("name")
                 or os.path.basename(os.path.dirname(self.fn))
             )
         print("epub_name =", epub_name)
         epub_path = os.path.join(
-            self.path, str(self.output_folder), epub_name + '_EPUB'
+            self.path, str(self.output_folder), epub_name + "_EPUB"
         )
         print("epub_path =", epub_path)
         if name_kind is True:
-            epub_name += '_EPUB'
+            epub_name += "_EPUB"
 
         if clean is True:
             if os.path.isdir(epub_path):
@@ -1013,20 +1013,20 @@ class Project(XML, Source):
         if progress is not None:
             progress.report()
         metadata = self.find(self.root, "opf:metadata", namespaces=NS)
-        cover_src = self.get_cover_href(kind='digital')
+        cover_src = self.get_cover_href(kind="digital")
         if lang is None:
-            dclang = self.find(metadata, 'dc:language')
+            dclang = self.find(metadata, "dc:language")
             if dclang is not None:
                 lang = dclang.text
             else:
-                lang = 'en'
+                lang = "en"
         spine_items = self.output_spineitems(
             output_path=epub_path,
             resources=resources,
-            ext='.xhtml',
+            ext=".xhtml",
             doc_stylesheets=doc_stylesheets,
             lang=lang,
-            conditions='digital epub',
+            conditions="digital epub",
             image_args=image_args,
         )
         if progress is not None:
@@ -1053,7 +1053,7 @@ class Project(XML, Source):
         self,
         clean=False,
         singlepage=False,
-        ext='.xhtml',
+        ext=".xhtml",
         doc_stylesheets=True,
         progress=None,
         before_compile=None,
@@ -1081,7 +1081,7 @@ class Project(XML, Source):
                 image_args=image_args,
             )
         )
-        html_path = os.path.join(self.output_path, self.name + '_HTML')
+        html_path = os.path.join(self.output_path, self.name + "_HTML")
         log.info(html_path)
         if clean is True and os.path.isdir(html_path):
             shutil.rmtree(html_path, onerror=rmtree_warn)
@@ -1092,11 +1092,11 @@ class Project(XML, Source):
         if progress is not None:
             progress.report()
         if lang is None:
-            dclang = self.find(self.root, 'opf:metadata/dc:language')
+            dclang = self.find(self.root, "opf:metadata/dc:language")
             if dclang is not None:
                 lang = dclang.text
             else:
-                lang = 'en'
+                lang = "en"
         spine_items = self.output_spineitems(
             output_path=html_path,
             resources=resources,
@@ -1114,11 +1114,11 @@ class Project(XML, Source):
         if zip is True:
             from bl.zip import ZIP
 
-            result['fn'] = ZIP.zip_path(html_path)
+            result["fn"] = ZIP.zip_path(html_path)
             if cleanup is True:
                 shutil.rmtree(html_path, onerror=rmtree_warn)
         else:
-            result['fn'] = html_path
+            result["fn"] = html_path
         if progress is not None:
             progress.report()
         return result
@@ -1137,26 +1137,26 @@ class Project(XML, Source):
     ):
         if image_args is None:
             image_args = config.Kindle.images
-        mobi_isbn = self.metadata().identifier(id_patterns=['mobi', 'ebook', 'isbn'])
+        mobi_isbn = self.metadata().identifier(id_patterns=["mobi", "ebook", "isbn"])
         if mobi_name is None:
             if mobi_isbn is not None and mobi_isbn.text is not None:
                 mobi_name = str(
                     String(mobi_isbn.text)
                     # remove any dashes or whitespace
                     .resub(
-                        r'[\s\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]',
-                        '',
+                        r"[\s\-\u058a\u2011\u2012\u2013\u2014\u2015\ufe58\ufe63\uff0d]",
+                        "",
                     )
                 )
             else:
                 mobi_name = self.name
         print("mobi_name =", mobi_name)
         mobi_path = os.path.join(
-            self.path, str(self.output_folder), mobi_name + '_Kindle'
+            self.path, str(self.output_folder), mobi_name + "_Kindle"
         )
         print("mobi_path =", mobi_path)
         if name_kind is True:
-            mobi_name += '_Kindle'
+            mobi_name += "_Kindle"
 
         if clean is True and os.path.isdir(mobi_path):
             shutil.rmtree(mobi_path, onerror=rmtree_warn)
@@ -1167,21 +1167,21 @@ class Project(XML, Source):
         if progress is not None:
             progress.report()
         metadata = self.root.find("{%(opf)s}metadata" % NS)
-        cover_src = self.get_cover_href(kind='digital')
+        cover_src = self.get_cover_href(kind="digital")
         if lang is None:
-            dclang = self.find(metadata, 'dc:language')
+            dclang = self.find(metadata, "dc:language")
             if dclang is not None:
                 lang = dclang.text
             else:
-                lang = 'en'
+                lang = "en"
         spine_items = self.output_spineitems(
             output_path=mobi_path,
             resources=resources,
-            ext='.html',
+            ext=".html",
             http_equiv_content_type=True,
             doc_stylesheets=doc_stylesheets,
             lang=lang,
-            conditions='digital mobi',
+            conditions="digital mobi",
             image_args=image_args,
         )
         if progress is not None:
@@ -1215,12 +1215,12 @@ class Project(XML, Source):
             log.debug(resource.attrib)
             f = File(
                 fn=os.path.abspath(
-                    os.path.join(self.path, str(URL(resource.get('href'))))
+                    os.path.join(self.path, str(URL(resource.get("href"))))
                 )
             )
-            if resource.get('class') == 'stylesheet':
+            if resource.get("class") == "stylesheet":
                 outfn = self.output_stylesheet(f.fn, output_path)
-            elif resource.get('class') in ['cover', 'cover-digital', 'image']:
+            elif resource.get("class") in ["cover", "cover-digital", "image"]:
                 outfn = self.output_image(
                     f.fn,
                     output_path=output_path,
@@ -1230,19 +1230,19 @@ class Project(XML, Source):
             else:  # other resource as-is
                 outfn = os.path.join(output_path, f.relpath(os.path.dirname(self.fn)))
                 f.write(fn=outfn)
-            resource.set('href', File(fn=outfn).relpath(output_path))
+            resource.set("href", File(fn=outfn).relpath(output_path))
         return resources
 
     def output_stylesheet(self, fn, output_path=None):
         output_path = output_path or os.path.join(self.path, str(self.output_folder))
         outfn = os.path.join(
-            output_path, os.path.relpath(fn, self.path).replace('\\', '/')
+            output_path, os.path.relpath(fn, self.path).replace("\\", "/")
         )
         log.debug("project.output_stylesheet(): %r" % outfn)
-        if os.path.splitext(fn)[-1] == '.scss':
+        if os.path.splitext(fn)[-1] == ".scss":
             from bf.scss import SCSS
 
-            outfn = os.path.splitext(outfn)[0] + '.css'
+            outfn = os.path.splitext(outfn)[0] + ".css"
             SCSS(fn=fn).render_css().write(fn=outfn)
         else:
             Text(fn=fn).write(fn=outfn)
@@ -1257,8 +1257,8 @@ class Project(XML, Source):
         png=True,
         svg=True,
         gs=None,
-        format='png16m',
-        ext='.png',
+        format="png16m",
+        ext=".png",
         res=300,
         quality=90,
         maxwh=None,
@@ -1279,7 +1279,7 @@ class Project(XML, Source):
         log.debug("outfn: %s" % outfn)
 
         if os.path.exists(outfn):
-            log.debug('FILE EXISTS: %s' % outfn)
+            log.debug("FILE EXISTS: %s" % outfn)
             return outfn
 
         # try writing the image multiple times (at most 5) to ensure clean output
@@ -1291,20 +1291,20 @@ class Project(XML, Source):
                 if not os.path.exists(os.path.dirname(outfn)):
                     os.makedirs(os.path.dirname(outfn))
 
-                if mimetype == 'application/pdf' or f.ext.lower() in ['.pdf', '.eps']:
+                if mimetype == "application/pdf" or f.ext.lower() in [".pdf", ".eps"]:
                     PDF(fn=fn).gswrite(fn=outfn, device=format, res=res, gs=gs)
-                elif (mimetype == 'image/jpeg' or f.ext == '.jpg') and jpg is True:
-                    outfn = os.path.splitext(outfn)[0] + '.jpg'
+                elif (mimetype == "image/jpeg" or f.ext == ".jpg") and jpg is True:
+                    outfn = os.path.splitext(outfn)[0] + ".jpg"
                     f.write(fn=outfn)
-                elif (mimetype == 'image/png' or f.ext == '.png') and png is True:
-                    outfn = os.path.splitext(outfn)[0] + '.png'
+                elif (mimetype == "image/png" or f.ext == ".png") and png is True:
+                    outfn = os.path.splitext(outfn)[0] + ".png"
                     f.write(fn=outfn)
-                elif (mimetype == 'image/svg+xml' or f.ext == '.svg') and svg is True:
-                    outfn = os.path.splitext(outfn)[0] + '.svg'
+                elif (mimetype == "image/svg+xml" or f.ext == ".svg") and svg is True:
+                    outfn = os.path.splitext(outfn)[0] + ".svg"
                     f.write(fn=outfn)
                 elif format in mimetype or f.ext == ext:
                     f.write(fn=outfn)
-                elif f.ext != '.svg':
+                elif f.ext != ".svg":
                     Image(fn=fn).convert(outfn)
 
                 # make sure the output image fits the parameters
@@ -1312,12 +1312,12 @@ class Project(XML, Source):
                 image = Image(fn=outfn)
 
                 image_args.update(density="%dx%d" % (res, res))
-                if os.path.splitext(outfn)[-1].lower() == '.jpg':
+                if os.path.splitext(outfn)[-1].lower() == ".jpg":
                     image_args.update(quality=quality)
 
-                if os.path.splitext(outfn)[-1].lower() != '.svg':
+                if os.path.splitext(outfn)[-1].lower() != ".svg":
                     width, height = [
-                        int(i) for i in image.identify(format="%w,%h").split(',')
+                        int(i) for i in image.identify(format="%w,%h").split(",")
                     ]
                     if (maxpixels is not None and (width * height) > maxpixels) or (
                         maxwh is not None and (width > maxwh or height > maxwh)
@@ -1346,7 +1346,7 @@ class Project(XML, Source):
                     image.mogrify(**image_args)
 
                 # here we compare the image_data from this write to what was done previously
-                image_data = open(outfn, 'rb').read()
+                image_data = open(outfn, "rb").read()
                 if image_data in image_data_tries:
                     break
                 image_data_tries.append(image_data)
@@ -1369,13 +1369,13 @@ class Project(XML, Source):
     def output_spineitems(
         self,
         output_path=None,
-        ext='.xhtml',
+        ext=".xhtml",
         resources=None,
         singlepage=False,
         http_equiv_content_type=False,
         doc_stylesheets=True,
-        lang='en',
-        conditions='digital',
+        lang="en",
+        conditions="digital",
         image_args=None,
     ):
         log.debug("project.output_spineitems()")
@@ -1390,7 +1390,7 @@ class Project(XML, Source):
         # conditions to include
         spine_cond = self.find(self.root, "pub:spine/@cond", namespaces=NS)
         if bool(spine_cond) is True:
-            conditions = ' '.join(set(conditions.split() + spine_cond.split()))
+            conditions = " ".join(set(conditions.split() + spine_cond.split()))
 
         spineitems = [
             deepcopy(spineitem)
@@ -1399,10 +1399,10 @@ class Project(XML, Source):
             )
         ]
         outfns = []
-        css_fns = glob(os.path.join(self.content_path, '*.css'))
+        css_fns = glob(os.path.join(self.content_path, "*.css"))
         endnotes = []  # collect endnotes and pass into and out of Document.html()
         for spineitem in spineitems:
-            split_href = str(URL(spineitem.get('href'))).split('#')
+            split_href = str(URL(spineitem.get("href"))).split("#")
             log.debug(split_href)
             docfn = os.path.join(self.path, split_href[0])
             if not os.path.exists(docfn):
@@ -1410,9 +1410,9 @@ class Project(XML, Source):
                 continue
 
             if os.path.dirname(docfn) == self.content_path:
-                doc_css_fns = glob(os.path.splitext(docfn)[0] + '.css')
+                doc_css_fns = glob(os.path.splitext(docfn)[0] + ".css")
             else:
-                doc_css_fns = glob(os.path.dirname(docfn) + '.css')
+                doc_css_fns = glob(os.path.dirname(docfn) + ".css")
 
             if len(split_href) > 1:
                 d = Document.load(fn=docfn, id=split_href[1])
@@ -1423,18 +1423,18 @@ class Project(XML, Source):
                 continue
 
             out_basename = re.sub(
-                r'\W+',
-                '-',
+                r"\W+",
+                "-",
                 os.path.splitext(os.path.basename(d.fn))[0]
-                .encode('ascii', 'xmlcharrefreplace')
+                .encode("ascii", "xmlcharrefreplace")
                 .decode(),
             )
             out_path = os.path.join(
                 output_path, os.path.relpath(d.path, self.path)
-            ).replace('\\', '/')
+            ).replace("\\", "/")
             outfn = os.path.join(out_path, out_basename) + ext
-            log.debug('outfn = %s', outfn)
-            if 'html' in ext:
+            log.debug("outfn = %s", outfn)
+            if "html" in ext:
                 # create the output html for this document
                 h = d.html(
                     fn=outfn,
@@ -1457,7 +1457,7 @@ class Project(XML, Source):
                     ):
                         css_fns.append(
                             os.path.abspath(
-                                os.path.join(h.path, str(URL(css_link.get('href'))))
+                                os.path.join(h.path, str(URL(css_link.get("href"))))
                             )
                         )
                         head.remove(
@@ -1469,11 +1469,11 @@ class Project(XML, Source):
                                 os.path.join(
                                     output_path,
                                     os.path.relpath(doc_css_fn, self.path).replace(
-                                        '\\', '/'
+                                        "\\", "/"
                                     ),
                                 )
                             )[0]
-                            + '.css'
+                            + ".css"
                         )
                         if not os.path.exists(out_css_fn):
                             merge_css_fns = css_fns + [doc_css_fn]
@@ -1484,7 +1484,7 @@ class Project(XML, Source):
                             out_css.write()
                         log.debug("doc_css: %r" % out_css_fn)
                         href = os.path.relpath(out_css_fn, h.dirpath()).replace(
-                            '\\', '/'
+                            "\\", "/"
                         )
                         link = etree.Element(
                             "{%(html)s}link" % NS,
@@ -1496,7 +1496,7 @@ class Project(XML, Source):
 
                 # output any images that are referenced from the document and are locally available
                 for img in h.root.xpath("//html:img", namespaces=NS):
-                    srcfn = os.path.join(d.path, str(URL(img.get('src'))))
+                    srcfn = os.path.join(d.path, str(URL(img.get("src"))))
                     if os.path.exists(srcfn):
                         outfn = self.output_image(
                             srcfn,
@@ -1505,7 +1505,7 @@ class Project(XML, Source):
                             **image_args,
                         )
                         img.set(
-                            'src', os.path.relpath(outfn, h.path).replace('\\', '/')
+                            "src", os.path.relpath(outfn, h.path).replace("\\", "/")
                         )
                     else:
                         log.error("IMAGE NOT FOUND: %s" % srcfn)
@@ -1514,7 +1514,7 @@ class Project(XML, Source):
                 h.write(doctype="<!DOCTYPE html>", canonicalized=False)
                 outfns.append(h.fn)
                 spineitem.set(
-                    'href', os.path.relpath(h.fn, output_path).replace('\\', '/')
+                    "href", os.path.relpath(h.fn, output_path).replace("\\", "/")
                 )
 
         project_css_fn = os.path.join(
@@ -1524,14 +1524,14 @@ class Project(XML, Source):
                 "pub:resources/pub:resource[@class='stylesheet']/@href",
                 namespaces=NS,
             )
-            or 'project.css',
+            or "project.css",
         )
 
         if (
             len(endnotes) > 0
         ):  # create a new spineitem for the endnotes, and put them there
             enfn = os.path.join(
-                output_path, self.content_folder, 'Collected-Endnotes' + ext
+                output_path, self.content_folder, "Collected-Endnotes" + ext
             )
             endnotes_html = Document().html(fn=enfn, output_path=output_path)
             if os.path.exists(project_css_fn):
@@ -1544,23 +1544,23 @@ class Project(XML, Source):
                         type="text/css",
                         href=os.path.relpath(
                             project_css_fn, endnotes_html.path
-                        ).replace('\\', '/'),
+                        ).replace("\\", "/"),
                     )
                 )
             body = endnotes_html.find(endnotes_html.root, "//html:body")
             if body is None:
-                body = H.body('\n')
-                body.tail = '\n'
+                body = H.body("\n")
+                body.tail = "\n"
                 endnotes_html.root.append(body)
-            section = H.section('\n', {'class': 'endnotes', 'id': 'Collected-Endnotes'})
+            section = H.section("\n", {"class": "endnotes", "id": "Collected-Endnotes"})
             body.append(section)
             while len(endnotes) > 0:
                 endnote = endnotes.pop(0)
-                endnote.tail = '\n'
+                endnote.tail = "\n"
                 section.append(endnote)
             endnotes_html.write(canonicalized=False)
             endnotes_spineitem = PUB.spineitem(
-                href=os.path.relpath(endnotes_html.fn, output_path).replace('\\', '/'),
+                href=os.path.relpath(endnotes_html.fn, output_path).replace("\\", "/"),
                 title="Endnotes",
             )
             spineitems.append(endnotes_spineitem)
@@ -1569,15 +1569,15 @@ class Project(XML, Source):
         if singlepage is True and len(spineitems) > 0:
             # concatenate all the outfns into a single document
             html = HTML()
-            html.root.set('lang', lang)
-            html.root.set('{%(xml)s}lang' % NS, lang)
+            html.root.set("lang", lang)
+            html.root.set("{%(xml)s}lang" % NS, lang)
             html.fn = os.path.join(output_path, self.content_folder, self.name + ext)
             title = (
-                self.metadata().title.text if self.metadata().title is not None else ''
+                self.metadata().title.text if self.metadata().title is not None else ""
             )
             spineitems = [
                 PUB.spineitem(
-                    href=os.path.relpath(html.fn, output_path).replace('\\', '/'),
+                    href=os.path.relpath(html.fn, output_path).replace("\\", "/"),
                     title=title,
                 )
             ]
@@ -1592,17 +1592,17 @@ class Project(XML, Source):
             html.root.append(
                 H.head(
                     H.title(title),
-                    H.meta({'charset': 'UTF-8'}),
+                    H.meta({"charset": "UTF-8"}),
                     H.link(
                         rel="stylesheet",
                         type="text/css",
                         href=os.path.relpath(project_css_fn, html.path).replace(
-                            '\\', '/'
+                            "\\", "/"
                         ),
                     ),
                 )
             )
-            body = H.body('\n')
+            body = H.body("\n")
             html.root.append(body)
             html.write()
             for outfn in outfns:
@@ -1618,13 +1618,13 @@ class Project(XML, Source):
 
         # FIXME: This assumes that id attributes are unique across the product.
         # We cannot assume this.
-        if 'html' in ext:
+        if "html" in ext:
             # collect the @ids from the content and fix the hyperlinks
             basenames = [self.make_basename(f) for f in outfns]
             ids = Dict()
             for outfn in outfns:
                 for elem in XML(fn=outfn).root.xpath("//*[@id]"):
-                    ids[elem.get('id')] = outfn
+                    ids[elem.get("id")] = outfn
 
             # relink to the correct items
             for outfn in outfns:
@@ -1633,22 +1633,22 @@ class Project(XML, Source):
                 for e in [
                     e
                     for e in x.root.xpath("//html:a[@href]", namespaces=NS)
-                    if len(e.get('href')) > 0
+                    if len(e.get("href")) > 0
                     and (
-                        e.get('href')[0] == '#'
-                        or e.get('href').split('#')[0] not in basenames
+                        e.get("href")[0] == "#"
+                        or e.get("href").split("#")[0] not in basenames
                     )
                 ]:
-                    hreflist = str(URL(e.get('href'))).split('#')
+                    hreflist = str(URL(e.get("href"))).split("#")
                     if len(hreflist) > 1:  # we have an id -- use it to resolve the link
                         id = hreflist[1]
                         if id in ids:
-                            rp = os.path.relpath(ids[id], x.path).replace('\\', '/')
+                            rp = os.path.relpath(ids[id], x.path).replace("\\", "/")
                             if (
                                 rp == x.basename
                             ):  # location in the same file, omit filename
-                                rp = ''
-                            e.set('href', rp + '#' + id)
+                                rp = ""
+                            e.set("href", rp + "#" + id)
                     else:  # only a filename
                         outfb = os.path.splitext(
                             os.path.abspath(
@@ -1658,14 +1658,14 @@ class Project(XML, Source):
                         for hfn in outfns:
                             if outfb in hfn:
                                 e.set(
-                                    'href',
+                                    "href",
                                     os.path.relpath(
                                         hfn, os.path.dirname(outfn)
-                                    ).replace('\\', '/'),
+                                    ).replace("\\", "/"),
                                 )
                                 break
                     e.set(
-                        'href', URL(e.get('href')).quoted()
+                        "href", URL(e.get("href")).quoted()
                     )  # urls need to be quoted.
 
                 x.write(canonicalized=False)
@@ -1679,10 +1679,10 @@ class Project(XML, Source):
                 "//html:span[@id and (@epub:type='pagebreak' or @role='doc-pagebreak')]",
                 namespaces=NS,
             ):
-                if pagebreak.get('id') in pagebreak_ids:
+                if pagebreak.get("id") in pagebreak_ids:
                     x.remove(pagebreak, leave_tail=True)
                 else:
-                    pagebreak_ids.append(pagebreak.get('id'))
+                    pagebreak_ids.append(pagebreak.get("id"))
             x.write(canonicalized=False)
 
         return spineitems
@@ -1697,16 +1697,16 @@ class Project(XML, Source):
             "cleanup %s: %r",
             self.name,
             {
-                'resources': resources,
-                'outputs': outputs,
-                'logs': logs,
-                'exclude': exclude,
+                "resources": resources,
+                "outputs": outputs,
+                "logs": logs,
+                "exclude": exclude,
             },
         )
         if outputs is True:
             dirs = [
                 d
-                for d in glob(self.output_path + '/*')
+                for d in glob(self.output_path + "/*")
                 if os.path.isdir(d)
                 and (exclude is None or re.search(exclude, d) is None)
             ]
@@ -1718,7 +1718,7 @@ class Project(XML, Source):
                 log.debug("removing: %s" % d)
                 shutil.rmtree(d, onerror=rmtree_warn)
         if logs is True:
-            log_glob = os.path.join(self.path, '/logs', '*.log')
+            log_glob = os.path.join(self.path, "/logs", "*.log")
             log.debug("cleanup logs: %s" % log_glob)
             for fn in glob(log_glob):
                 os.remove(fn)
@@ -1729,14 +1729,14 @@ class Project(XML, Source):
                     [
                         File(fn=fn).splitext()[0]
                         for fn in rglob(self.content_path, "*.*")
-                        if os.path.splitext(fn)[-1].lower() != '.xml'
+                        if os.path.splitext(fn)[-1].lower() != ".xml"
                         and (exclude is None or re.search(exclude, fn) is None)
                     ]
                 )
             )
-            log.debug('%d content resources' % len(resourcefns))
+            log.debug("%d content resources" % len(resourcefns))
             # pop from the list those that are referenced from the content
-            xmlfns = [self.fn] + rglob(self.content_path, '*.xml')
+            xmlfns = [self.fn] + rglob(self.content_path, "*.xml")
             for xmlfn in xmlfns:
                 x = XML(fn=xmlfn)
                 hreffns = list(
@@ -1744,7 +1744,7 @@ class Project(XML, Source):
                         [
                             File(
                                 fn=os.path.abspath(
-                                    os.path.join(x.path, href.split('#')[0])
+                                    os.path.join(x.path, href.split("#")[0])
                                 )
                             ).splitext()[0]
                             for href in Document.xpath(
@@ -1753,18 +1753,18 @@ class Project(XML, Source):
                         ]
                     )
                 )
-                log.debug('%d hrefs in %s' % (len(hreffns), x.fn))
+                log.debug("%d hrefs in %s" % (len(hreffns), x.fn))
                 for hreffn in hreffns:
                     if hreffn in resourcefns:
-                        log.debug('retain: %s' % hreffn)
+                        log.debug("retain: %s" % hreffn)
                         resourcefns.pop(resourcefns.index(hreffn))
             log.info(
-                'cleanup: removing %d orphaned content resources from %s'
+                "cleanup: removing %d orphaned content resources from %s"
                 % (len(resourcefns), self.path)
             )
             # delete those that remain -- not excluded, not referenced
             for resourcefn in resourcefns:
-                fns = glob(resourcefn + '.*')
+                fns = glob(resourcefn + ".*")
                 for fn in fns:
                     os.remove(fn)
 
@@ -1788,7 +1788,7 @@ class Project(XML, Source):
             log.info("removed file: %s" % fn)
         href = File.normpath(os.path.relpath(fn, self.path))
         for e in self.xpath(self.root, "//*[@href]"):
-            if e.get('href').startswith(href):
+            if e.get("href").startswith(href):
                 self.remove(e)
         self.write()
 
@@ -1796,7 +1796,7 @@ class Project(XML, Source):
         log.info("fn   = %s (%r)" % (fn, os.path.exists(fn)))
         href = os.path.relpath(fn, self.path)
         if id is not None:
-            href += '#' + id
+            href += "#" + id
         if os.path.exists(fn):
             if id is None:
                 os.remove(fn)
@@ -1819,8 +1819,8 @@ class Project(XML, Source):
         imgs = []
         for doc in self.documents():
             for img in doc.xpath(doc.root, "//img[@src]"):
-                imgs.append(str(doc.folder / img.get('src')))
-        img_paths = [os.normpath(fn) for fn in glob(str(doc.folder / 'images' / '*'))]
+                imgs.append(str(doc.folder / img.get("src")))
+        img_paths = [os.normpath(fn) for fn in glob(str(doc.folder / "images" / "*"))]
         for img_path in img_paths:
             if img_path not in imgs:
                 os.remove(img_path)
@@ -1839,8 +1839,8 @@ def main():
     print()
 
 
-@main.command('create')
-@click.argument('project_path', type=click.Path(file_okay=False, resolve_path=True))
+@main.command("create")
+@click.argument("project_path", type=click.Path(file_okay=False, resolve_path=True))
 def create_project(project_path):
     """
     Create a new project in the given folder.
@@ -1853,14 +1853,14 @@ def create_project(project_path):
 
 
 existing_project_path_argument = click.argument(
-    'project_path',
+    "project_path",
     type=click.Path(exists=True, resolve_path=True, readable=True, writable=True),
 )
 
 
-@main.command('import')
+@main.command("import")
 @existing_project_path_argument
-@click.argument('filenames', nargs=-1)
+@click.argument("filenames", nargs=-1)
 def import_(project_path, filenames):
     """
     Import the given source files into the project.
@@ -1872,20 +1872,20 @@ def import_(project_path, filenames):
     project.write()
 
 
-@main.command('import-cover')
+@main.command("import-cover")
 @existing_project_path_argument
-@click.argument('filenames', nargs=-1)
+@click.argument("filenames", nargs=-1)
 def import_cover(project_path, filename):
     """
     Import the given image files into the project.
     """
     project = Project.load(project_path)
-    project.import_image(filename, **{'class': 'cover'})
+    project.import_image(filename, **{"class": "cover"})
 
 
-@main.command('import-images')
+@main.command("import-images")
 @existing_project_path_argument
-@click.argument('filenames', nargs=-1)
+@click.argument("filenames", nargs=-1)
 def import_images(project_path, filenames):
     """
     Import the given image files into the project.
@@ -1895,9 +1895,9 @@ def import_images(project_path, filenames):
         project.import_image(filename)
 
 
-@main.command('import-stylesheets')
+@main.command("import-stylesheets")
 @existing_project_path_argument
-@click.argument('filenames', nargs=-1)
+@click.argument("filenames", nargs=-1)
 def import_stylesheets(project_path, filenames):
     """
     Merge the given CSS files into the project stylesheet.
@@ -1909,7 +1909,7 @@ def import_stylesheets(project_path, filenames):
     css.write()
 
 
-@main.command('import-all')
+@main.command("import-all")
 @existing_project_path_argument
 def import_all(project_path):
     """
@@ -1921,53 +1921,53 @@ def import_all(project_path):
     log.info("== IMPORT ALL FOR PROJECT: %s ==" % basename)
 
     # import idml if available
-    fns = rglob(project.interior_path, '*.idml') + rglob(project.source_path, '*.idml')
-    log.info('-- %d .idml files' % len(fns))
+    fns = rglob(project.interior_path, "*.idml") + rglob(project.source_path, "*.idml")
+    log.info("-- %d .idml files" % len(fns))
     for fn in fns:
         project.import_source_file(fn, fns=fns)
 
     # import icml
-    fns = rglob(project.interior_path, '*.icml') + rglob(project.source_path, '*.icml')
-    log.info('-- %d .icml files' % len(fns))
+    fns = rglob(project.interior_path, "*.icml") + rglob(project.source_path, "*.icml")
+    log.info("-- %d .icml files" % len(fns))
     for fn in fns:
         project.import_source_file(fn, fns=fns)
 
     # import docx
-    fns = rglob(project.interior_path, '*.docx') + rglob(project.source_path, '*.docx')
-    log.info('-- %d .docx files' % len(fns))
+    fns = rglob(project.interior_path, "*.docx") + rglob(project.source_path, "*.docx")
+    log.info("-- %d .docx files" % len(fns))
     for fn in fns:
         project.import_source_file(fn, fns=fns, with_metadata=False)
 
     # import metadata.xml
     fns = [
-        fn for fn in rglob(project.path, '*metadata.xml') if '.itmsp' not in fn
+        fn for fn in rglob(project.path, "*metadata.xml") if ".itmsp" not in fn
     ]  # not inside an iTunes Producer package
-    log.info('-- %d metadata.xml files' % len(fns))
+    log.info("-- %d metadata.xml files" % len(fns))
     for fn in fns:
         project.import_metadata(fn)
 
     # images
     fns = [
         fn
-        for fn in rglob(project.interior_path + '/Links', "*.*")
+        for fn in rglob(project.interior_path + "/Links", "*.*")
         if os.path.splitext(fn)[-1].lower()
-        in ['.pdf', '.jpg', '.png', '.tif', '.tiff', '.eps']
+        in [".pdf", ".jpg", ".png", ".tif", ".tiff", ".eps"]
     ]
-    log.info('-- %d image files' % len(fns))
+    log.info("-- %d image files" % len(fns))
     for fn in fns:
         project.import_image(fn, gs=config.Lib and config.Lib.gs or None)
 
 
-@main.command('build')
+@main.command("build")
 @existing_project_path_argument
 @click.option(
-    '--format',
-    type=click.Choice(['epub', 'mobi', 'html', 'archive'], case_sensitive=False),
+    "--format",
+    type=click.Choice(["epub", "mobi", "html", "archive"], case_sensitive=False),
     multiple=True,
 )
-@click.option('--daisyace', is_flag=True)
-@click.option('--epubcheck', is_flag=True)
-@click.option('--singlepage', is_flag=True)
+@click.option("--daisyace", is_flag=True)
+@click.option("--epubcheck", is_flag=True)
+@click.option("--singlepage", is_flag=True)
 def build_outputs(
     project_path,
     format=None,
@@ -1984,24 +1984,24 @@ def build_outputs(
         project.build_outputs()
     else:
         for fmt in format:
-            if fmt == 'epub':
+            if fmt == "epub":
                 project.build_outputs(
-                    kind='EPUB', epub_check=epubcheck, epub_ace=daisyace
+                    kind="EPUB", epub_check=epubcheck, epub_ace=daisyace
                 )
-            elif fmt == 'mobi':
-                project.build_outputs(kind='Kindle')
-            elif fmt == 'html':
-                project.build_outputs(kind='HTML', singlepage=singlepage)
-            elif fmt == 'archive':
-                project.build_outputs(kind='archive')
+            elif fmt == "mobi":
+                project.build_outputs(kind="Kindle")
+            elif fmt == "html":
+                project.build_outputs(kind="HTML", singlepage=singlepage)
+            elif fmt == "archive":
+                project.build_outputs(kind="archive")
 
 
-@main.command('cleanup')
+@main.command("cleanup")
 @existing_project_path_argument
-@click.option('--outputs', is_flag=True)
-@click.option('--resources', is_flag=True)
-@click.option('--logs', is_flag=True)
-@click.option('--exclude')
+@click.option("--outputs", is_flag=True)
+@click.option("--resources", is_flag=True)
+@click.option("--logs", is_flag=True)
+@click.option("--exclude")
 def cleanup(project_path, outputs, resources, logs, exclude):
     """
     Clean up files in the project.
@@ -2010,7 +2010,7 @@ def cleanup(project_path, outputs, resources, logs, exclude):
     project.cleanup(outputs=outputs, resources=resources, logs=logs, exclude=exclude)
 
 
-@main.command('zip')
+@main.command("zip")
 @existing_project_path_argument
 def zip_project(project_path):
     """
@@ -2020,7 +2020,7 @@ def zip_project(project_path):
     return ZIP.zip_path(project.path)
 
 
-@main.command('remove')
+@main.command("remove")
 @existing_project_path_argument
 def remove_project(project_path):
     """
@@ -2030,6 +2030,6 @@ def remove_project(project_path):
     shutil.rmtree(project.path, onerror=rmtree_warn)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logging.basicConfig(**config.Logging)
     main()

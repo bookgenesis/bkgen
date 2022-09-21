@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 class HTML(XML, Source):
     ROOT_TAG = "{%(html)s}html" % NS
-    NS = Dict(**{k: NS[k] for k in NS if k in ['html', 'epub']})
+    NS = Dict(**{k: NS[k] for k in NS if k in ["html", "epub"]})
     DEFAULT_NS = NS.html
 
     def document(self, fn=None, **params):
@@ -23,7 +23,7 @@ class HTML(XML, Source):
         from .converters.html_document import HtmlDocument
 
         converter = HtmlDocument()
-        fn = fn or os.path.splitext(self.clean_filename(self.fn))[0] + '.xml'
+        fn = fn or os.path.splitext(self.clean_filename(self.fn))[0] + ".xml"
         doc = converter.convert(self, fn=fn, **params)
         return doc
 
@@ -31,7 +31,7 @@ class HTML(XML, Source):
         path = path or self.path
         fn = (
             os.path.splitext(os.path.join(path, self.clean_filename(self.basename)))[0]
-            + '.xml'
+            + ".xml"
         )
         return [self.document(fn=fn, **params)]
 
@@ -40,7 +40,7 @@ class HTML(XML, Source):
 
     def metadata(self):
         """return a Metadata object with the metadata in the document"""
-        Metadata = importlib.import_module('bkgen.metadata').Metadata
+        Metadata = importlib.import_module("bkgen.metadata").Metadata
         m = Metadata()
         return m
 
@@ -48,33 +48,33 @@ class HTML(XML, Source):
         return self.css_template()
 
     def css_template(self, tags=None):
-        CSS = importlib.import_module('bkgen.css').CSS
-        Styles = importlib.import_module('bf.styles').Styles
+        CSS = importlib.import_module("bkgen.css").CSS
+        Styles = importlib.import_module("bf.styles").Styles
 
         styles = Styles()
         if tags is None:
             tags = self.element_map(
-                include_attribs=['class'], attrib_vals=True, hierarchy=False
+                include_attribs=["class"], attrib_vals=True, hierarchy=False
             )
         for tag in [tag for tag in tags if NS.html in tag]:
             tagname = XML.tag_name(tag)
             styles[tagname] = {}
-            for c in tags[tag].attributes.get('class') or []:
-                for s in c.split(' '):
-                    styles[tagname + '.' + s] = {}
-        css = CSS(fn=os.path.splitext(self.fn)[0] + '.css', styles=styles)
+            for c in tags[tag].attributes.get("class") or []:
+                for s in c.split(" "):
+                    styles[tagname + "." + s] = {}
+        css = CSS(fn=os.path.splitext(self.fn)[0] + ".css", styles=styles)
         return css
 
     @classmethod
     def audit_links(cls, filenames):
         # document cache, to avoid repeatedly parsing the same document.
         documents = {}
-        allowed_exts = {'.htm', '.html', '.xhtml', '.xml'}
+        allowed_exts = {".htm", ".html", ".xhtml", ".xml"}
         for filename in [os.path.abspath(filename) for filename in filenames]:
             document = documents.setdefault(filename, cls(fn=filename))
             for a in document.xpath(document.root, "//html:a[@href]"):
-                url = URL(a.get('href'))
-                if url.scheme in ['', 'file']:
+                url = URL(a.get("href"))
+                if url.scheme in ["", "file"]:
                     if not url.path:
                         target_file = File(fn=document.fn)
                     else:
@@ -84,12 +84,12 @@ class HTML(XML, Source):
 
                     if not target_file.exists:
                         log.warning(
-                            '%s: link target file not found: %s'
+                            "%s: link target file not found: %s"
                             % (document.fn, target_file.fn)
                         )
                     elif target_file.ext.lower() not in allowed_exts:
                         log.warning(
-                            '%s: link target id in non-HTML/XML file: %s'
+                            "%s: link target id in non-HTML/XML file: %s"
                             % (document.fn, target_file.fn)
                         )
                     elif url.fragment:

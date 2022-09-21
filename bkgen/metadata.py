@@ -10,11 +10,11 @@ class Metadata(XML):
         **{
             k: NS[k]
             for k in NS
-            if k in ['opf', 'dc', 'dcterms', 'dcmitype', 'cp', 'xsi']
+            if k in ["opf", "dc", "dcterms", "dcmitype", "cp", "xsi"]
         }
     )
 
-    def identifier(self, id_patterns=['isbn']):
+    def identifier(self, id_patterns=["isbn"]):
         identifier = None
         for pattern in id_patterns:
             identifier = self.find(
@@ -56,8 +56,8 @@ class Metadata(XML):
         for elem in self.xpath(self.root, "dc:identifier"):
             entries.append(
                 (
-                    elem.text or '',
-                    self.element("opf:meta", refines='#%s' % elem.get('id')).text or '',
+                    elem.text or "",
+                    self.element("opf:meta", refines="#%s" % elem.get("id")).text or "",
                 )
             )
         return entries
@@ -72,8 +72,8 @@ class Metadata(XML):
         for elem in self.xpath(self.root, "dc:creator"):
             entries.append(
                 (
-                    elem.text or '',
-                    self.element("opf:meta", refines='#%s' % elem.get('id')).text,
+                    elem.text or "",
+                    self.element("opf:meta", refines="#%s" % elem.get("id")).text,
                 )
             )
         return entries
