@@ -15,7 +15,7 @@ from bkgen.source import Source
 from .icml import ICML
 
 LOG = logging.getLogger(__name__)
-B = Builder(default=NS.html, **{'html': NS.html, 'pub': NS.pub})
+B = Builder(default=NS.html, **{"html": NS.html, "pub": NS.pub})
 
 
 class IDML(ZIP, Source):
@@ -37,7 +37,7 @@ class IDML(ZIP, Source):
         a collection.
         """
         if self.__designmap is None:
-            self.__designmap = ICML(root=self.read('designmap.xml'))
+            self.__designmap = ICML(root=self.read("designmap.xml"))
         return self.__designmap
 
     @property
@@ -50,9 +50,9 @@ class IDML(ZIP, Source):
             self.__stories = []
             for story in self.designmap.root.xpath("idPkg:Story", namespaces=self.NS):
                 fn = os.path.join(
-                    self.splitext()[0], os.path.basename(str(URL(story.get('src'))))
+                    self.splitext()[0], os.path.basename(str(URL(story.get("src"))))
                 )
-                icml = ICML(fn=fn, root=self.read(story.get('src')))
+                icml = ICML(fn=fn, root=self.read(story.get("src")))
                 self.__stories.append(icml)
         return self.__stories
 
@@ -67,39 +67,39 @@ class IDML(ZIP, Source):
             for rp in [
                 rp
                 for rp in self.zipfile.namelist()
-                if os.path.splitext(rp)[-1].lower() == '.xml'
+                if os.path.splitext(rp)[-1].lower() == ".xml"
             ]:
                 x = XML(root=self.read(rp))
                 for item in x.root.xpath(
                     "//*[@Self] | //idPkg:*[@Self]", namespaces=self.NS
                 ):
                     if (
-                        item.get('Self') in d
-                        and d[item.get('Self')].attrib != item.attrib
+                        item.get("Self") in d
+                        and d[item.get("Self")].attrib != item.attrib
                     ):
                         LOG.error(
                             "%s already in items_dict. %r vs. %r"
                             % (
-                                item.get('Self'),
-                                d[item.get('Self')].attrib,
+                                item.get("Self"),
+                                d[item.get("Self")].attrib,
                                 item.attrib,
                             )
                         )
                     else:
-                        d[item.get('Self')] = item
+                        d[item.get("Self")] = item
             self.__items = d
         return self.__items
 
     def styles(self):
-        return ICML(root=self.read('Resources/Styles.xml')).styles()
+        return ICML(root=self.read("Resources/Styles.xml")).styles()
 
     def stylesheet(self, fn=None):
         """return a stylesheet from the .idml file's style definitions"""
         if fn is None:
             fn = os.path.join(
-                self.output_path, os.path.basename(self.output_path) + '.css'
+                self.output_path, os.path.basename(self.output_path) + ".css"
             )
-        return ICML(root=self.read('Resources/Styles.xml')).stylesheet(fn=fn)
+        return ICML(root=self.read("Resources/Styles.xml")).stylesheet(fn=fn)
 
     def document(self, path=None, articles=True, sources=None, **params):
         """return a pub:document with the articles / stories in the .idml file.
@@ -112,7 +112,7 @@ class IDML(ZIP, Source):
         path = path or self.output_path
         if sources is None:
             sources = [self]
-            for fn in [fn for fn in (params.get('fns') or []) if fn != self.fn]:
+            for fn in [fn for fn in (params.get("fns") or []) if fn != self.fn]:
                 sources.append(IDML(fn=fn))
         # Articles or Stories?
         if articles is True and len(self.designmap.root.xpath("//Article")) > 0:
@@ -129,29 +129,29 @@ class IDML(ZIP, Source):
         path = path or self.output_path
         sources = sources or [self]
         doc = Document()
-        doc.fn = str(Folder(path) / (os.path.splitext(self.basename)[0] + '.xml'))
+        doc.fn = str(Folder(path) / (os.path.splitext(self.basename)[0] + ".xml"))
         doc_body = doc.find(doc.root, "html:body")
         for article in self.designmap.root.xpath("//Article"):
             article_icml = ICML()
-            article_icml.fn = os.path.splitext(doc.fn)[0] + '.icml'
+            article_icml.fn = os.path.splitext(doc.fn)[0] + ".icml"
             LOG.debug(
-                "article name=%r icml.fn = %r" % (article.get('Name'), article_icml.fn)
+                "article name=%r icml.fn = %r" % (article.get("Name"), article_icml.fn)
             )
             for member in article.xpath("ArticleMember"):
-                item = self.items[member.get('ItemRef')]
+                item = self.items[member.get("ItemRef")]
                 LOG.debug(
                     "ItemRef=%r => %r ParentStory=%r"
-                    % (member.get('ItemRef'), item.tag, item.get('ParentStory'))
+                    % (member.get("ItemRef"), item.tag, item.get("ParentStory"))
                 )
                 for elem in item.xpath("descendant-or-self::*[@ParentStory]"):
-                    story_id = elem.get('ParentStory')
+                    story_id = elem.get("ParentStory")
                     pkg_story = self.designmap.find(
                         self.designmap.root,
                         "//idPkg:Story[contains(@src, '%s')]" % story_id,
                         namespaces=ICML.NS,
                     )
                     # Add the story to the Article document as a section
-                    story_icml = ICML(root=self.read(str(URL(pkg_story.get('src')))))
+                    story_icml = ICML(root=self.read(str(URL(pkg_story.get("src")))))
                     for story in story_icml.root.xpath("//Story"):
                         article_icml.root.append(story)
 
@@ -163,12 +163,12 @@ class IDML(ZIP, Source):
             ):
                 parent = incl.getparent()
                 incl_pkg = self.designmap.root.find(
-                    "idPkg:Story[@src='Stories/Story_%s.xml']" % incl.get('idref'),
+                    "idPkg:Story[@src='Stories/Story_%s.xml']" % incl.get("idref"),
                     namespaces=self.NS,
                 )
                 if incl_pkg is not None:
                     incl_doc = ICML(
-                        root=self.read(str(URL(incl_pkg.get('src'))))
+                        root=self.read(str(URL(incl_pkg.get("src"))))
                     ).document(
                         fn=self.fn, srcfn=self.fn, sources=sources, styles=self.styles()
                     )
@@ -189,12 +189,12 @@ class IDML(ZIP, Source):
         path = path or self.output_path
         sources = sources or [self]
         doc = Document()
-        doc.fn = str(Folder(path) / (os.path.splitext(self.basename)[0] + '.xml'))
+        doc.fn = str(Folder(path) / (os.path.splitext(self.basename)[0] + ".xml"))
         doc_body = doc.find(doc.root, "html:body")
-        doc_body.text = '\n'
-        icml_fn = os.path.splitext(doc.fn)[0] + '.icml'
+        doc_body.text = "\n"
+        icml_fn = os.path.splitext(doc.fn)[0] + ".icml"
         for story in self.designmap.root.xpath("idPkg:Story", namespaces=self.NS):
-            icml = ICML(fn=icml_fn, root=self.read(str(URL(story.get('src')))))
+            icml = ICML(fn=icml_fn, root=self.read(str(URL(story.get("src")))))
             idoc = icml.document(srcfn=self.fn, sources=sources, styles=self.styles())
             for elem in idoc.xpath(idoc.root, "html:body/*", namespaces=NS):
                 doc_body.append(elem)

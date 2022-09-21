@@ -17,7 +17,7 @@ from ._converter import Converter
 
 B = Builder(**NS)
 transformer = XT()
-transformer_XSLT = etree.XSLT(etree.parse(os.path.splitext(__file__)[0] + '.xsl'))
+transformer_XSLT = etree.XSLT(etree.parse(os.path.splitext(__file__)[0] + ".xsl"))
 
 
 class HtmlDocument(Converter):
@@ -61,7 +61,7 @@ def wrap_sections(root, body_xpath=None):
         if parent.tag != "{%(html)s}section" % NS:
             # start a section, go until another body_xpath element or no more available
             section = etree.Element("{%(html)s}section" % NS)
-            section.text = section.tail = '\n'
+            section.text = section.tail = "\n"
             parent.insert(parent.index(elem), section)
             nxt = elem.getnext()
             section.append(elem)
@@ -85,21 +85,21 @@ def sections_ids(root):
         | ./html:img[contains(@class, 'title') 
                     or contains(@class, 'Title')]"""
     for section in sections:
-        if section.get('title') is None:
+        if section.get("title") is None:
             title_elems = section.xpath(title_xpath, namespaces=NS)
             if len(title_elems) > 0:
                 title_elem = title_elems[0]
                 if title_elem.tag == "{%(html)s}img" % NS:
-                    title_text = title_elem.get('title') or title_elem.get('alt')
+                    title_text = title_elem.get("title") or title_elem.get("alt")
                 else:
                     title_text = String(
-                        etree.tounicode(title_elems[0], method='text', with_tail=False)
+                        etree.tounicode(title_elems[0], method="text", with_tail=False)
                     ).titleify()
-                section.set('title', title_text)
+                section.set("title", title_text)
         id = "s%d" % (sections.index(section) + 1,)
-        if section.get('title') is not None:
-            id += '_' + String(section.get('title') or '').nameify(ascii=True)
-        section.set('id', id)
+        if section.get("title") is not None:
+            id += "_" + String(section.get("title") or "").nameify(ascii=True)
+        section.set("id", id)
     return root
 
 
@@ -110,29 +110,29 @@ def p_ids(root):
         # create a unique but repeatable id: sequence number + digest
         id = "p%d_%s" % (
             paras.index(p) + 1,
-            String(etree.tounicode(p, method='text', with_tail=False)).digest()[:4],
+            String(etree.tounicode(p, method="text", with_tail=False)).digest()[:4],
         )
-        p.set('id', id)
+        p.set("id", id)
     return root
 
 
 def hrefs_to_xml(root):
     """hrefs to html files in this document space need to be to xml files instead."""
     for a in root.xpath("//*[contains(@href, 'html')]", namespaces=NS):
-        url = URL(a.get('href'))
-        if url.host in ['', None] and 'html' in url.path:
-            url.path = os.path.splitext(url.path)[0] + '.xml'
-        a.set('href', str(url))
+        url = URL(a.get("href"))
+        if url.host in ["", None] and "html" in url.path:
+            url.path = os.path.splitext(url.path)[0] + ".xml"
+        a.set("href", str(url))
     return root
 
 
 def normalize_img_src(root):
     for e in root.xpath("//html:img[@src]", namespaces=NS):
-        src = File(fn=str(URL(e.get('src'))))
+        src = File(fn=str(URL(e.get("src"))))
         newfn = src.clean_filename()
         if newfn != src.fn:
             os.rename(src.fn, newfn)
-            e.set('src', newfn)
+            e.set("src", newfn)
     return root
 
 
@@ -141,7 +141,7 @@ def remove_empty_spans(root):
     for span in [
         span
         for span in root.xpath("//html:span", namespaces=NS)
-        if span.text in [None, ''] and len(span.getchildren()) == 0
+        if span.text in [None, ""] and len(span.getchildren()) == 0
     ]:
         XML.remove(span, leave_tail=True)
     return root
@@ -150,6 +150,6 @@ def remove_empty_spans(root):
 def remove_event_attributes(root):
     """all event attributes (onLoad, etc.) should be removed."""
     for elem in root.xpath("//*[@*[starts-with(name(),'on')]]"):
-        for key in [key for key in elem.attrib.keys() if key[:2] == 'on']:
+        for key in [key for key in elem.attrib.keys() if key[:2] == "on"]:
             _ = elem.attrib.pop(key)
     return root

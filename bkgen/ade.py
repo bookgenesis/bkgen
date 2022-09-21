@@ -36,32 +36,32 @@ class ADE(EPUB):
                 manifest.append(
                     C.OPF.item(
                         {
-                            'href': pagemap_href,
-                            'id': pagemap_id,
-                            'media-type': "application/oebps-page-map+xml",
+                            "href": pagemap_href,
+                            "id": pagemap_id,
+                            "media-type": "application/oebps-page-map+xml",
                         }
                     )
                 )
                 spine = opf.root.find("{%(opf)s}spine" % C.NS)
-                spine.set('page-map', pagemap_id)
+                spine.set("page-map", pagemap_id)
                 opf.write()
 
         # now zip the epub
         return C.zip(epub_path, epubfn=epubfn, opf_fn=opffn)
 
     @classmethod
-    def make_page_map_file(C, epub_path, nav_fn, pagemap_href='page-map.xml'):
+    def make_page_map_file(C, epub_path, nav_fn, pagemap_href="page-map.xml"):
         nav = XML(fn=nav_fn)
         page_list = nav.root.find(
             ".//{%(html)s}nav[@{%(epub)s}type='page-list']" % C.NS
         )
         if page_list is not None:
             pagemap = XML(
-                fn=os.path.join(epub_path, pagemap_href), root=C.OPF('page-map')
+                fn=os.path.join(epub_path, pagemap_href), root=C.OPF("page-map")
             )
             for a in page_list.xpath(".//html:a[@href]", namespaces=C.NS):
                 pagemap.root.append(
-                    C.OPF.page(name=a.text, href=str(URL(a.get('href'))))
+                    C.OPF.page(name=a.text, href=str(URL(a.get("href"))))
                 )
             pagemap.write()
             return pagemap.fn
