@@ -16,8 +16,8 @@ class CSS(bf.css.CSS):
         for fn in xmlfns:
             x = XML(fn=fn)
             for element in x.root.xpath("//html:*[@class]", namespaces=NS):
-                for classname in element.get('class').split(' '):
-                    selector = element.tag.split('}')[-1] + '.' + classname
+                for classname in element.get("class").split(" "):
+                    selector = element.tag.split("}")[-1] + "." + classname
                     selectors.append(selector)
         selectors = list(set(selectors))
         for sel in self.styles.keys():
@@ -31,8 +31,8 @@ class CSS(bf.css.CSS):
         for fn in xmlfns:
             x = XML(fn=fn)
             for element in x.root.xpath("//html:*[@class]", namespaces=NS):
-                for classname in element.get('class').split(' '):
-                    selector = element.tag.split('}')[-1] + '.' + classname
+                for classname in element.get("class").split(" "):
+                    selector = element.tag.split("}")[-1] + "." + classname
                     selectors.append(selector)
         selectors = list(set(selectors))
         for sel in selectors:

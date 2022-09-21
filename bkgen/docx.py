@@ -18,7 +18,7 @@ class DOCX(bxml.docx.DOCX, Source):
         from .converters.docx_document import DocxDocument
 
         converter = DocxDocument()
-        fn = fn or os.path.splitext(self.clean_filename(self.fn))[0] + '.xml'
+        fn = fn or os.path.splitext(self.clean_filename(self.fn))[0] + ".xml"
         doc = converter.convert(self, fn=fn, **params)
         return doc
 
@@ -29,7 +29,7 @@ class DOCX(bxml.docx.DOCX, Source):
         path = path or self.path
         fn = (
             os.path.splitext(os.path.join(path, self.clean_filename(self.basename)))[0]
-            + '.xml'
+            + ".xml"
         )
         # just the one document
         return [self.document(fn=fn, **params)]
@@ -39,26 +39,26 @@ class DOCX(bxml.docx.DOCX, Source):
         from bf.image import Image
 
         images = []
-        rels = self.xml(src='word/_rels/document.xml.rels').root
+        rels = self.xml(src="word/_rels/document.xml.rels").root
         for img in self.xml().root.xpath("//html:img", namespaces=DOCX.NS):
             image = Image()
             link_rel = XML.find(
                 rels,
-                "//rels:Relationship[@Id='%s']" % img.get('data-link-id'),
+                "//rels:Relationship[@Id='%s']" % img.get("data-link-id"),
                 namespaces=DOCX.NS,
             )
             embed_rel = XML.find(
                 rels,
-                "//rels:Relationship[@Id='%s']" % img.get('data-embed-id'),
+                "//rels:Relationship[@Id='%s']" % img.get("data-embed-id"),
                 namespaces=DOCX.NS,
             )
             if link_rel is not None:
-                image.fn = URL(link_rel.get('Target')).path
+                image.fn = URL(link_rel.get("Target")).path
                 if embed_rel is not None:
-                    image.data = self.read('word/' + embed_rel.get('Target'))
-                    image.fn = os.path.join(self.path, img.attrib.pop('name'))
+                    image.data = self.read("word/" + embed_rel.get("Target"))
+                    image.fn = os.path.join(self.path, img.attrib.pop("name"))
                 else:
-                    image.data = open(image.fn, 'rb').read()
+                    image.data = open(image.fn, "rb").read()
             images.append(image)
         return images
 
@@ -77,7 +77,7 @@ class DOCX(bxml.docx.DOCX, Source):
 
     def numbering_params(self, numId, level):
         """return numbering parameters for the given w:numId an w:lvl / w:ilvl"""
-        numbering = self.xml(src='word/numbering.xml')
+        numbering = self.xml(src="word/numbering.xml")
         params = Dict(level=str(level))
         num = XML.find(
             numbering.root, "//w:num[@w:numId='%s']" % numId, namespaces=self.NS
@@ -98,36 +98,36 @@ class DOCX(bxml.docx.DOCX, Source):
                         namespaces=self.NS,
                     )
                     if lvl is not None:
-                        params['start'] = XML.find(
+                        params["start"] = XML.find(
                             lvl, "w:start/@w:val", namespaces=self.NS
                         )
-                        params['numFmt'] = XML.find(
+                        params["numFmt"] = XML.find(
                             lvl, "w:numFmt/@w:val", namespaces=self.NS
                         )
-                        if params['numFmt'] == 'bullet':
-                            params['ul'] = True
+                        if params["numFmt"] == "bullet":
+                            params["ul"] = True
                         else:
-                            params['ol'] = True
+                            params["ol"] = True
         return params
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     for fn in sys.argv[2:]:
         docx = DOCX(fn=fn)
-        if 'css' in sys.argv[1]:
+        if "css" in sys.argv[1]:
             docx.stylesheet().write()
         if (
-            'xml' in sys.argv[1]
-            or 'aid' in sys.argv[1]
-            or 'html' in sys.argv[1]
-            or 'icml' in sys.argv[1]
+            "xml" in sys.argv[1]
+            or "aid" in sys.argv[1]
+            or "html" in sys.argv[1]
+            or "icml" in sys.argv[1]
         ):
             xml = docx.document()
-            if 'xml' in sys.argv[1]:
+            if "xml" in sys.argv[1]:
                 xml.write()
-            if 'icml' in sys.argv[1]:
-                xml.icml(fn=os.path.splitext(docx.fn)[0] + '.icml').write()
-            if 'aid' in sys.argv[1]:
-                xml.aid(fn=os.path.splitext(docx.fn)[0] + '.aid.xml').write()
-            if 'html' in sys.argv[1]:
+            if "icml" in sys.argv[1]:
+                xml.icml(fn=os.path.splitext(docx.fn)[0] + ".icml").write()
+            if "aid" in sys.argv[1]:
+                xml.aid(fn=os.path.splitext(docx.fn)[0] + ".aid.xml").write()
+            if "html" in sys.argv[1]:
                 xml.html().write()

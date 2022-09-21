@@ -24,7 +24,7 @@ class MOBI(Dict):
         Dict.__init__(self, **args)
 
     @classmethod
-    def mobi_fn(C, mobi_path, mobi_name=None, ext='.mobi'):
+    def mobi_fn(C, mobi_path, mobi_name=None, ext=".mobi"):
         return os.path.join(
             os.path.dirname(os.path.abspath(mobi_path)),
             (mobi_name or (os.path.basename(mobi_path.rstrip(os.path.sep)))) + ext,
@@ -38,13 +38,13 @@ class MOBI(Dict):
         manifest=None,
         spine_items=None,
         cover_src=None,
-        lang='en',
+        lang="en",
         nav_toc=None,
         nav_landmarks=None,
         nav_page_list=None,
         before_compile=None,
         progress=None,
-        nav_href='nav.html',
+        nav_href="nav.html",
         nav_title="Navigation",
         mobi7=False,
     ):
@@ -54,7 +54,7 @@ class MOBI(Dict):
 
         if nav_landmarks is None:
             nav_landmarks = EPUB.nav_landmarks(
-                {'href': nav_href, 'title': 'Table of Contents', 'epub_type': 'toc'}
+                {"href": nav_href, "title": "Table of Contents", "epub_type": "toc"}
             )
         result = EPUB(**self).build(
             build_path,
@@ -98,7 +98,7 @@ class MOBI(Dict):
 
         mobifn = self.mobi_fn(build_path, mobi_name=mobi_name)
 
-        result = result or {'reports': []}
+        result = result or {"reports": []}
         if build_path is not None and os.path.normpath(build_path) != os.path.normpath(
             epub_path
         ):
@@ -130,8 +130,8 @@ class MOBI(Dict):
 
         self.compile_mobi(build_path, opffn, mobifn=mobifn)
 
-        result.update(fn=mobifn, format='mobi')
-        result['reports'].append({'kindlegen': mobifn + '.kindlegen.txt'})
+        result.update(fn=mobifn, format="mobi")
+        result["reports"].append({"kindlegen": mobifn + ".kindlegen.txt"})
 
         if progress is not None:
             progress.report()
@@ -150,11 +150,11 @@ class MOBI(Dict):
         for item in opf.root.xpath(
             "opf:manifest/opf:item[contains(@media-type, 'html')]", namespaces=C.NS
         ):
-            x = XML(fn=os.path.join(build_path, str(URL(item.get('href')))))
+            x = XML(fn=os.path.join(build_path, str(URL(item.get("href")))))
             anchors = [
                 a
                 for a in x.root.xpath("//html:a[@id and not(@href)]", namespaces=C.NS)
-                if len(a.getchildren()) == 0 and a.text in [None, '']
+                if len(a.getchildren()) == 0 and a.text in [None, ""]
             ]
             for a in anchors:
                 pp = a.xpath("ancestor::html:p", namespaces=C.NS)
@@ -163,7 +163,7 @@ class MOBI(Dict):
                     p = pp[-1]
                     parent = p.getparent()
                     XML.remove(a, leave_tail=True)
-                    a.tail = ''
+                    a.tail = ""
                     parent.insert(parent.index(p), a)
             x.write()
 
@@ -174,7 +174,7 @@ class MOBI(Dict):
         for item in opf.root.xpath(
             "opf:manifest/opf:item[contains(@media-type, 'html')]", namespaces=C.NS
         ):
-            h = HTML(fn=os.path.join(build_path, str(URL(item.get('href')))))
+            h = HTML(fn=os.path.join(build_path, str(URL(item.get("href")))))
             for header in h.xpath(h.root, "//html:header"):
                 HTML.replace_with_contents(header)
             h.write()
@@ -188,40 +188,40 @@ class MOBI(Dict):
         for item in [
             item
             for item in opf.root.xpath("//opf:manifest/opf:item", namespaces=self.NS)
-            if item.get('href')[-4:].lower() == 'html'
+            if item.get("href")[-4:].lower() == "html"
         ]:
-            x = XML(os.path.join(os.path.dirname(opffn), str(URL(item.get('href')))))
+            x = XML(os.path.join(os.path.dirname(opffn), str(URL(item.get("href")))))
             for img in x.root.xpath(
                 "//html:img[@width or @height or @style]", namespaces=self.NS
             ):
-                srcfn = os.path.join(os.path.dirname(x.fn), str(URL(img.get('src'))))
-                if os.path.splitext(srcfn)[-1] in ['.svg']:
+                srcfn = os.path.join(os.path.dirname(x.fn), str(URL(img.get("src"))))
+                if os.path.splitext(srcfn)[-1] in [".svg"]:
                     continue
                 w, h = [
-                    int(i) for i in Image(fn=srcfn).identify(format="%w,%h").split(',')
+                    int(i) for i in Image(fn=srcfn).identify(format="%w,%h").split(",")
                 ]
                 width, height = w, h
                 styles = {
                     k: v
                     for k, v in [
-                        s.strip().split(':')
-                        for s in (img.get('style') or '').split(';')
-                        if s.strip() != ''
+                        s.strip().split(":")
+                        for s in (img.get("style") or "").split(";")
+                        if s.strip() != ""
                     ]
                 }
                 log.debug(img.attrib)
                 log.debug(styles)
-                if img.get('width') is not None:
+                if img.get("width") is not None:
                     width = int(
-                        re.sub(r'\D', '', img.attrib.pop('width'))
+                        re.sub(r"\D", "", img.attrib.pop("width"))
                     )  # treat as pixels
-                    if img.get('height') is None:
+                    if img.get("height") is None:
                         height = int(h * (width / w))
-                elif styles.get('width') is not None:
+                elif styles.get("width") is not None:
                     vv = [
                         i
-                        for i in re.split(r'([a-z%]+)', styles.get('width'))
-                        if i != ''
+                        for i in re.split(r"([a-z%]+)", styles.get("width"))
+                        if i != ""
                     ]
                     if len(vv) == 2:
                         width, unit = vv
@@ -230,18 +230,18 @@ class MOBI(Dict):
                                 (float(width) * CSS.units[unit]).asUnit(CSS.px) / CSS.px
                             )
                             height = int(height * width / w)
-                            styles.pop('width')
-                if img.get('height') is not None:
+                            styles.pop("width")
+                if img.get("height") is not None:
                     height = int(
-                        re.sub(r'\D', '', img.attrib.pop('height'))
+                        re.sub(r"\D", "", img.attrib.pop("height"))
                     )  # treat as pixels
-                    if img.get('width') is None:
+                    if img.get("width") is None:
                         width = int(w * (height / h))
-                elif styles.get('height') is not None:
+                elif styles.get("height") is not None:
                     vv = [
                         i
-                        for i in re.split(r'([a-z%]+)', styles.get('height'))
-                        if i != ''
+                        for i in re.split(r"([a-z%]+)", styles.get("height"))
+                        if i != ""
                     ]
                     if len(vv) == 2:
                         height, unit = vv
@@ -251,7 +251,7 @@ class MOBI(Dict):
                                 / CSS.px
                             )
                             width = int(width * height / h)
-                            styles.pop('height')
+                            styles.pop("height")
                 log.debug("%d x %d\t%d x %d" % (w, h, width, height))
                 image = Image(fn=srcfn)
                 if width < w and height < h:
@@ -274,7 +274,7 @@ class MOBI(Dict):
                             "image %s: %s"
                             % (image.relpath(opf.path), sys.exc_info()[1])
                         )
-                img.set('style', ';'.join('%s:%s' % (k, v) for k, v in styles.items()))
+                img.set("style", ";".join("%s:%s" % (k, v) for k, v in styles.items()))
             x.write(canonicalized=False)
 
     def direct_styles(self, opffn):
@@ -290,12 +290,12 @@ class MOBI(Dict):
             )
         ]:
             h = HTML(
-                fn=os.path.join(os.path.dirname(opffn), str(URL(item.get('href'))))
+                fn=os.path.join(os.path.dirname(opffn), str(URL(item.get("href"))))
             )
             log.debug(h.fn)
             css = CSS.merge_stylesheets(
                 *[
-                    os.path.join(h.path, ss.get('href'))
+                    os.path.join(h.path, ss.get("href"))
                     for ss in h.xpath(
                         h.root,
                         "html:head/html:link[@rel='stylesheet' and @type='text/css']",
@@ -303,27 +303,27 @@ class MOBI(Dict):
                 ]
             )
             for sel, style in [
-                [sel, style] for sel, style in css.styles.items() if sel[0] != '@'
+                [sel, style] for sel, style in css.styles.items() if sel[0] != "@"
             ]:
                 # floats
-                if style.get('float:') in ['left', 'right']:
-                    xpath = '//' + CSS.selector_to_xpath(sel, xmlns={'html': h.NS.html})
+                if style.get("float:") in ["left", "right"]:
+                    xpath = "//" + CSS.selector_to_xpath(sel, xmlns={"html": h.NS.html})
                     log.debug("%s %r" % (sel, style))
                     log.debug(xpath)
                     for elem in h.xpath(h.root, xpath):
                         styles = {
                             k: v
                             for k, v in [
-                                s.strip().split(':')
-                                for s in (elem.get('style') or '').split(';')
-                                if s.strip() != ''
+                                s.strip().split(":")
+                                for s in (elem.get("style") or "").split(";")
+                                if s.strip() != ""
                             ]
                         }
-                        if 'float' not in styles.keys():
-                            styles['float'] = style.get('float:')
+                        if "float" not in styles.keys():
+                            styles["float"] = style.get("float:")
                         elem.set(
-                            'style',
-                            ';'.join('%s:%s' % (k, v) for k, v in styles.items()) + ';',
+                            "style",
+                            ";".join("%s:%s" % (k, v) for k, v in styles.items()) + ";",
                         )
                         log.debug(elem.attrib)
             h.write()
@@ -339,11 +339,11 @@ class MOBI(Dict):
             )
         ]:
             h = HTML(
-                fn=os.path.join(os.path.dirname(opffn), str(URL(item.get('href'))))
+                fn=os.path.join(os.path.dirname(opffn), str(URL(item.get("href"))))
             )
             css = CSS.merge_stylesheets(
                 *[
-                    os.path.join(h.path, ss.get('href'))
+                    os.path.join(h.path, ss.get("href"))
                     for ss in h.xpath(
                         h.root,
                         "html:head/html:link[@rel='stylesheet' and @type='text/css']",
@@ -353,20 +353,20 @@ class MOBI(Dict):
             for sel, style in [
                 [sel, style]
                 for sel, style in css.styles.items()
-                if sel[0] != '@' and style.get('list-style-type:') == 'none'
+                if sel[0] != "@" and style.get("list-style-type:") == "none"
             ]:
-                xpath = '//' + CSS.selector_to_xpath(sel, xmlns={'html': h.NS.html})
+                xpath = "//" + CSS.selector_to_xpath(sel, xmlns={"html": h.NS.html})
                 log.debug("%s %r" % (sel, style))
                 log.debug(xpath)
                 for elem in h.xpath(h.root, xpath):
                     tag = h.tag_name(elem)
                     elem.tag = "{%(html)s}div" % h.NS
-                    elem.set('class', ((elem.get('class') or '') + ' ' + tag).strip())
+                    elem.set("class", ((elem.get("class") or "") + " " + tag).strip())
                     # also convert <li> direct children to <div>
                     for li in h.xpath(elem, "html:li"):
                         tag = h.tag_name(li)
                         li.tag = "{%(html)s}div" % h.NS
-                        li.set('class', ((li.get('class') or '') + ' ' + tag).strip())
+                        li.set("class", ((li.get("class") or "") + " " + tag).strip())
             h.write()
 
     def remove_display_none(self, opffn):
@@ -384,18 +384,18 @@ class MOBI(Dict):
         ]
         for item in html_items:
             h = HTML(
-                fn=os.path.join(os.path.dirname(opffn), str(URL(item.get('href'))))
+                fn=os.path.join(os.path.dirname(opffn), str(URL(item.get("href"))))
             )
             for link in h.xpath(
                 h.root, "html:head/html:link[@rel='stylesheet' and @type='text/css']"
             ):
-                css = CSS(fn=os.path.join(h.path, link.get('href')))
+                css = CSS(fn=os.path.join(h.path, link.get("href")))
                 for sel, style in [
                     [sel, style]
                     for sel, style in css.styles.items()
-                    if sel[0] != '@' and style.get('display:') == 'none'
+                    if sel[0] != "@" and style.get("display:") == "none"
                 ]:
-                    xpath = '//' + CSS.selector_to_xpath(sel, xmlns={'html': h.NS.html})
+                    xpath = "//" + CSS.selector_to_xpath(sel, xmlns={"html": h.NS.html})
                     log.debug("%s %r" % (sel, style))
                     log.debug(xpath)
                     for elem in h.xpath(h.root, xpath):
@@ -417,7 +417,7 @@ class MOBI(Dict):
             )
         ]:
             # do string replace -- easiest
-            css = Text(fn=os.path.join(opf.path, css_item.get('href')))
+            css = Text(fn=os.path.join(opf.path, css_item.get("href")))
             css.text = css.text.resub(r"display:\s*none;?\n?", "")
             css.write()
 
@@ -434,7 +434,7 @@ class MOBI(Dict):
                 namespaces=self.NS,
             )
         ]:
-            css = CSS(fn=os.path.join(opf.path, css_item.get('href')))
+            css = CSS(fn=os.path.join(opf.path, css_item.get("href")))
             for sel in [
                 sel
                 for sel in css.styles.keys()
@@ -459,10 +459,10 @@ class MOBI(Dict):
         ]
         for item in html_items:
             html = HTML(
-                fn=os.path.join(os.path.dirname(opffn), str(URL(item.get('href'))))
+                fn=os.path.join(os.path.dirname(opffn), str(URL(item.get("href"))))
             )
             for details in html.xpath(html.root, "//html:details"):
-                log.info('<details> in %s', html.path)
+                log.info("<details> in %s", html.path)
                 html.remove(details)
             html.write()
 
@@ -470,17 +470,17 @@ class MOBI(Dict):
         """generate .mobi file using kindlegen"""
         if mobifn is None:
             mobifn = os.path.join(
-                os.path.dirname(build_path), os.path.basename(build_path) + '.mobi'
+                os.path.dirname(build_path), os.path.basename(build_path) + ".mobi"
             )
-        logfn = mobifn + '.kindlegen.txt'
-        logf = open(logfn, 'wb')
+        logfn = mobifn + ".kindlegen.txt"
+        logf = open(logfn, "wb")
         log.info("mobi: %s" % mobifn)
         cmd = [
             config.Resources.kindlegen,
             opffn,
-            '-o',
+            "-o",
             os.path.basename(mobifn),
-            '-verbose',
+            "-verbose",
         ]
         subprocess.call(cmd, stdout=logf, stderr=logf)
         logf.close()
@@ -490,22 +490,22 @@ class MOBI(Dict):
             if os.path.exists(mobifn) and mobifn != mobi_build_fn:
                 os.remove(mobifn)
             os.rename(mobi_build_fn, mobifn)
-        result = dict(fn=mobifn, log=logfn, format='mobi')
+        result = dict(fn=mobifn, log=logfn, format="mobi")
         return result
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
 
     from bkgen.epub import EPUB
 
     logging.basicConfig(**config.Logging)
     for build_path in sys.argv[2:]:
-        if sys.argv[1] == 'compile':
+        if sys.argv[1] == "compile":
             opffn = EPUB.get_opf_fn(build_path)
             MOBI().compile_mobi(build_path, opffn)
-        elif 'from-epub=' in sys.argv[1]:
-            epub_path = sys.argv[1].split('=')[-1]
+        elif "from-epub=" in sys.argv[1]:
+            epub_path = sys.argv[1].split("=")[-1]
             result = MOBI().from_epub(epub_path, build_path=build_path)
             print(result)
         else:
