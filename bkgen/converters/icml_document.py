@@ -139,15 +139,6 @@ def CharacterStyleRange(elem, **params):
             # space-separated list
             attribs['{%(pub)s}cond' % NS] = ' '.join(conditions)
 
-        # FillColor => style="color:"
-        if elem.get('FillColor') is not None and 'color:' not in attribs.get(
-            'style', ''
-        ):
-            attribs['style'] = '; '.join(
-                [a.strip() for a in attribs.get('style', '').split(';')]
-                + [f"color: {elem.get('FillColor').replace('Color/', '')}"]
-            )
-
         result = []
 
         # use regular spans, and MathML embedded in MathTools MathZones
