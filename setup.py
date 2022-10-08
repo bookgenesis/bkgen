@@ -4,10 +4,10 @@ import shutil
 from setuptools import find_packages, setup
 
 config = {
-    "name": "bkgen",
+    "name": "bookgen",
     "version": "0.19.0",
-    "description": "Core functionality for bookgenesis",
-    "url": "https://gitlab.com/bookgenesis/bkgen",
+    "description": "Automated genesis of books and other publications",
+    "url": "https://github.com/bookgenesis/bookgen",
     "author": "Sean Harrison",
     "author_email": "sah@bookgenesis.com",
     "license": "All rights reserved.",
@@ -17,8 +17,24 @@ config = {
         "Programming Language :: Python :: 3",
     ],
     "entry_points": {},
-    "install_requires": ["bl", "bf", "bxml", "pycountry"],
-    "extras_require": {"dev": [], "test": []},
+    "install_requires": [
+        "bxml",
+        "click~=8.0.4",
+        "lxml~=4.9.1",
+        "Markdown~=3.4.1",
+        "pycountry~=22.3.5",
+        "PyYAML~=6.0",
+    ],
+    "extras_require": {
+        "dev": [
+            "black~=22.8.0",
+            "isort~=5.10.1",
+        ],
+        "test": [
+            "black~=22.8.0",
+            "flake8~=5.0.4",
+        ],
+    },
     "package_data": {"": []},
     "data_files": [],
     "scripts": [],
