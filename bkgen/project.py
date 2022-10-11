@@ -342,7 +342,7 @@ class Project(XML, Source):
 
         Returns the Project XML object.
         """
-        name = name or String(title).nameify()
+        name = name or String(title).hyphenify()
         if not (re.match(r"^[\w\-\_\.]+$", name or "", flags=re.U)):
             raise ValueError(
                 "Please provide a project name containing letters, numbers, hyphens, "
@@ -1849,11 +1849,11 @@ def create_project(project_path):
     """
     Create a new project in the given folder.
     """
-    print(project_path)
-    Project.create(
+    project = Project.create(
         os.path.dirname(project_path),
         os.path.basename(project_path),
     )
+    print("Created project:", project.fn)
 
 
 existing_project_path_argument = click.argument(
