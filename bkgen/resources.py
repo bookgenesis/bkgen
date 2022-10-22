@@ -118,10 +118,9 @@ class Resource(BaseModel):
 
             # remove left-over empty files
             else:
-                fn = os.path.abspath(str(resource_path))
-                if os.path.exists(fn):
+                if resource_path.exists():
                     LOG.info("REMOVE %s", resource_path)
-                    os.remove(fn)
+                    os.remove(resource_path)
 
         except Exception as exc:
             LOG.critical("%s %s %s %s", self.folder, source, transform, exc)
