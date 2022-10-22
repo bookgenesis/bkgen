@@ -14,6 +14,7 @@ All paths in the resources.yaml are relative to the parent directory of that doc
 very generalizable and included a lot of bespoke scripting. This is more generic.)
 """
 
+import logging
 import multiprocessing as mp
 import os
 import shutil
@@ -33,6 +34,7 @@ from pydantic import BaseModel, Field, validator
 from bkgen.document import Document
 
 PATH = Path(os.path.abspath(__file__)).parent
+LOG = logging.getLogger(__name__)
 
 
 class Resource(BaseModel):
@@ -118,12 +120,12 @@ class Resource(BaseModel):
             else:
                 fn = os.path.abspath(str(resource_path))
                 if os.path.exists(fn):
-                    print("REMOVE", resource_path)
+                    LOG.info("REMOVE %s", resource_path)
                     os.remove(fn)
 
         except Exception as exc:
-            print(self.folder, source, transform, exc)
-            print(traceback.format_exc())
+            LOG.critical("%s %s %s %s", self.folder, source, transform, exc)
+            LOG.critical("%s", traceback.format_exc())
 
         return resource_path
 
@@ -220,15 +222,20 @@ def update_spine(project):
                             spineitem.set("title", section.get("title"))
                         spineitem.tail = "\n\t"
                         spine.append(spineitem)
-                        print("APPEND spineitem:", spineitem.attrib)
+                        LOG.info("APPEND spineitem:", spineitem.attrib)
 
 
 # == COMMAND-LINE INTERFACE ==
 
 
 @click.group()
-def main():
-    pass
+@click.option("-l", "--log-level", default=logging.INFO)
+def main(log_level):
+    logging.basicConfig(
+        level=log_level,
+        format="%(asctime)s|%(levelname)s|%(name)s:%(lineno)s|%(message)s",
+    )
+    logging.getLogger("bref.refparser").setLevel(logging.WARNING)
 
 
 @main.command("process")
