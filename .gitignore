@@ -9,6 +9,7 @@ build
 dist
 docs/_build
 Exemplar_EPUB.epub
+node_modules/
 pip-wheel-metadata
 src
 tests/Projects/Exemplar/outputs/Exemplar_EPUB
