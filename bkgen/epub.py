@@ -416,13 +416,17 @@ class EPUB(ZIP, Source):
                 nav_toc.set("{%(epub)s}type" % NS, "toc")
                 nav_toc.set("role", "doc-toc")
 
-                # remove any p elements in the nav -- replace with content
-                # (this also removes empty spans such as pagebreaks and index entries)
+                # remove any p elements in the nav ol -- replace with content (also
+                # remove empty list items and spans (pagebreaks and index entries)
                 for element in HTML.xpath(
                     nav_toc,
-                    """
-                    .//html:p[html:span or html:a] 
-                    | .//html:span[not(text() or node()) or @epub:type="pagebreak"]
+                    f"""
+                    html:ol//html:p[html:span or html:a] 
+                    | .//html:span[
+                        not(node()) or re:match(text(), "^\s*$")
+                        or @epub:type="pagebreak" 
+                    ]
+                    | html:ol/html:li[not(.//html:a)]
                     """,
                     namespaces=NS,
                 ):
