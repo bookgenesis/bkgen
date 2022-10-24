@@ -59,5 +59,7 @@ NS = OrderedDict(
         # Publishing XML and Book Genesis
         ("pub", "http://publishingxml.org/ns"),
         ("bg", "http://bookgenesis.com/ns"),
+        # EXSLT - http://exslt.org
+        ("re", "http://exslt.org/regular-expressions"),
     ]
 )
