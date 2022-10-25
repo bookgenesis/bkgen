@@ -412,6 +412,11 @@ class EPUB(ZIP, Source):
                     )
                 else:
                     nav_toc = deepcopy(nav_elem)
+                    section = nav_elem.getparent()
+                    if section.tag == "{%(html)s}section" % NS:
+                        for attr in ["id", "aria-label", "aria-labelledby"]:
+                            if section.get(attr) is not None:
+                                nav_toc.set(attr, section.get(attr))
 
                 nav_toc.set("{%(epub)s}type" % NS, "toc")
                 nav_toc.set("role", "doc-toc")
@@ -678,38 +683,24 @@ class EPUB(ZIP, Source):
     ):
         """create a nav.xhtml file in output_path, return the filename to it"""
         H = Builder(default=C.NS.html, **{"html": C.NS.html, "epub": C.NS.epub})._
-        sections = [
-            H.section(
-                nav_elem,
-                {
-                    "id": nav_elem.get("class") or "toc",
-                    "class": nav_elem.get("class") or "toc",
-                },
-            )
-            for nav_elem in nav_elems
-        ]
         # h1s at beginning of nav
-        for section in sections:
-            section.text = "\n"
-
-            nav_elem = XML.find(section, "html:nav", namespaces=NS)
-            if nav_elem.get("{%(epub)s}type" % NS) is not None:
-                section.set("{%(epub)s}type" % NS, nav_elem.get("{%(epub)s}type" % NS))
-            if nav_elem.get("role") is not None:
-                section.set("role", nav_elem.get("role"))
-
-            h1 = XML.find(section, ".//html:h1", namespaces=NS)
-            if h1 is not None:
+        for nav_elem in nav_elems:
+            h1 = XML.find(nav_elem, ".//html:h1", namespaces=NS)
+            if h1 is None:
+                h1 = H.h1(
+                    {"class": "title"},
+                    nav_elem.get("aria-label") or nav_elem.get("{%(epub)s}type" % NS),
+                )
                 nav_elem.insert(0, h1)
-                h1.set("class", nav_elem.get("class") or section.get("class"))
-                h1.set("{%s}type" % NS["epub"], "title")
+            if h1 is not None:
+                h1.set("{%(epub)s}type" % NS, "title")
                 if h1.get("id") is None:
                     h1.set(
                         "id",
                         String(f"{nav_href} {etree.tounicode(h1)}").digest(alg="md5"),
                     )
                 h1.tail = "\n"
-                section.set("aria-labelledby", h1.get("id"))
+                nav_elem.set("aria-labelledby", h1.get("id"))
 
         nav = XML(
             root=H.html(
@@ -725,7 +716,7 @@ class EPUB(ZIP, Source):
                     "\n\t",
                 ),
                 "\n\t",
-                H.body("\n", *sections),
+                H.body("\n", *nav_elems),
                 "\n",
             )
         )
@@ -833,7 +824,12 @@ class EPUB(ZIP, Source):
                     }
                 )
         if len(page_list_items) > 0:
-            return C.nav_elem(*page_list_items, epub_type="page-list", role="doc-pagelist", title=title)
+            return C.nav_elem(
+                *page_list_items,
+                epub_type="page-list",
+                role="doc-pagelist",
+                title=title,
+            )
 
     @classmethod
     def nav_elem(C, *nav_items, epub_type=None, title=None, role=None):
