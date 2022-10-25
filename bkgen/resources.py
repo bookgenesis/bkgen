@@ -14,6 +14,7 @@ All paths in the resources.yaml are relative to the parent directory of that doc
 very generalizable and included a lot of bespoke scripting. This is more generic.)
 """
 
+import logging
 import multiprocessing as mp
 import os
 import shutil
@@ -33,6 +34,7 @@ from pydantic import BaseModel, Field, validator
 from bkgen.document import Document
 
 PATH = Path(os.path.abspath(__file__)).parent
+LOG = logging.getLogger(__name__)
 
 
 class Resource(BaseModel):
@@ -227,8 +229,9 @@ def update_spine(project):
 
 
 @click.group()
-def main():
-    pass
+@click.option('-l', '--log-level', default=20)
+def main(log_level):
+    logging.basicConfig(level=log_level)
 
 
 @main.command("process")
