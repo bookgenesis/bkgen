@@ -833,10 +833,10 @@ class EPUB(ZIP, Source):
                     }
                 )
         if len(page_list_items) > 0:
-            return C.nav_elem(*page_list_items, epub_type="page-list", title=title)
+            return C.nav_elem(*page_list_items, epub_type="page-list", role="doc-pagelist", title=title)
 
     @classmethod
-    def nav_elem(C, *nav_items, epub_type=None, title=None):
+    def nav_elem(C, *nav_items, epub_type=None, title=None, role=None):
         """create and return an html:nav element.
 
         nav_items   = a list of dict-type elements with the following attributes:
@@ -856,6 +856,8 @@ class EPUB(ZIP, Source):
         nav_elem.tail = "\n\n"
         if epub_type is not None:
             nav_elem.set("{%(epub)s}type" % C.NS, epub_type)
+        if role is not None:
+            nav_elem.set("role", role)
         nav_elem.set("class", epub_type or "nav")
         ol_elem = nav_elem.find("{%(html)s}ol" % C.NS)
         ol_elem.set("class", nav_elem.get("class"))
