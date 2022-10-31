@@ -868,6 +868,7 @@ class Project(XML, Source):
         before_compile=None,
         doc_stylesheets=True,
         singlepage=False,
+        epub_zip=True,
         epub_check=True,
         epub_ace=True,
     ):
@@ -903,6 +904,7 @@ class Project(XML, Source):
                         cleanup=cleanup,
                         doc_stylesheets=doc_stylesheets,
                         before_compile=before_compile,
+                        zip=epub_zip,
                         check=epub_check,
                         ace=epub_ace,
                     )
@@ -1965,12 +1967,14 @@ def import_all(project_path):
     type=click.Choice(["epub", "mobi", "html", "archive"], case_sensitive=False),
     multiple=True,
 )
+@click.option("--zip", default=True, type=click.BOOL)
 @click.option("--daisyace", is_flag=True)
 @click.option("--epubcheck", is_flag=True)
 @click.option("--singlepage", is_flag=True)
 def build_outputs(
     project_path,
     format=None,
+    zip=True,
     daisyace=None,
     epubcheck=None,
     singlepage=False,
@@ -1986,7 +1990,7 @@ def build_outputs(
         for fmt in format:
             if fmt == "epub":
                 project.build_outputs(
-                    kind="EPUB", epub_check=epubcheck, epub_ace=daisyace
+                    kind="EPUB", epub_zip=zip, epub_check=epubcheck, epub_ace=daisyace
                 )
             elif fmt == "mobi":
                 project.build_outputs(kind="Kindle")
