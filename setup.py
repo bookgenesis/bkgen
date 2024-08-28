@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 config = {
     "name": "bkgen",
-    "version": "0.15.0",
+    "version": "3.0.0-kp3",
     "description": "Core functionality for bookgenesis",
     "url": "https://github.com/bookgenesis/bkgen",
     "author": "Sean Harrison",
