@@ -39,11 +39,6 @@ config = {
     "scripts": []
 }
 
-PATH = os.path.dirname(os.path.abspath(__file__))
-configfn = os.path.join(PATH, 'bkgen', '__config__.ini')
-if not os.path.exists(configfn):
-    shutil.copy(configfn + '.TEMPLATE', configfn)
-
 setup(
     long_description="This package contains the core BookGenesis software.",
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),

@@ -48,24 +48,34 @@ bkgen.NS
 
 import os, sys, mimetypes
 from bl.dict import Dict
-from bl.config import Config
 
 PATH = os.path.dirname(os.path.abspath(__file__))
-config = Config(fn=os.path.join(PATH, '__config__.ini')) 
-
 resources_path = os.path.join(PATH, 'resources')
-config.Resources = Dict(
-    path=resources_path,
-    publishingxml=os.path.join(resources_path, 'publishing-xml'),
-    schemas=os.path.join(resources_path, 'publishing-xml', 'schemas'),
-    epubcheck=os.path.join(resources_path, 'epubcheck-4.0.2/epubcheck.jar'),
-    kindlegen=os.path.join(resources_path,
-        ('darwin' in sys.platform and 'KindleGen_Mac_i386_v2_9/kindlegen')
-        or ('linux' in sys.platform and 'kindlegen_linux_2.6_i386_v2_9/kindlegen')
-        or ('win32' in sys.platform and 'kindlegen_win32_v2_9/kindlegen.exe')
-        or None),
-    mimetypes=os.path.join(resources_path, 'mime.types'),
-)
+config = Dict(
+    Logging=Dict(
+        format="[%(asctime)s] %(name)s:%(lineno)s: %(message)s",
+        level=20,
+    ),
+    Projects=Dict(),
+    EPUB=Dict(
+        images={'quality': 90, 'maxpixels': 4e6},
+    ),
+    Kindle=Dict(
+        images={'quality': 90, 'maxwh': 2560, 'maxpixels': 100e6},
+    ),
+    Resources = Dict(
+        path=resources_path,
+        publishingxml=os.path.join(resources_path, 'publishing-xml'),
+        schemas=os.path.join(resources_path, 'publishing-xml', 'schemas'),
+        epubcheck=os.path.join(resources_path, 'epubcheck-4.0.2/epubcheck.jar'),
+        kindlegen=os.path.join(resources_path,
+            ('darwin' in sys.platform and 'KindleGen_Mac_i386_v2_9/kindlegen')
+            or ('linux' in sys.platform and 'kindlegen_linux_2.6_i386_v2_9/kindlegen')
+            or ('win32' in sys.platform and 'kindlegen_win32_v2_9/kindlegen.exe')
+            or None),
+        mimetypes=os.path.join(resources_path, 'mime.types'),
+    )
+) 
 
 mimetypes.init(files=[config.Resources.mimetypes])              
 
