@@ -217,9 +217,13 @@ class Project(XML, Source):
             project = Class(fn=os.path.join(PATH, 'templates', 'project.xml'), **project_params)
             project.fn = project_fn
             project.root.set('name', name)
+        
+        project.write()
 
         # update the title from what is given
-        project.find(project.root, "opf:metadata/dc:title", namespaces=NS).text = title
+        title_elem = project.find(project.root, "opf:metadata/dc:title", namespaces=NS)
+        # if title_elem:
+        title_elem.text = title
 
         # make sure there is a base set of project folders
         for folder in [project.get(k) for k in project.keys() if '_folder' in k and project.get(k) is not None]:
