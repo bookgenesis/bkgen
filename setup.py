@@ -33,8 +33,13 @@ config = {
         "test": []
     },
     "package_data": {
-        "": []
-        },
+        'bkgen': [
+            'bkgen/*.json', 
+            'bkgen/resources/*', 
+            'bkgen/resources/**/*', 
+            'bkgen/templates/*',
+        ],
+    },
     "data_files": [],
     "scripts": []
 }
